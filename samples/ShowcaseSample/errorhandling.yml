@@ -1,0 +1,44 @@
+# ErrorLens.ErrorHandling - ShowcaseSample Configuration
+# This YAML file configures all error handling behavior for the sample.
+
+ErrorHandling:
+  Enabled: true
+  HttpStatusInJsonResponse: true
+  DefaultErrorCodeStrategy: AllCaps
+  SearchSuperClassHierarchy: true
+  ExceptionLogging: WithStacktrace
+
+  # Customize JSON field names (rename "code" → "type", "message" → "detail")
+  JsonFieldNames:
+    Code: type
+    Message: detail
+
+  # Force full stacktrace logging for server errors
+  FullStacktraceHttpStatuses:
+    - 5xx
+
+  # Map exception types to HTTP status codes
+  HttpStatuses:
+    ShowcaseSample.Exceptions.DatabaseTimeoutException: 503
+    ShowcaseSample.Exceptions.ServiceUnavailableException: 503
+    ShowcaseSample.Exceptions.RateLimitExceededException: 429
+
+  # Map exception types and field validations to error codes
+  Codes:
+    ShowcaseSample.Exceptions.DatabaseTimeoutException: DATABASE_TIMEOUT
+    ShowcaseSample.Exceptions.ServiceUnavailableException: SERVICE_UNAVAILABLE
+    ShowcaseSample.Exceptions.RateLimitExceededException: RATE_LIMIT_EXCEEDED
+    email.Required: EMAIL_IS_REQUIRED
+    email.EmailAddress: EMAIL_FORMAT_INVALID
+
+  # Map exception types to custom messages
+  Messages:
+    ShowcaseSample.Exceptions.DatabaseTimeoutException: A database operation timed out. Please try again.
+    ShowcaseSample.Exceptions.ServiceUnavailableException: An external service is temporarily unavailable.
+    email.Required: A valid email address is required
+
+  # Configure log levels per HTTP status range
+  LogLevels:
+    4xx: Warning
+    5xx: Error
+    404: Debug

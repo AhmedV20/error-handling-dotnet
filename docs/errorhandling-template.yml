@@ -1,0 +1,102 @@
+# ErrorLens.ErrorHandling - Full Configuration Template
+# Copy this file to your project root and customize as needed.
+# Register with: builder.Configuration.AddYamlErrorHandling("errorhandling.yml");
+
+ErrorHandling:
+  # Enable or disable error handling globally (default: true)
+  Enabled: true
+
+  # Include HTTP status code in JSON response body (default: false)
+  HttpStatusInJsonResponse: true
+
+  # Error code generation strategy: AllCaps | FullQualifiedName (default: AllCaps)
+  # AllCaps: UserNotFoundException → USER_NOT_FOUND
+  # FullQualifiedName: MyApp.Exceptions.UserNotFoundException
+  DefaultErrorCodeStrategy: AllCaps
+
+  # Search exception base class hierarchy for config matches (default: false)
+  SearchSuperClassHierarchy: true
+
+  # Include property path in field errors (default: true)
+  AddPathToError: true
+
+  # Exception logging verbosity: NoLogging | MessageOnly | WithStacktrace (default: MessageOnly)
+  ExceptionLogging: WithStacktrace
+
+  # --- RFC 9457 Problem Details ---
+
+  # Use RFC 9457 Problem Details response format (default: false)
+  UseProblemDetailFormat: false
+
+  # Type URI prefix for Problem Details (default: "https://example.com/errors/")
+  ProblemDetailTypePrefix: https://api.example.com/errors/
+
+  # Convert error codes to kebab-case for type URI (default: true)
+  # USER_NOT_FOUND → https://api.example.com/errors/user-not-found
+  ProblemDetailConvertToKebabCase: true
+
+  # --- Custom JSON Field Names ---
+  # Customize the JSON property names in error responses.
+  # Useful for matching existing API conventions or frontend expectations.
+
+  JsonFieldNames:
+    Code: code                    # Error code field (default: "code")
+    Message: message              # Error message field (default: "message")
+    Status: status                # HTTP status field (default: "status")
+    FieldErrors: fieldErrors      # Field errors array (default: "fieldErrors")
+    GlobalErrors: globalErrors    # Global errors array (default: "globalErrors")
+    ParameterErrors: parameterErrors  # Parameter errors array (default: "parameterErrors")
+    Property: property            # Property name in field errors (default: "property")
+    RejectedValue: rejectedValue  # Rejected value field (default: "rejectedValue")
+    Path: path                    # Property path field (default: "path")
+    Parameter: parameter          # Parameter name field (default: "parameter")
+
+  # --- Exception → HTTP Status Mappings ---
+  # Key: Fully qualified exception type name
+  # Value: HTTP status code (integer)
+
+  HttpStatuses:
+    # MyApp.Exceptions.UserNotFoundException: 404
+    # MyApp.Exceptions.DuplicateEmailException: 409
+    # MyApp.Exceptions.UnauthorizedException: 401
+    # MyApp.Exceptions.ForbiddenException: 403
+
+  # --- Exception → Error Code Mappings ---
+  # Key: Fully qualified exception type name OR "fieldName.validationType"
+  # Value: Custom error code string
+
+  Codes:
+    # MyApp.Exceptions.UserNotFoundException: USER_NOT_FOUND
+    # MyApp.Exceptions.DuplicateEmailException: EMAIL_ALREADY_EXISTS
+    # email.Required: EMAIL_IS_REQUIRED
+    # email.EmailAddress: EMAIL_FORMAT_INVALID
+
+  # --- Exception → Error Message Mappings ---
+  # Key: Fully qualified exception type name OR "fieldName.validationType"
+  # Value: Custom error message string
+
+  Messages:
+    # MyApp.Exceptions.UserNotFoundException: The requested user was not found
+    # email.Required: A valid email address is required
+
+  # --- Log Level Mappings ---
+  # Key: HTTP status code or pattern (e.g., "400", "4xx", "5xx")
+  # Value: Log level (Trace, Debug, Information, Warning, Error, Critical)
+
+  LogLevels:
+    4xx: Warning
+    5xx: Error
+    # 404: Debug    # Override specific status within a range
+
+  # --- Full Stacktrace HTTP Statuses ---
+  # Force full stack trace logging for these HTTP status codes/patterns.
+
+  FullStacktraceHttpStatuses:
+    - 5xx
+
+  # --- Full Stacktrace Exception Classes ---
+  # Force full stack trace logging for these exception types.
+
+  FullStacktraceClasses: []
+    # - MyApp.Exceptions.CriticalException
+    # - System.NullReferenceException

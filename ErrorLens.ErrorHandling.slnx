@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/FullApiSample/FullApiSample.csproj" />
+    <Project Path="samples/MinimalApiSample/MinimalApiSample.csproj" />
+    <Project Path="samples/ShowcaseSample/ShowcaseSample.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ErrorLens.ErrorHandling.Tests/ErrorLens.ErrorHandling.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,129 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+TestResult.xml
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# NCrunch
+*.ncrunch*
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# Chutzpah
+_Chutzpah*
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# JetBrains
+*.dotCover
+
+# TeamCity
+_TeamCity*
+
+# AxoCover
+.axoCover/*
+!.axoCover/settings.json
+
+# dotnet
+project.lock.json
+
+# User secrets
+secrets.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Publish output
+publish/
+out/
+
+# NuGet local feeds
+local-packages/
+
+# Others
+nul
+
+# ============================================
+# Project-specific exclusions
+# ============================================
+
+# Clone of Java reference project (not part of this repo)
+clone/
+
+# Claude Code AI assistant files
+.claude/
+
+# Specify tooling files
+specs/
+.specify/
+
+# Generated documentation output
+build/
+generated-docs/
+
+# Plan files
+*.plan.md

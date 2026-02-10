@@ -1,0 +1,68 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Asciidoctor
+        run: |
+          gem install asciidoctor
+          gem install asciidoctor-rouge
+
+      - name: Extract version from csproj
+        run: |
+          VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj)
+          echo "RELEASE_VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Detected version: ${VERSION}"
+
+      - name: Generate HTML documentation
+        run: |
+          mkdir -p build/generated-docs
+          asciidoctor \
+            -b html5 \
+            -a project-version=${{ env.RELEASE_VERSION }} \
+            -a source-highlighter=highlight.js \
+            -a icons=font \
+            -a toc=left \
+            -a toclevels=4 \
+            -a sectanchors \
+            -a sectnums \
+            -D build/generated-docs \
+            docs/index.adoc
+
+      - name: Copy additional assets
+        run: |
+          # Copy YAML template if it exists
+          if [ -f docs/errorhandling-template.yml ]; then
+            cp docs/errorhandling-template.yml build/generated-docs/
+          fi
+
+      - name: GitHub Pages action
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/generated-docs
+          destination_dir: current
+
+      - name: GitHub Pages action (versioned dir)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/generated-docs
+          destination_dir: ${{ env.RELEASE_VERSION }}

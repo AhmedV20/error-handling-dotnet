@@ -1,0 +1,1499 @@
+= ErrorLens.ErrorHandling
+ErrorLens
+:doctype: book
+:idprefix:
+:idseparator: -
+:toc: left
+:toclevels: 4
+:tabsize: 4
+:numbered:
+:sectanchors:
+:sectnums:
+:hide-uri-scheme:
+:source-highlighter: highlight.js
+:icons: font
+
+This documentation is for version {project-version}.
+
+== Goal
+
+The goal of the project is to make it easy to have proper, consistent error responses for REST APIs built with ASP.NET Core.
+Just like the Java https://github.com/wimdeblauwe/error-handling-spring-boot-starter[error-handling-spring-boot-starter], it takes an opinionated approach to how the response body should look in the case of an error.
+
+The library supports .NET 6.0, 7.0, 8.0, 9.0, and 10.0.
+
+[cols="1,1"]
+|===
+|Framework |Integration
+
+|.NET 6.0
+|`IMiddleware` based
+
+|.NET 7.0
+|`IMiddleware` based
+
+|.NET 8.0+
+|Native `IExceptionHandler` + `IMiddleware` fallback
+
+|.NET 9.0
+|Native `IExceptionHandler` + `IMiddleware` fallback
+
+|.NET 10.0
+|Native `IExceptionHandler` + `IMiddleware` fallback
+|===
+
+== Getting started
+
+=== Add the library to your project
+
+The library is available on https://www.nuget.org/packages/ErrorLens.ErrorHandling[NuGet], so it is easy to add the dependency to your project.
+
+[source,bash,indent=0,role="primary"]
+.dotnet CLI
+----
+dotnet add package ErrorLens.ErrorHandling
+----
+
+[source,xml,indent=0,role="secondary"]
+.PackageReference
+----
+<PackageReference Include="ErrorLens.ErrorHandling" Version="LATEST_VERSION_HERE" />
+----
+
+NOTE: This library is intended to be used with an https://learn.microsoft.com/en-us/aspnet/core[ASP.NET Core] project.
+It will not work outside of an ASP.NET Core application.
+
+=== Usage
+
+==== Minimal setup
+
+By adding the library and calling `AddErrorHandling()` and `UseErrorHandling()`, it becomes active.
+It registers exception handling middleware that will act if an exception is thrown from any controller or minimal API endpoint.
+
+[source,csharp]
+----
+var builder = WebApplication.CreateBuilder(args);
+
+// Add error handling services
+builder.Services.AddErrorHandling();
+
+var app = builder.Build();
+
+// Use error handling middleware
+app.UseErrorHandling();
+
+app.MapControllers();
+app.Run();
+----
+
+==== Default `Exception` handling
+
+Suppose there is a custom Exception like this:
+
+[source,csharp]
+----
+public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}") { }
+}
+----
+
+When this `UserNotFoundException` is thrown from a controller method, the library will return a JSON response like this:
+
+[source,json]
+----
+{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}
+----
+
+The HTTP status code will be _500 Internal Server Error_.
+
+Next to this quite simple default behaviour, there is special handling for some common .NET exceptions and there is an extensive amount of <<Configuration,customization options>> that should make this library a good fit for all of your error handling needs.
+
+==== Default HTTP status mappings
+
+The library maps common .NET exception types to appropriate HTTP status codes out of the box:
+
+[cols="2,1"]
+|===
+|Exception Type |HTTP Status
+
+|`InvalidOperationException`
+|400 Bad Request
+
+|`ArgumentException` / `ArgumentNullException`
+|400 Bad Request
+
+|`UnauthorizedAccessException`
+|401 Unauthorized
+
+|`KeyNotFoundException`
+|404 Not Found
+
+|`NotImplementedException`
+|501 Not Implemented
+
+|All other exceptions
+|500 Internal Server Error
+|===
+
+==== Validation exception handling
+
+For validation exceptions there is special handling and extra information is returned in the response.
+
+For example, suppose you have this class:
+
+[source,csharp]
+----
+public class CreateUserRequest
+{
+    [Required(ErrorMessage = "Name is required")]
+    [StringLength(100, MinimumLength = 2)]
+    public string? Name { get; set; }
+
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
+    public string? Email { get; set; }
+
+    [Range(18, 120, ErrorMessage = "Age must be between 18 and 120")]
+    public int? Age { get; set; }
+}
+----
+
+Which is used as a request body in a controller like this:
+
+[source,csharp]
+----
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult CreateUser([FromBody] CreateUserRequest request)
+    {
+        // If we reach here, validation passed
+        return Ok(new { message = "User created" });
+    }
+}
+----
+
+When sending a JSON request body like this:
+
+[source,json]
+----
+{
+    "name": "A",
+    "email": "not-an-email",
+    "age": 5
+}
+----
+
+The validation fails, and the following JSON response will be returned:
+
+[source,json]
+----
+{
+  "code": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "STRING_LENGTH",
+      "property": "Name",
+      "message": "The field Name must be a string with a minimum length of 2 and a maximum length of 100.",
+      "rejectedValue": "A",
+      "path": "Name"
+    },
+    {
+      "code": "EMAIL_ADDRESS",
+      "property": "Email",
+      "message": "Invalid email format",
+      "rejectedValue": "not-an-email",
+      "path": "Email"
+    },
+    {
+      "code": "RANGE",
+      "property": "Age",
+      "message": "Age must be between 18 and 120",
+      "rejectedValue": 5,
+      "path": "Age"
+    }
+  ]
+}
+----
+
+NOTE: If there are validation errors at the class level, they will be added in the response as `globalErrors`.
+
+==== Setup with configuration binding
+
+You can bind error handling options from `appsettings.json` or any other configuration source:
+
+[source,csharp]
+----
+builder.Services.AddErrorHandling(builder.Configuration);
+----
+
+==== Setup with inline options
+
+[source,csharp]
+----
+builder.Services.AddErrorHandling(options =>
+{
+    options.HttpStatusInJsonResponse = true;
+    options.ExceptionLogging = ExceptionLogging.WithStacktrace;
+    options.SearchSuperClassHierarchy = true;
+});
+----
+
+== Configuration
+
+=== HTTP response status
+
+==== Set HTTP response status via `[ResponseStatus]`
+
+The library uses _500 Internal Server Error_ as HTTP response code by default.
+
+To set a specific status code, you can use the `[ResponseStatus]` attribute on your exception class.
+The library will honor what is set there.
+
+Example:
+
+[source,csharp]
+----
+using System.Net;
+using ErrorLens.ErrorHandling.Attributes;
+
+[ResponseStatus(HttpStatusCode.NotFound)] // <.>
+public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}") { }
+}
+----
+
+<.> Specify the HTTP response status via a class level attribute.
+
+==== Set HTTP response status via configuration
+
+Use the `HttpStatuses` property to set the HTTP response status without adding an attribute to the Exception class itself.
+This is mostly useful if you don't control the sources of the Exception.
+
+===== JSON (`appsettings.json`)
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "HttpStatuses": {
+      "System.InvalidOperationException": 409,
+      "MyApp.Exceptions.UserNotFoundException": 404
+    }
+  }
+}
+----
+
+===== YAML (`errorhandling.yml`)
+
+[source,yaml]
+----
+ErrorHandling:
+  HttpStatuses:
+    System.InvalidOperationException: 409
+    MyApp.Exceptions.UserNotFoundException: 404
+----
+
+By setting this, any `InvalidOperationException` will have a _409 Conflict_ response code.
+The values are integer HTTP status codes.
+
+==== Add HTTP response status in JSON response
+
+It is possible to add the HTTP response status in the JSON response payload itself.
+This is not the case by default.
+To enable this, set the following property:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "HttpStatusInJsonResponse": true
+  }
+}
+----
+
+The resulting JSON response will now be:
+
+[source,json]
+----
+{
+  "status": 404,
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}
+----
+
+=== Error codes
+
+==== Error code style
+
+By default, the exception class name is converted to `ALL_CAPS` to be used as the `code` in the response.
+
+If you like to use the full qualified name style for the codes, then specify this property:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "DefaultErrorCodeStrategy": "FullQualifiedName"
+  }
+}
+----
+
+For a class called `UserNotFoundException`, the default style (`AllCaps`) will result in the following JSON:
+
+[source,json]
+----
+{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}
+----
+
+Using `FullQualifiedName`, the result will be:
+
+[source,json]
+----
+{
+  "code": "MyApp.Exceptions.UserNotFoundException",
+  "message": "Could not find user with id 123"
+}
+----
+
+==== General override of error codes
+
+If the default error code style is not enough, you can set a code via the configuration by using the full qualified name under the `Codes` key:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "Codes": {
+      "System.InvalidOperationException": "ILLEGAL_OPERATION"
+    }
+  }
+}
+----
+
+Result:
+
+[source,json]
+----
+{
+  "code": "ILLEGAL_OPERATION",
+  "message": "The operation is not valid."
+}
+----
+
+This is mostly useful for `Exception` types that are not under your own control (e.g., they come from a library that you use).
+If you do have control, it is probably easier to use <<Per class override of error code>>.
+
+==== Per class override of error code
+
+By adding the `[ResponseErrorCode]` attribute as a class level attribute, it is possible to define the `code` that the response will use.
+
+Example:
+
+[source,csharp]
+----
+using ErrorLens.ErrorHandling.Attributes;
+
+[ResponseErrorCode("COULD_NOT_FIND_USER")]
+public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}") { }
+}
+----
+
+This results in this response:
+
+[source,json]
+----
+{
+  "code": "COULD_NOT_FIND_USER",
+  "message": "Could not find user with id 123"
+}
+----
+
+==== Field specific override of validation error codes
+
+It is possible to configure a specific error code that will only be used for a combination of a field with a validation annotation.
+
+Suppose you add a `[Required]` attribute on an `email` field:
+
+[source,csharp]
+----
+public class CreateUserRequest
+{
+    [Required]
+    [EmailAddress]
+    public string? Email { get; set; }
+}
+----
+
+By default, the error code for `[Required]` is `REQUIRED`.
+If you want to override this specifically for the `email` field:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "Codes": {
+      "email.Required": "EMAIL_IS_REQUIRED",
+      "email.EmailAddress": "EMAIL_FORMAT_INVALID"
+    }
+  }
+}
+----
+
+YAML equivalent:
+
+[source,yaml]
+----
+ErrorHandling:
+  Codes:
+    email.Required: EMAIL_IS_REQUIRED
+    email.EmailAddress: EMAIL_FORMAT_INVALID
+----
+
+This results in:
+
+[source,json]
+----
+{
+  "code": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "EMAIL_IS_REQUIRED",
+      "property": "Email",
+      "message": "The Email field is required.",
+      "path": "Email"
+    }
+  ]
+}
+----
+
+=== Error messages
+
+==== Default behaviour
+
+The library will output the `Message` property of the Exception into the `message` JSON field by default.
+
+For example:
+
+[source,csharp]
+----
+public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}") { }
+}
+----
+
+The response JSON:
+
+[source,json]
+----
+{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}
+----
+
+==== General override of error messages
+
+By using the `Messages` property, it is possible to globally set an error message for a certain exception:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "Messages": {
+      "MyApp.Exceptions.UserNotFoundException": "The user was not found"
+    }
+  }
+}
+----
+
+The response JSON:
+
+[source,json]
+----
+{
+  "code": "USER_NOT_FOUND",
+  "message": "The user was not found"
+}
+----
+
+==== Field specific override of error messages
+
+Similar to error codes, you can override messages for specific field + validation combinations:
+
+[source,yaml]
+----
+ErrorHandling:
+  Messages:
+    email.Required: A valid email address is required
+    password.StringLength: Password must be at least 8 characters
+----
+
+=== Super class hierarchy search
+
+By default, the library will only match <<HTTP response status>>, <<Error codes>> or <<Error messages>> settings when there is an exact match with the full qualified name of the `Exception`.
+
+If you want to define settings for a group of Exceptions that share a common base class, enable the `SearchSuperClassHierarchy` setting:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "SearchSuperClassHierarchy": true
+  }
+}
+----
+
+With this in place, you can set properties for any `Exception` sub-class like this:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "SearchSuperClassHierarchy": true,
+    "HttpStatuses": {
+      "System.InvalidOperationException": 400
+    },
+    "Codes": {
+      "System.InvalidOperationException": "INVALID_OPERATION"
+    },
+    "Messages": {
+      "System.InvalidOperationException": "An invalid operation occurred"
+    }
+  }
+}
+----
+
+Any exception that extends `InvalidOperationException` will match these settings.
+
+=== Exception handlers
+
+==== Validation
+
+There are multiple scenarios where the library creates specific JSON responses for validation errors:
+
+. When using `[ApiController]` with DataAnnotations validation attributes on a request body model.
+The library intercepts the model validation failure and returns a structured response with `fieldErrors`.
+
+. When validation fails on query parameters or route parameters.
+These appear as `parameterErrors` in the response.
+
+In all cases, the response JSON will be similar to this:
+
+[source,json]
+----
+{
+  "code": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "REQUIRED",
+      "property": "email",
+      "message": "Email is required",
+      "rejectedValue": null,
+      "path": "email"
+    },
+    {
+      "code": "STRING_LENGTH",
+      "property": "name",
+      "message": "Name must be between 2 and 100 characters",
+      "rejectedValue": "A",
+      "path": "name"
+    }
+  ],
+  "globalErrors": [
+    {
+      "code": "PASSWORDS_MUST_MATCH",
+      "message": "Password and confirmation must match"
+    }
+  ],
+  "parameterErrors": [
+    {
+      "code": "REQUIRED",
+      "message": "Id is required",
+      "parameter": "id",
+      "rejectedValue": null
+    }
+  ]
+}
+----
+
+Breakdown:
+
+* The `code` is always `VALIDATION_ERROR` (unless there was an override defined).
+* The `message` indicates that validation failed.
+* The `fieldErrors` array contains all field-level validation problems. It shows the name of the property that failed validation, the error code, message, and the rejected value.
+* The `parameterErrors` array contains all the parameter-level validation problems.
+* The `globalErrors` array contains the class-level validation problems.
+
+==== Unreadable HTTP message
+
+If a controller receives a message it cannot read (e.g., invalid JSON), a `BadHttpRequestException` is thrown.
+The library will return a structured response:
+
+[source,json]
+----
+{
+  "code": "BAD_REQUEST",
+  "message": "Failed to read the request body."
+}
+----
+
+==== Type conversion exceptions
+
+Type conversion exceptions like `FormatException` and `InvalidCastException` are handled with extra information:
+
+[source,json]
+----
+{
+  "code": "FORMAT",
+  "message": "Input string was not in a correct format."
+}
+----
+
+==== JSON parsing exceptions
+
+When invalid JSON is sent, a `JsonException` is caught:
+
+[source,json]
+----
+{
+  "code": "JSON",
+  "message": "The JSON value could not be converted..."
+}
+----
+
+=== Adding extra properties in the response
+
+It is possible to add extra properties in the JSON response by using the `[ResponseErrorProperty]` attribute on your custom Exception class.
+
+==== Via property annotation
+
+This example annotates the `UserId` property with `[ResponseErrorProperty]` so that the value of the property is added to the JSON response:
+
+[source,csharp]
+----
+using System.Net;
+using ErrorLens.ErrorHandling.Attributes;
+
+[ResponseErrorCode("USER_NOT_FOUND")]
+[ResponseStatus(HttpStatusCode.NotFound)]
+public class UserNotFoundException : Exception
+{
+    [ResponseErrorProperty("userId")] // <.>
+    public string UserId { get; }
+
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}")
+    {
+        UserId = userId;
+    }
+}
+----
+
+<.> Add the value of this property as an extra field in the response.
+
+The resulting response:
+
+[source,json]
+----
+{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id abc-123",
+  "userId": "abc-123"
+}
+----
+
+==== Multiple properties
+
+You can annotate multiple properties:
+
+[source,csharp]
+----
+[ResponseErrorCode("INSUFFICIENT_FUNDS")]
+[ResponseStatus(HttpStatusCode.UnprocessableEntity)]
+public class InsufficientFundsException : Exception
+{
+    [ResponseErrorProperty("required")]
+    public decimal RequiredAmount { get; }
+
+    [ResponseErrorProperty("available")]
+    public decimal AvailableAmount { get; }
+
+    public InsufficientFundsException(decimal required, decimal available)
+        : base("Insufficient funds")
+    {
+        RequiredAmount = required;
+        AvailableAmount = available;
+    }
+}
+----
+
+The resulting response:
+
+[source,json]
+----
+{
+  "code": "INSUFFICIENT_FUNDS",
+  "message": "Insufficient funds",
+  "required": 500.00,
+  "available": 123.45
+}
+----
+
+==== Overriding the property name
+
+It is possible to override the JSON property name by using the `name` parameter of the attribute:
+
+[source,csharp]
+----
+[ResponseErrorProperty("id")] // <.>
+public string UserId { get; }
+----
+
+<.> The JSON key will be `"id"` instead of `"userId"`.
+
+==== Null handling
+
+If a property annotated with `[ResponseErrorProperty]` returns `null`, the JSON output will not contain the property by default.
+If you want to include it, use the `IncludeIfNull` property:
+
+[source,csharp]
+----
+[ResponseErrorProperty("details")]
+public string? Details { get; set; }                    // <.>
+
+[ResponseErrorProperty(IncludeIfNull = true)]
+public string? OptionalInfo { get; set; }               // <.>
+----
+
+<.> Omitted from response when `null` (default).
+<.> Included in response even when `null`.
+
+==== Global customization of the response JSON
+
+The previous methods can only be used if you have access to the source code of the exception class.
+If you want to add some property globally for all exceptions, including those from libraries, you can implement `IApiErrorResponseCustomizer`.
+
+For example, suppose you want to add a timestamp and trace ID to all error responses.
+You can do so by implementing the following class and registering it:
+
+[source,csharp]
+----
+using ErrorLens.ErrorHandling.Models;
+using ErrorLens.ErrorHandling.Services;
+
+public class RequestMetadataCustomizer : IApiErrorResponseCustomizer
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public RequestMetadataCustomizer(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public void Customize(ApiErrorResponse response)
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context == null) return;
+
+        response.AddProperty("traceId", context.TraceIdentifier);
+        response.AddProperty("timestamp", DateTime.UtcNow.ToString("o"));
+        response.AddProperty("path", context.Request.Path.Value);
+    }
+}
+----
+
+Register it in `Program.cs`:
+
+[source,csharp]
+----
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddErrorResponseCustomizer<RequestMetadataCustomizer>();
+----
+
+An example resulting response:
+
+[source,json]
+----
+{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id abc-123",
+  "traceId": "0HN4L2M8V3Q1S:00000001",
+  "timestamp": "2026-02-10T12:00:00.0000000Z",
+  "path": "/api/users/abc-123"
+}
+----
+
+You can register multiple customizer beans in your application.
+
+=== Custom JSON response field names
+
+If the `code`, `message`, `fieldErrors`, `globalErrors`, `parameterErrors`, and other field names are not to your liking, you can customize them through configuration:
+
+===== JSON
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "JsonFieldNames": {
+      "Code": "type",
+      "Message": "detail",
+      "Status": "statusCode",
+      "FieldErrors": "fields",
+      "GlobalErrors": "errors",
+      "ParameterErrors": "params",
+      "Property": "field",
+      "RejectedValue": "value",
+      "Path": "jsonPath",
+      "Parameter": "paramName"
+    }
+  }
+}
+----
+
+===== YAML
+
+[source,yaml]
+----
+ErrorHandling:
+  JsonFieldNames:
+    Code: type
+    Message: detail
+    Status: statusCode
+    FieldErrors: fields
+    GlobalErrors: errors
+    ParameterErrors: params
+    Property: field
+    RejectedValue: value
+    Path: jsonPath
+    Parameter: paramName
+----
+
+With these settings, a response will look similar to this:
+
+[source,json]
+----
+{
+  "type": "VALIDATION_FAILED",
+  "detail": "Validation failed",
+  "statusCode": 400,
+  "fields": [
+    {
+      "type": "REQUIRED",
+      "field": "email",
+      "detail": "Email is required",
+      "jsonPath": "email"
+    }
+  ],
+  "errors": [
+    {
+      "type": "PASSWORDS_MUST_MATCH",
+      "detail": "Passwords do not match"
+    }
+  ]
+}
+----
+
+All configurable field names:
+
+[cols="2,1,3"]
+|===
+|Option |Default |Applies To
+
+|`Code`
+|`code`
+|Top-level + nested error objects
+
+|`Message`
+|`message`
+|Top-level + nested error objects
+
+|`Status`
+|`status`
+|Top-level response
+
+|`FieldErrors`
+|`fieldErrors`
+|Top-level response
+
+|`GlobalErrors`
+|`globalErrors`
+|Top-level response
+
+|`ParameterErrors`
+|`parameterErrors`
+|Top-level response
+
+|`Property`
+|`property`
+|Field error objects
+
+|`RejectedValue`
+|`rejectedValue`
+|Field + parameter error objects
+
+|`Path`
+|`path`
+|Field error objects
+
+|`Parameter`
+|`parameter`
+|Parameter error objects
+|===
+
+=== Logging
+
+The library will log a single line to the configured logging output for each Exception that is handled.
+This behaviour can be changed to log either nothing at all (`NoLogging`), or to log full stack traces (`WithStacktrace`) via the `ExceptionLogging` property.
+
+[source,yaml]
+----
+ErrorHandling:
+  ExceptionLogging: WithStacktrace
+----
+
+If you want to keep logging minimal, but still have a full stacktrace for some exceptions, you can use the `FullStacktraceClasses` property:
+
+[source,yaml]
+----
+ErrorHandling:
+  ExceptionLogging: MessageOnly
+  FullStacktraceClasses:
+    - System.NullReferenceException
+    - MyApp.Exceptions.CriticalException
+----
+
+With this configuration, all exceptions will have a single log line, but `NullReferenceException` and `CriticalException` will have full stack traces printed.
+
+Another way to have additional logging is to specify a list of HTTP return codes that you want full stack traces for:
+
+[source,yaml]
+----
+ErrorHandling:
+  FullStacktraceHttpStatuses:
+    - 5xx
+    - 403
+----
+
+This configuration will print a full stack trace for all errors in the 5xx range and for the exact 403 error code.
+
+NOTE: The logging that is done on the response codes is _additionally_ to the logging done on the exception type.
+You might want to only enable one of the two to avoid double stack traces.
+
+It is also possible to define on what log level the exception message (and the stacktrace if enabled) should be printed.
+By default, everything is printed on ERROR, but using the `LogLevels` property, this can be changed:
+
+[source,yaml]
+----
+ErrorHandling:
+  LogLevels:
+    400: Debug
+    401: Information
+    4xx: Warning
+    5xx: Error
+----
+
+With this configuration, 400 Bad Request will be printed on Debug level.
+401 Unauthorized will be printed on Information.
+All other 4xx status codes will be printed on Warning.
+Finally, all status codes in the 5xx range will be printed on Error.
+
+==== Filter logging
+
+If you want to filter certain exceptions from being logged (while you still want the exception handling to happen), you can implement `ILoggingFilter`:
+
+[source,csharp]
+----
+using ErrorLens.ErrorHandling.Services;
+
+public class IgnoreNotFoundFilter : ILoggingFilter
+{
+    public bool ShouldLog(Exception exception, HttpStatusCode statusCode)
+    {
+        // Don't log 404 errors
+        return statusCode != HttpStatusCode.NotFound;
+    }
+}
+----
+
+=== YAML configuration
+
+The library supports YAML configuration files as an alternative to `appsettings.json`.
+This is enabled by the `NetEscapades.Configuration.Yaml` package which is included as a dependency.
+
+==== Setup
+
+Add YAML support with a single line in `Program.cs`:
+
+[source,csharp]
+----
+builder.Configuration.AddYamlErrorHandling("errorhandling.yml");
+builder.Services.AddErrorHandling(builder.Configuration);
+----
+
+==== Example YAML configuration
+
+[source,yaml]
+----
+ErrorHandling:
+  Enabled: true
+  HttpStatusInJsonResponse: true
+  DefaultErrorCodeStrategy: AllCaps
+  SearchSuperClassHierarchy: true
+  ExceptionLogging: WithStacktrace
+
+  JsonFieldNames:
+    Code: type
+    Message: detail
+
+  FullStacktraceHttpStatuses:
+    - 5xx
+
+  HttpStatuses:
+    MyApp.Exceptions.UserNotFoundException: 404
+    MyApp.Exceptions.DuplicateEmailException: 409
+
+  Codes:
+    MyApp.Exceptions.UserNotFoundException: USER_NOT_FOUND
+    email.Required: EMAIL_IS_REQUIRED
+    email.EmailAddress: EMAIL_FORMAT_INVALID
+
+  Messages:
+    MyApp.Exceptions.UserNotFoundException: The requested user was not found
+    email.Required: A valid email address is required
+
+  LogLevels:
+    4xx: Warning
+    5xx: Error
+    404: Debug
+----
+
+A full YAML template with all options and comments is available in the repository at `docs/errorhandling-template.yml`.
+
+=== Problem Detail format (RFC 9457)
+
+The library supports the https://www.rfc-editor.org/rfc/rfc9457[RFC 9457] Problem Detail format as an alternative to the default JSON response format.
+When enabled, error responses will use the standardized Problem Detail structure and the `application/problem+json` content type.
+
+==== Enabling Problem Detail format
+
+To enable Problem Detail format, set the following property:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "UseProblemDetailFormat": true
+  }
+}
+----
+
+Or in YAML:
+
+[source,yaml]
+----
+ErrorHandling:
+  UseProblemDetailFormat: true
+----
+
+==== Response format comparison
+
+When Problem Detail format is disabled (default), the response looks like this:
+
+[source,json]
+----
+{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}
+----
+
+When Problem Detail format is enabled, the same error produces:
+
+[source,json]
+----
+{
+  "type": "https://example.com/errors/user-not-found",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find user with id 123",
+  "instance": "/api/users/123",
+  "code": "USER_NOT_FOUND"
+}
+----
+
+The Problem Detail format is built like this:
+
+[cols="1,3"]
+|===
+|Problem Detail field |Description
+
+|`type`
+|URI reference identifying the problem type (prefix + error code in kebab-case)
+
+|`title`
+|The HTTP status reason phrase (e.g., "Not Found", "Bad Request")
+
+|`status`
+|The numeric HTTP status code
+
+|`detail`
+|Human-readable explanation (exception message)
+
+|`instance`
+|The request path where the error occurred
+
+|`code`
+|The original error code from ErrorLens (extension member)
+|===
+
+==== Configuring the type prefix
+
+You can add a prefix to the `type` field to create fully qualified URIs:
+
+[source,yaml]
+----
+ErrorHandling:
+  UseProblemDetailFormat: true
+  ProblemDetailTypePrefix: https://api.example.com/errors/
+----
+
+With this configuration, the response becomes:
+
+[source,json]
+----
+{
+  "type": "https://api.example.com/errors/user-not-found",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find user with id 123"
+}
+----
+
+==== Disabling kebab-case conversion
+
+By default, error codes are converted to kebab-case for the `type` field (e.g., `USER_NOT_FOUND` becomes `user-not-found`).
+To preserve the original error code format:
+
+[source,yaml]
+----
+ErrorHandling:
+  UseProblemDetailFormat: true
+  ProblemDetailConvertToKebabCase: false
+----
+
+Result:
+
+[source,json]
+----
+{
+  "type": "USER_NOT_FOUND",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find user with id 123"
+}
+----
+
+==== Validation errors with Problem Detail
+
+Validation errors include `fieldErrors` and `globalErrors` as additional properties in the Problem Detail response:
+
+[source,json]
+----
+{
+  "type": "https://api.example.com/errors/validation-error",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "REQUIRED",
+      "property": "email",
+      "message": "Email is required",
+      "path": "email"
+    }
+  ]
+}
+----
+
+==== Custom properties with Problem Detail
+
+Custom properties added via `[ResponseErrorProperty]` and `IApiErrorResponseCustomizer` are included as extension members in the Problem Detail response:
+
+[source,json]
+----
+{
+  "type": "https://api.example.com/errors/user-not-found",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find user with id abc-123",
+  "instance": "/api/users/abc-123",
+  "userId": "abc-123",
+  "traceId": "0HN4L2M8V3Q1S:00000001"
+}
+----
+
+== Custom exception handler
+
+If the <<Configuration,extensive customization options>> are not enough, you can write your own `IApiExceptionHandler` implementation.
+
+The contract that you need to implement:
+
+[source,csharp]
+----
+public interface IApiExceptionHandler
+{
+    /// <summary>
+    /// Handler priority. Lower values run first.
+    /// </summary>
+    int Order { get; }
+
+    /// <summary>
+    /// Returns true if this handler can process the exception.
+    /// </summary>
+    bool CanHandle(Exception exception);
+
+    /// <summary>
+    /// Creates the error response for the exception.
+    /// </summary>
+    ApiErrorResponse Handle(Exception exception);
+}
+----
+
+NOTE: There is also the `AbstractApiExceptionHandler` base class that you can use as a starting point.
+
+As an example, imagine you want to handle infrastructure exceptions:
+
+[source,csharp]
+----
+using ErrorLens.ErrorHandling.Handlers;
+using ErrorLens.ErrorHandling.Models;
+
+public class InfrastructureExceptionHandler : IApiExceptionHandler // <.>
+{
+    public int Order => 100; // <.>
+
+    public bool CanHandle(Exception exception) // <.>
+    {
+        return exception is DatabaseTimeoutException
+            or ServiceUnavailableException;
+    }
+
+    public ApiErrorResponse Handle(Exception exception) // <.>
+    {
+        return exception switch
+        {
+            DatabaseTimeoutException dbEx => new ApiErrorResponse(
+                HttpStatusCode.ServiceUnavailable,
+                "DATABASE_TIMEOUT",
+                dbEx.Message),
+
+            ServiceUnavailableException svcEx => new ApiErrorResponse(
+                HttpStatusCode.ServiceUnavailable,
+                "SERVICE_UNAVAILABLE",
+                svcEx.Message),
+
+            _ => new ApiErrorResponse("INFRASTRUCTURE_ERROR", exception.Message)
+        };
+    }
+}
+----
+
+<.> Implement the `IApiExceptionHandler` interface.
+<.> Set the handler priority. Lower values run first.
+<.> Check if this handler can process the exception.
+<.> Create the `ApiErrorResponse` instance.
+
+Register it:
+
+[source,csharp]
+----
+builder.Services.AddExceptionHandler<InfrastructureExceptionHandler>();
+----
+
+==== Handler ordering
+
+Handlers are executed in order of their `Order` property (lowest first).
+The first handler whose `CanHandle()` returns `true` processes the exception.
+
+[cols="1,2,2"]
+|===
+|Order |Handler |Purpose
+
+|Built-in
+|`ValidationExceptionHandler`
+|DataAnnotations validation
+
+|Built-in
+|`BadRequestExceptionHandler`
+|Bad HTTP requests
+
+|Built-in
+|`TypeMismatchExceptionHandler`
+|`FormatException`, `InvalidCastException`
+
+|Built-in
+|`JsonExceptionHandler`
+|`JsonException`
+
+|Custom (e.g. 100)
+|Your handlers
+|Domain/infrastructure specific
+
+|`int.MaxValue`
+|`DefaultFallbackHandler`
+|Catch-all fallback
+|===
+
+The `DefaultFallbackHandler` always runs last as the catch-all.
+
+== Properties
+
+[cols="m,a,a"]
+|===
+|Property |Description|Default
+
+|Enabled
+|Allows to enable or disable the error handling.
+|`true`
+
+|DefaultErrorCodeStrategy
+|Determines how an Exception is converted into a `code`. One of: `AllCaps`, `FullQualifiedName`.
+|`AllCaps`
+
+|HttpStatusInJsonResponse
+|Boolean that allows adding a `status` field with the HTTP response code in the response JSON body.
+|`false`
+
+|SearchSuperClassHierarchy
+|When set to `true`, the library will search base classes when matching `HttpStatuses`, `Codes`, or `Messages`.
+|`false`
+
+|AddPathToError
+|Allows to remove the `path` property in field error responses when set to `false`.
+|`true`
+
+|ExceptionLogging
+|Controls how the exception should be logged. One of: `NoLogging`, `MessageOnly`, `WithStacktrace`.
+|`MessageOnly`
+
+|UseProblemDetailFormat
+|Set to `true` to use the RFC 9457 Problem Detail format for error responses.
+|`false`
+
+|ProblemDetailTypePrefix
+|The prefix to use for the `type` field in Problem Detail responses.
+|`https://example.com/errors/`
+
+|ProblemDetailConvertToKebabCase
+|Controls whether the error code is converted to kebab-case for the Problem Detail `type` field.
+|`true`
+
+|HttpStatuses
+|Map of exception full qualified names to HTTP status codes.
+|Empty
+
+|Codes
+|Map of exception full qualified names or `fieldName.validationType` to error code strings.
+|Empty
+
+|Messages
+|Map of exception full qualified names or `fieldName.validationType` to error message strings.
+|Empty
+
+|LogLevels
+|Map of HTTP status codes or patterns (e.g., `4xx`, `5xx`, `404`) to log levels.
+|Empty
+
+|FullStacktraceHttpStatuses
+|List of HTTP status codes or patterns that force full stack trace logging.
+|Empty
+
+|FullStacktraceClasses
+|List of exception full qualified names that force full stack trace logging.
+|Empty
+
+|JsonFieldNames.Code
+|The field name used to serialize the `code` to JSON.
+|`code`
+
+|JsonFieldNames.Message
+|The field name used to serialize the `message` to JSON.
+|`message`
+
+|JsonFieldNames.Status
+|The field name used to serialize the `status` to JSON.
+|`status`
+
+|JsonFieldNames.FieldErrors
+|The field name used to serialize the `fieldErrors` to JSON.
+|`fieldErrors`
+
+|JsonFieldNames.GlobalErrors
+|The field name used to serialize the `globalErrors` to JSON.
+|`globalErrors`
+
+|JsonFieldNames.ParameterErrors
+|The field name used to serialize the `parameterErrors` to JSON.
+|`parameterErrors`
+
+|JsonFieldNames.Property
+|The field name for property names in field errors.
+|`property`
+
+|JsonFieldNames.RejectedValue
+|The field name for rejected values in field/parameter errors.
+|`rejectedValue`
+
+|JsonFieldNames.Path
+|The field name for property paths in field errors.
+|`path`
+
+|JsonFieldNames.Parameter
+|The field name for parameter names in parameter errors.
+|`parameter`
+|===
+
+== Samples
+
+The repository includes three sample projects:
+
+[cols="1,3"]
+|===
+|Sample |Description
+
+|`MinimalApiSample`
+|Zero-config minimal API setup. Demonstrates the library works with just `AddErrorHandling()` and `UseErrorHandling()`.
+
+|`FullApiSample`
+|Controller-based API with custom exception handlers, response customizers, and configuration binding.
+
+|`ShowcaseSample`
+|Comprehensive sample demonstrating all features: YAML configuration, custom JSON field names, exception attributes, custom handlers, response customizers, and RFC 9457 Problem Details.
+|===
+
+== Support
+
+If you have problems with the library, or you are missing a feature, feel free to create an issue on GitHub at https://github.com/AhmedV20/errorLens-errorhandling.
