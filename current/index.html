@@ -553,7 +553,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>This documentation is for version 1.0.0.</p>
+<p>This documentation is for version 1.1.0.</p>
 </div>
 </div>
 </div>
@@ -720,11 +720,27 @@ app.Run();</code></pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">400 Bad Request</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FormatException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400 Bad Request</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>UnauthorizedAccessException</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">401 Unauthorized</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>KeyNotFoundException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>KeyNotFoundException</code> / <code>FileNotFoundException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404 Not Found</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TimeoutException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">408 Request Timeout</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>OperationCanceledException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400 Bad Request</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DirectoryNotFoundException</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">404 Not Found</p></td>
 </tr>
 <tr>
@@ -742,6 +758,43 @@ app.Run();</code></pre>
 <h4 id="validation-exception-handling"><a class="anchor" href="#validation-exception-handling"></a>2.2.4. Validation exception handling</h4>
 <div class="paragraph">
 <p>For validation exceptions there is special handling and extra information is returned in the response.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+By default, <code>[ApiController]</code> automatic model validation uses ASP.NET Core&#8217;s built-in <code>ProblemDetails</code> response.
+To use ErrorLens&#8217;s structured <code>fieldErrors</code> format instead, you must enable the <code>OverrideModelStateValidation</code> option:
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Services.AddErrorHandling(options =&gt;
+{
+    options.OverrideModelStateValidation = true;
+});</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or via configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "OverrideModelStateValidation": true
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When <code>false</code> (default), ASP.NET Core&#8217;s built-in validation response is preserved — ErrorLens only handles thrown exceptions.
+When <code>true</code>, validation errors are intercepted and returned using ErrorLens&#8217;s structured format with <code>fieldErrors</code>, <code>globalErrors</code>, and custom JSON field names.</p>
 </div>
 <div class="paragraph">
 <p>For example, suppose you have this class:</p>
@@ -796,32 +849,41 @@ public class UsersController : ControllerBase
 <div class="paragraph">
 <p>The validation fails, and the following JSON response will be returned:</p>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+This response requires <code>OverrideModelStateValidation: true</code>. Without it, ASP.NET Core returns its default <code>ProblemDetails</code> format.
+</td>
+</tr>
+</table>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "fieldErrors": [
     {
-      "code": "STRING_LENGTH",
-      "property": "Name",
+      "code": "INVALID_SIZE",
+      "property": "name",
       "message": "The field Name must be a string with a minimum length of 2 and a maximum length of 100.",
-      "rejectedValue": "A",
-      "path": "Name"
+      "path": "name"
     },
     {
-      "code": "EMAIL_ADDRESS",
-      "property": "Email",
+      "code": "INVALID_EMAIL",
+      "property": "email",
       "message": "Invalid email format",
-      "rejectedValue": "not-an-email",
-      "path": "Email"
+      "path": "email"
     },
     {
-      "code": "RANGE",
-      "property": "Age",
+      "code": "VALUE_OUT_OF_RANGE",
+      "property": "age",
       "message": "Age must be between 18 and 120",
-      "rejectedValue": 5,
-      "path": "Age"
+      "path": "age"
     }
   ]
 }</code></pre>
@@ -1098,7 +1160,7 @@ public class UserNotFoundException : Exception
 </div>
 </div>
 <div class="paragraph">
-<p>By default, the error code for <code>[Required]</code> is <code>REQUIRED</code>.
+<p>By default, the error code for <code>[Required]</code> is <code>REQUIRED_NOT_NULL</code>.
 If you want to override this specifically for the <code>email</code> field:</p>
 </div>
 <div class="listingblock">
@@ -1130,14 +1192,14 @@ If you want to override this specifically for the <code>email</code> field:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "fieldErrors": [
     {
       "code": "EMAIL_IS_REQUIRED",
-      "property": "Email",
+      "property": "email",
       "message": "The Email field is required.",
-      "path": "Email"
+      "path": "email"
     }
   ]
 }</code></pre>
@@ -1272,6 +1334,7 @@ If you want to override this specifically for the <code>email</code> field:</p>
 <ol class="arabic">
 <li>
 <p>When using <code>[ApiController]</code> with DataAnnotations validation attributes on a request body model.
+This requires <code>OverrideModelStateValidation</code> to be set to <code>true</code> (see <a href="#validation-exception-handling">Validation exception handling</a>).
 The library intercepts the model validation failure and returns a structured response with <code>fieldErrors</code>.</p>
 </li>
 <li>
@@ -1286,18 +1349,18 @@ These appear as <code>parameterErrors</code> in the response.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "fieldErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "property": "email",
       "message": "Email is required",
       "rejectedValue": null,
       "path": "email"
     },
     {
-      "code": "STRING_LENGTH",
+      "code": "INVALID_SIZE",
       "property": "name",
       "message": "Name must be between 2 and 100 characters",
       "rejectedValue": "A",
@@ -1312,7 +1375,7 @@ These appear as <code>parameterErrors</code> in the response.</p>
   ],
   "parameterErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "message": "Id is required",
       "parameter": "id",
       "rejectedValue": null
@@ -1327,7 +1390,7 @@ These appear as <code>parameterErrors</code> in the response.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>The <code>code</code> is always <code>VALIDATION_ERROR</code> (unless there was an override defined).</p>
+<p>The <code>code</code> is always <code>VALIDATION_FAILED</code> (unless there was an override defined).</p>
 </li>
 <li>
 <p>The <code>message</code> indicates that validation failed.</p>
@@ -1367,7 +1430,7 @@ The library will return a structured response:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "code": "FORMAT",
+  "code": "TYPE_MISMATCH",
   "message": "Input string was not in a correct format."
 }</code></pre>
 </div>
@@ -1381,8 +1444,8 @@ The library will return a structured response:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "code": "JSON",
-  "message": "The JSON value could not be converted..."
+  "code": "MESSAGE_NOT_READABLE",
+  "message": "The request body could not be parsed as valid JSON"
 }</code></pre>
 </div>
 </div>
@@ -1648,7 +1711,7 @@ builder.Services.AddErrorResponseCustomizer&lt;RequestMetadataCustomizer&gt;();<
   "statusCode": 400,
   "fields": [
     {
-      "type": "REQUIRED",
+      "type": "REQUIRED_NOT_NULL",
       "field": "email",
       "detail": "Email is required",
       "jsonPath": "email"
@@ -1738,7 +1801,7 @@ builder.Services.AddErrorResponseCustomizer&lt;RequestMetadataCustomizer&gt;();<
 <h3 id="logging"><a class="anchor" href="#logging"></a>3.8. Logging</h3>
 <div class="paragraph">
 <p>The library will log a single line to the configured logging output for each Exception that is handled.
-This behaviour can be changed to log either nothing at all (<code>NoLogging</code>), or to log full stack traces (<code>WithStacktrace</code>) via the <code>ExceptionLogging</code> property.</p>
+This behaviour can be changed to log either nothing at all (<code>None</code>), or to log full stack traces (<code>WithStacktrace</code>) via the <code>ExceptionLogging</code> property.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1815,17 +1878,29 @@ Finally, all status codes in the 5xx range will be printed on Error.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">using ErrorLens.ErrorHandling.Services;
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">using ErrorLens.ErrorHandling.Models;
+using ErrorLens.ErrorHandling.Services;
 
 public class IgnoreNotFoundFilter : ILoggingFilter
 {
-    public bool ShouldLog(Exception exception, HttpStatusCode statusCode)
+    public bool ShouldLog(ApiErrorResponse response, Exception exception)
     {
         // Don't log 404 errors
-        return statusCode != HttpStatusCode.NotFound;
+        return response.HttpStatusCode != HttpStatusCode.NotFound;
     }
 }</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>Register the filter in <code>Program.cs</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Services.AddSingleton&lt;ILoggingFilter, IgnoreNotFoundFilter&gt;();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can register multiple filters - all filters must return <code>true</code> for the exception to be logged.</p>
 </div>
 </div>
 </div>
@@ -2050,13 +2125,13 @@ To preserve the original error code format:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "type": "https://api.example.com/errors/validation-error",
+  "type": "https://api.example.com/errors/validation-failed",
   "title": "Bad Request",
   "status": 400,
   "detail": "Validation failed",
   "fieldErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "property": "email",
       "message": "Email is required",
       "path": "email"
@@ -2217,27 +2292,32 @@ The first handler whose <code>CanHandle()</code> returns <code>true</code> proce
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Built-in</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">90</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ModelStateValidationExceptionHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>[ApiController]</code> model validation (requires <code>OverrideModelStateValidation: true</code>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ValidationExceptionHandler</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DataAnnotations validation</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Built-in</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>BadRequestExceptionHandler</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bad HTTP requests</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Built-in</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TypeMismatchExceptionHandler</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FormatException</code>, <code>InvalidCastException</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Built-in</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">120</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonExceptionHandler</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonException</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Custom (e.g. 100)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">130</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TypeMismatchExceptionHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FormatException</code>, <code>InvalidCastException</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">150</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>BadRequestExceptionHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bad HTTP requests</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Custom (e.g. 200)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Your handlers</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain/infrastructure specific</p></td>
 </tr>
@@ -2317,9 +2397,18 @@ The first handler whose <code>CanHandle()</code> returns <code>true</code> proce
 </div></div></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>OverrideModelStateValidation</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>When set to <code>true</code>, the library intercepts <code>[ApiController]</code> automatic model validation and returns ErrorLens structured <code>fieldErrors</code> format instead of ASP.NET Core&#8217;s default <code>ProblemDetails</code> response.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>false</code></p>
+</div></div></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ExceptionLogging</code></p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>Controls how the exception should be logged. One of: <code>NoLogging</code>, <code>MessageOnly</code>, <code>WithStacktrace</code>.</p>
+<p>Controls how the exception should be logged. One of: <code>None</code>, <code>MessageOnly</code>, <code>WithStacktrace</code>.</p>
 </div></div></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
 <p><code>MessageOnly</code></p>
@@ -2545,7 +2634,7 @@ The first handler whose <code>CanHandle()</code> returns <code>true</code> proce
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-02-10 18:31:04 UTC
+Last updated 2026-02-11 16:38:34 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
