@@ -1,0 +1,2648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.26">
+<meta name="author" content="ErrorLens">
+<title>ErrorLens.ErrorHandling</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<style>
+/*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+/* Uncomment the following line when using as a custom stylesheet */
+/* @import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700"; */
+html{font-family:sans-serif;-webkit-text-size-adjust:100%}
+a{background:none}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+b,strong{font-weight:bold}
+abbr{font-size:.9em}
+abbr[title]{cursor:help;border-bottom:1px dotted #dddddf;text-decoration:none}
+dfn{font-style:italic}
+hr{height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+audio,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type=button],input[type=reset],input[type=submit]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type=checkbox],input[type=radio]{padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,::before,::after{box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;line-height:1;position:relative;cursor:auto;-moz-tab-size:4;-o-tab-size:4;tab-size:4;word-wrap:anywhere;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:0}
+p{line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ul.square{list-style-type:square}
+ul.circle ul:not([class]),ul.disc ul:not([class]),ul.square ul:not([class]){list-style:inherit}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:1px solid #dedede;word-wrap:normal}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt{background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+:not(pre).nobreak{word-wrap:normal}
+:not(pre).nowrap{white-space:nowrap}
+:not(pre).pre-wrap{white-space:pre-wrap}
+:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed}
+pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
+pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
+pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;border-radius:3px;box-shadow:0 1px 0 rgba(0,0,0,.2),inset 0 0 0 .1em #fff;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin:0 auto;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child{border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:flex;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border:1px solid #e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:none;background:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:hsla(0,0%,100%,.8);line-height:1.44}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+details{margin-left:1.25rem}
+details>summary{cursor:pointer;display:block;position:relative;line-height:1.6;margin-bottom:.625rem;outline:none;-webkit-tap-highlight-color:transparent}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";border:solid transparent;border-left:solid;border-width:.3em 0 .3em .5em;position:absolute;top:.5em;left:-1.25rem;transform:translateX(15%)}
+details[open]>summary::before{border:solid transparent;border-top:solid;border-width:.5em .3em 0;transform:translateY(15%)}
+details>summary::after{content:"";width:1.25rem;height:1em;position:absolute;top:.3em;left:-1.25rem}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class=paragraph]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6);word-wrap:anywhere}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border:1px solid #e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;border-radius:4px}
+.sidebarblock{border:1px solid #dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;border-radius:4px}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:first-child,.sidebarblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child,.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock>.content>pre{border-radius:4px;overflow-x:auto;padding:1em;font-size:.8125em}
+@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
+.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class=highlight],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
+.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
+.listingblock>.content{position:relative}
+.listingblock pre>code{display:block}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.prettyprint{background:#f7f7f8}
+pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
+pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
+pre.prettyprint li code[data-lang]::before{opacity:1}
+pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
+table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
+table.linenotable td.code{padding-left:.75em}
+table.linenotable td.linenos,pre.pygments .linenos{border-right:1px solid;opacity:.35;padding-right:.5em;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
+pre.pygments span.linenos{display:inline-block;margin-right:.75em}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans-serif;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;font-size:.85rem;text-align:left;margin-right:0}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content{margin-bottom:1.25em;word-wrap:anywhere}
+td.tableblock>.content>:last-child{margin-bottom:-1.25em}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>*>tr>*{border-width:1px}
+table.grid-cols>*>tr>*{border-width:0 1px}
+table.grid-rows>*>tr>*{border-width:1px 0}
+table.frame-all{border-width:1px}
+table.frame-ends{border-width:1px 0}
+table.frame-sides{border-width:0 1px}
+table.frame-none>colgroup+*>:first-child>*,table.frame-sides>colgroup+*>:first-child>*{border-top-width:0}
+table.frame-none>:last-child>:last-child>*,table.frame-sides>:last-child>:last-child>*{border-bottom-width:0}
+table.frame-none>*>tr>:first-child,table.frame-ends>*>tr>:first-child{border-left-width:0}
+table.frame-none>*>tr>:last-child,table.frame-ends>*>tr>:last-child{border-right-width:0}
+table.stripes-all>*>tr,table.stripes-odd>*>tr:nth-of-type(odd),table.stripes-even>*>tr:nth-of-type(even),table.stripes-hover>*>tr:hover{background:#f8f8f7}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+li>p:empty:only-child::before{content:"";display:inline-block}
+ul.checklist>li>p:first-child{margin-left:-1em}
+ul.checklist>li>p:first-child>.fa-square-o:first-child,ul.checklist>li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist>li>p:first-child>input[type=checkbox]:first-child{margin-right:.25em}
+ul.inline{display:flex;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+td.hdlist2{word-wrap:anywhere}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:4px solid #fff;box-shadow:0 0 0 1px #ddd}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active,#footnotes .footnote a:first-of-type:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background:#00fafa}
+.black{color:#000}
+.black-background{background:#000}
+.blue{color:#0000bf}
+.blue-background{background:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background:#fa00fa}
+.gray{color:#606060}
+.gray-background{background:#7d7d7d}
+.green{color:#006000}
+.green-background{background:#007d00}
+.lime{color:#00bf00}
+.lime-background{background:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background:#7d0000}
+.navy{color:#000060}
+.navy-background{background:#00007d}
+.olive{color:#606000}
+.olive-background{background:#7d7d00}
+.purple{color:#600060}
+.purple-background{background:#7d007d}
+.red{color:#bf0000}
+.red-background{background:#fa0000}
+.silver{color:#909090}
+.silver-background{background:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);border-radius:50%;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt,summary{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,td.hdlist1,span.alt,summary{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]{border-bottom:1px dotted}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#header,#content,#footnotes,#footer{max-width:none}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media amzn-kf8,print{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/styles/github.min.css">
+</head>
+<body class="book toc2 toc-left">
+<div id="header">
+<h1>ErrorLens.ErrorHandling</h1>
+<div class="details">
+<span id="author" class="author">ErrorLens</span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#goal">1. Goal</a></li>
+<li><a href="#getting-started">2. Getting started</a>
+<ul class="sectlevel2">
+<li><a href="#add-the-library-to-your-project">2.1. Add the library to your project</a></li>
+<li><a href="#usage">2.2. Usage</a>
+<ul class="sectlevel3">
+<li><a href="#minimal-setup">2.2.1. Minimal setup</a></li>
+<li><a href="#default-exception-handling">2.2.2. Default <code>Exception</code> handling</a></li>
+<li><a href="#default-http-status-mappings">2.2.3. Default HTTP status mappings</a></li>
+<li><a href="#validation-exception-handling">2.2.4. Validation exception handling</a></li>
+<li><a href="#setup-with-configuration-binding">2.2.5. Setup with configuration binding</a></li>
+<li><a href="#setup-with-inline-options">2.2.6. Setup with inline options</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#configuration">3. Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#http-response-status">3.1. HTTP response status</a>
+<ul class="sectlevel3">
+<li><a href="#set-http-response-status-via-responsestatus">3.1.1. Set HTTP response status via <code>[ResponseStatus]</code></a></li>
+<li><a href="#set-http-response-status-via-configuration">3.1.2. Set HTTP response status via configuration</a>
+<ul class="sectlevel4">
+<li><a href="#json-appsettings-json">JSON (<code>appsettings.json</code>)</a></li>
+<li><a href="#yaml-errorhandling-yml">YAML (<code>errorhandling.yml</code>)</a></li>
+</ul>
+</li>
+<li><a href="#add-http-response-status-in-json-response">3.1.3. Add HTTP response status in JSON response</a></li>
+</ul>
+</li>
+<li><a href="#error-codes">3.2. Error codes</a>
+<ul class="sectlevel3">
+<li><a href="#error-code-style">3.2.1. Error code style</a></li>
+<li><a href="#general-override-of-error-codes">3.2.2. General override of error codes</a></li>
+<li><a href="#per-class-override-of-error-code">3.2.3. Per class override of error code</a></li>
+<li><a href="#field-specific-override-of-validation-error-codes">3.2.4. Field specific override of validation error codes</a></li>
+</ul>
+</li>
+<li><a href="#error-messages">3.3. Error messages</a>
+<ul class="sectlevel3">
+<li><a href="#default-behaviour">3.3.1. Default behaviour</a></li>
+<li><a href="#general-override-of-error-messages">3.3.2. General override of error messages</a></li>
+<li><a href="#field-specific-override-of-error-messages">3.3.3. Field specific override of error messages</a></li>
+</ul>
+</li>
+<li><a href="#super-class-hierarchy-search">3.4. Super class hierarchy search</a></li>
+<li><a href="#exception-handlers">3.5. Exception handlers</a>
+<ul class="sectlevel3">
+<li><a href="#validation">3.5.1. Validation</a></li>
+<li><a href="#unreadable-http-message">3.5.2. Unreadable HTTP message</a></li>
+<li><a href="#type-conversion-exceptions">3.5.3. Type conversion exceptions</a></li>
+<li><a href="#json-parsing-exceptions">3.5.4. JSON parsing exceptions</a></li>
+</ul>
+</li>
+<li><a href="#adding-extra-properties-in-the-response">3.6. Adding extra properties in the response</a>
+<ul class="sectlevel3">
+<li><a href="#via-property-annotation">3.6.1. Via property annotation</a></li>
+<li><a href="#multiple-properties">3.6.2. Multiple properties</a></li>
+<li><a href="#overriding-the-property-name">3.6.3. Overriding the property name</a></li>
+<li><a href="#null-handling">3.6.4. Null handling</a></li>
+<li><a href="#global-customization-of-the-response-json">3.6.5. Global customization of the response JSON</a></li>
+</ul>
+</li>
+<li><a href="#custom-json-response-field-names">3.7. Custom JSON response field names</a>
+<ul class="sectlevel4">
+<li><a href="#json">JSON</a></li>
+<li><a href="#yaml">YAML</a></li>
+</ul>
+</li>
+<li><a href="#logging">3.8. Logging</a>
+<ul class="sectlevel3">
+<li><a href="#filter-logging">3.8.1. Filter logging</a></li>
+</ul>
+</li>
+<li><a href="#yaml-configuration">3.9. YAML configuration</a>
+<ul class="sectlevel3">
+<li><a href="#setup">3.9.1. Setup</a></li>
+<li><a href="#example-yaml-configuration">3.9.2. Example YAML configuration</a></li>
+</ul>
+</li>
+<li><a href="#problem-detail-format-rfc-9457">3.10. Problem Detail format (RFC 9457)</a>
+<ul class="sectlevel3">
+<li><a href="#enabling-problem-detail-format">3.10.1. Enabling Problem Detail format</a></li>
+<li><a href="#response-format-comparison">3.10.2. Response format comparison</a></li>
+<li><a href="#configuring-the-type-prefix">3.10.3. Configuring the type prefix</a></li>
+<li><a href="#disabling-kebab-case-conversion">3.10.4. Disabling kebab-case conversion</a></li>
+<li><a href="#validation-errors-with-problem-detail">3.10.5. Validation errors with Problem Detail</a></li>
+<li><a href="#custom-properties-with-problem-detail">3.10.6. Custom properties with Problem Detail</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#custom-exception-handler">4. Custom exception handler</a>
+<ul class="sectlevel3">
+<li><a href="#handler-ordering">4.1. Handler ordering</a></li>
+</ul>
+</li>
+<li><a href="#properties">5. Properties</a></li>
+<li><a href="#samples">6. Samples</a></li>
+<li><a href="#support">7. Support</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This documentation is for version 1.1.0.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="goal"><a class="anchor" href="#goal"></a>1. Goal</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The goal of the project is to make it easy to have proper, consistent error responses for REST APIs built with ASP.NET Core.
+Just like the Java <a href="https://github.com/wimdeblauwe/error-handling-spring-boot-starter">error-handling-spring-boot-starter</a>, it takes an opinionated approach to how the response body should look in the case of an error.</p>
+</div>
+<div class="paragraph">
+<p>The library supports .NET 6.0, 7.0, 8.0, 9.0, and 10.0.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Framework</th>
+<th class="tableblock halign-left valign-top">Integration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">.NET 6.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IMiddleware</code> based</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">.NET 7.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IMiddleware</code> based</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">.NET 8.0+</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Native <code>IExceptionHandler</code> + <code>IMiddleware</code> fallback</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">.NET 9.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Native <code>IExceptionHandler</code> + <code>IMiddleware</code> fallback</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">.NET 10.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Native <code>IExceptionHandler</code> + <code>IMiddleware</code> fallback</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="getting-started"><a class="anchor" href="#getting-started"></a>2. Getting started</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="add-the-library-to-your-project"><a class="anchor" href="#add-the-library-to-your-project"></a>2.1. Add the library to your project</h3>
+<div class="paragraph">
+<p>The library is available on <a href="https://www.nuget.org/packages/ErrorLens.ErrorHandling">NuGet</a>, so it is easy to add the dependency to your project.</p>
+</div>
+<div class="listingblock primary">
+<div class="title">dotnet CLI</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">dotnet add package ErrorLens.ErrorHandling</code></pre>
+</div>
+</div>
+<div class="listingblock secondary">
+<div class="title">PackageReference</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;PackageReference Include="ErrorLens.ErrorHandling" Version="LATEST_VERSION_HERE" /&gt;</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+This library is intended to be used with an <a href="https://learn.microsoft.com/en-us/aspnet/core">ASP.NET Core</a> project.
+It will not work outside of an ASP.NET Core application.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="usage"><a class="anchor" href="#usage"></a>2.2. Usage</h3>
+<div class="sect3">
+<h4 id="minimal-setup"><a class="anchor" href="#minimal-setup"></a>2.2.1. Minimal setup</h4>
+<div class="paragraph">
+<p>By adding the library and calling <code>AddErrorHandling()</code> and <code>UseErrorHandling()</code>, it becomes active.
+It registers exception handling middleware that will act if an exception is thrown from any controller or minimal API endpoint.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">var builder = WebApplication.CreateBuilder(args);
+
+// Add error handling services
+builder.Services.AddErrorHandling();
+
+var app = builder.Build();
+
+// Use error handling middleware
+app.UseErrorHandling();
+
+app.MapControllers();
+app.Run();</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="default-exception-handling"><a class="anchor" href="#default-exception-handling"></a>2.2.2. Default <code>Exception</code> handling</h4>
+<div class="paragraph">
+<p>Suppose there is a custom Exception like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}") { }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When this <code>UserNotFoundException</code> is thrown from a controller method, the library will return a JSON response like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The HTTP status code will be <em>500 Internal Server Error</em>.</p>
+</div>
+<div class="paragraph">
+<p>Next to this quite simple default behaviour, there is special handling for some common .NET exceptions and there is an extensive amount of <a href="#configuration">customization options</a> that should make this library a good fit for all of your error handling needs.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="default-http-status-mappings"><a class="anchor" href="#default-http-status-mappings"></a>2.2.3. Default HTTP status mappings</h4>
+<div class="paragraph">
+<p>The library maps common .NET exception types to appropriate HTTP status codes out of the box:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 66.6666%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Exception Type</th>
+<th class="tableblock halign-left valign-top">HTTP Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>InvalidOperationException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400 Bad Request</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ArgumentException</code> / <code>ArgumentNullException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400 Bad Request</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FormatException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400 Bad Request</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>UnauthorizedAccessException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">401 Unauthorized</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>KeyNotFoundException</code> / <code>FileNotFoundException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404 Not Found</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TimeoutException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">408 Request Timeout</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>OperationCanceledException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400 Bad Request</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DirectoryNotFoundException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404 Not Found</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NotImplementedException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">501 Not Implemented</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">All other exceptions</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500 Internal Server Error</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="validation-exception-handling"><a class="anchor" href="#validation-exception-handling"></a>2.2.4. Validation exception handling</h4>
+<div class="paragraph">
+<p>For validation exceptions there is special handling and extra information is returned in the response.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+By default, <code>[ApiController]</code> automatic model validation uses ASP.NET Core&#8217;s built-in <code>ProblemDetails</code> response.
+To use ErrorLens&#8217;s structured <code>fieldErrors</code> format instead, you must enable the <code>OverrideModelStateValidation</code> option:
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Services.AddErrorHandling(options =&gt;
+{
+    options.OverrideModelStateValidation = true;
+});</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or via configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "OverrideModelStateValidation": true
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When <code>false</code> (default), ASP.NET Core&#8217;s built-in validation response is preserved — ErrorLens only handles thrown exceptions.
+When <code>true</code>, validation errors are intercepted and returned using ErrorLens&#8217;s structured format with <code>fieldErrors</code>, <code>globalErrors</code>, and custom JSON field names.</p>
+</div>
+<div class="paragraph">
+<p>For example, suppose you have this class:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">public class CreateUserRequest
+{
+    [Required(ErrorMessage = "Name is required")]
+    [StringLength(100, MinimumLength = 2)]
+    public string? Name { get; set; }
+
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
+    public string? Email { get; set; }
+
+    [Range(18, 120, ErrorMessage = "Age must be between 18 and 120")]
+    public int? Age { get; set; }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which is used as a request body in a controller like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">[ApiController]
+[Route("api/[controller]")]
+public class UsersController : ControllerBase
+{
+    [HttpPost]
+    public IActionResult CreateUser([FromBody] CreateUserRequest request)
+    {
+        // If we reach here, validation passed
+        return Ok(new { message = "User created" });
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When sending a JSON request body like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+    "name": "A",
+    "email": "not-an-email",
+    "age": 5
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The validation fails, and the following JSON response will be returned:</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+This response requires <code>OverrideModelStateValidation: true</code>. Without it, ASP.NET Core returns its default <code>ProblemDetails</code> format.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "INVALID_SIZE",
+      "property": "name",
+      "message": "The field Name must be a string with a minimum length of 2 and a maximum length of 100.",
+      "path": "name"
+    },
+    {
+      "code": "INVALID_EMAIL",
+      "property": "email",
+      "message": "Invalid email format",
+      "path": "email"
+    },
+    {
+      "code": "VALUE_OUT_OF_RANGE",
+      "property": "age",
+      "message": "Age must be between 18 and 120",
+      "path": "age"
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If there are validation errors at the class level, they will be added in the response as <code>globalErrors</code>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="setup-with-configuration-binding"><a class="anchor" href="#setup-with-configuration-binding"></a>2.2.5. Setup with configuration binding</h4>
+<div class="paragraph">
+<p>You can bind error handling options from <code>appsettings.json</code> or any other configuration source:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Services.AddErrorHandling(builder.Configuration);</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="setup-with-inline-options"><a class="anchor" href="#setup-with-inline-options"></a>2.2.6. Setup with inline options</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Services.AddErrorHandling(options =&gt;
+{
+    options.HttpStatusInJsonResponse = true;
+    options.ExceptionLogging = ExceptionLogging.WithStacktrace;
+    options.SearchSuperClassHierarchy = true;
+});</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuration"><a class="anchor" href="#configuration"></a>3. Configuration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="http-response-status"><a class="anchor" href="#http-response-status"></a>3.1. HTTP response status</h3>
+<div class="sect3">
+<h4 id="set-http-response-status-via-responsestatus"><a class="anchor" href="#set-http-response-status-via-responsestatus"></a>3.1.1. Set HTTP response status via <code>[ResponseStatus]</code></h4>
+<div class="paragraph">
+<p>The library uses <em>500 Internal Server Error</em> as HTTP response code by default.</p>
+</div>
+<div class="paragraph">
+<p>To set a specific status code, you can use the <code>[ResponseStatus]</code> attribute on your exception class.
+The library will honor what is set there.</p>
+</div>
+<div class="paragraph">
+<p>Example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">using System.Net;
+using ErrorLens.ErrorHandling.Attributes;
+
+[ResponseStatus(HttpStatusCode.NotFound)] <i class="conum" data-value="1"></i><b>(1)</b>
+public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}") { }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Specify the HTTP response status via a class level attribute.</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="set-http-response-status-via-configuration"><a class="anchor" href="#set-http-response-status-via-configuration"></a>3.1.2. Set HTTP response status via configuration</h4>
+<div class="paragraph">
+<p>Use the <code>HttpStatuses</code> property to set the HTTP response status without adding an attribute to the Exception class itself.
+This is mostly useful if you don&#8217;t control the sources of the Exception.</p>
+</div>
+<div class="sect4">
+<h5 id="json-appsettings-json"><a class="anchor" href="#json-appsettings-json"></a>JSON (<code>appsettings.json</code>)</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "HttpStatuses": {
+      "System.InvalidOperationException": 409,
+      "MyApp.Exceptions.UserNotFoundException": 404
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="yaml-errorhandling-yml"><a class="anchor" href="#yaml-errorhandling-yml"></a>YAML (<code>errorhandling.yml</code>)</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  HttpStatuses:
+    System.InvalidOperationException: 409
+    MyApp.Exceptions.UserNotFoundException: 404</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By setting this, any <code>InvalidOperationException</code> will have a <em>409 Conflict</em> response code.
+The values are integer HTTP status codes.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="add-http-response-status-in-json-response"><a class="anchor" href="#add-http-response-status-in-json-response"></a>3.1.3. Add HTTP response status in JSON response</h4>
+<div class="paragraph">
+<p>It is possible to add the HTTP response status in the JSON response payload itself.
+This is not the case by default.
+To enable this, set the following property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "HttpStatusInJsonResponse": true
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The resulting JSON response will now be:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "status": 404,
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="error-codes"><a class="anchor" href="#error-codes"></a>3.2. Error codes</h3>
+<div class="sect3">
+<h4 id="error-code-style"><a class="anchor" href="#error-code-style"></a>3.2.1. Error code style</h4>
+<div class="paragraph">
+<p>By default, the exception class name is converted to <code>ALL_CAPS</code> to be used as the <code>code</code> in the response.</p>
+</div>
+<div class="paragraph">
+<p>If you like to use the full qualified name style for the codes, then specify this property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "DefaultErrorCodeStrategy": "FullQualifiedName"
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For a class called <code>UserNotFoundException</code>, the default style (<code>AllCaps</code>) will result in the following JSON:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Using <code>FullQualifiedName</code>, the result will be:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "MyApp.Exceptions.UserNotFoundException",
+  "message": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="general-override-of-error-codes"><a class="anchor" href="#general-override-of-error-codes"></a>3.2.2. General override of error codes</h4>
+<div class="paragraph">
+<p>If the default error code style is not enough, you can set a code via the configuration by using the full qualified name under the <code>Codes</code> key:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "Codes": {
+      "System.InvalidOperationException": "ILLEGAL_OPERATION"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Result:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "ILLEGAL_OPERATION",
+  "message": "The operation is not valid."
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is mostly useful for <code>Exception</code> types that are not under your own control (e.g., they come from a library that you use).
+If you do have control, it is probably easier to use <a href="#per-class-override-of-error-code">Per class override of error code</a>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="per-class-override-of-error-code"><a class="anchor" href="#per-class-override-of-error-code"></a>3.2.3. Per class override of error code</h4>
+<div class="paragraph">
+<p>By adding the <code>[ResponseErrorCode]</code> attribute as a class level attribute, it is possible to define the <code>code</code> that the response will use.</p>
+</div>
+<div class="paragraph">
+<p>Example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">using ErrorLens.ErrorHandling.Attributes;
+
+[ResponseErrorCode("COULD_NOT_FIND_USER")]
+public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}") { }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This results in this response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "COULD_NOT_FIND_USER",
+  "message": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="field-specific-override-of-validation-error-codes"><a class="anchor" href="#field-specific-override-of-validation-error-codes"></a>3.2.4. Field specific override of validation error codes</h4>
+<div class="paragraph">
+<p>It is possible to configure a specific error code that will only be used for a combination of a field with a validation annotation.</p>
+</div>
+<div class="paragraph">
+<p>Suppose you add a <code>[Required]</code> attribute on an <code>email</code> field:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">public class CreateUserRequest
+{
+    [Required]
+    [EmailAddress]
+    public string? Email { get; set; }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By default, the error code for <code>[Required]</code> is <code>REQUIRED_NOT_NULL</code>.
+If you want to override this specifically for the <code>email</code> field:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "Codes": {
+      "email.Required": "EMAIL_IS_REQUIRED",
+      "email.EmailAddress": "EMAIL_FORMAT_INVALID"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>YAML equivalent:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  Codes:
+    email.Required: EMAIL_IS_REQUIRED
+    email.EmailAddress: EMAIL_FORMAT_INVALID</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This results in:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "EMAIL_IS_REQUIRED",
+      "property": "email",
+      "message": "The Email field is required.",
+      "path": "email"
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="error-messages"><a class="anchor" href="#error-messages"></a>3.3. Error messages</h3>
+<div class="sect3">
+<h4 id="default-behaviour"><a class="anchor" href="#default-behaviour"></a>3.3.1. Default behaviour</h4>
+<div class="paragraph">
+<p>The library will output the <code>Message</code> property of the Exception into the <code>message</code> JSON field by default.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}") { }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The response JSON:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="general-override-of-error-messages"><a class="anchor" href="#general-override-of-error-messages"></a>3.3.2. General override of error messages</h4>
+<div class="paragraph">
+<p>By using the <code>Messages</code> property, it is possible to globally set an error message for a certain exception:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "Messages": {
+      "MyApp.Exceptions.UserNotFoundException": "The user was not found"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The response JSON:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "USER_NOT_FOUND",
+  "message": "The user was not found"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="field-specific-override-of-error-messages"><a class="anchor" href="#field-specific-override-of-error-messages"></a>3.3.3. Field specific override of error messages</h4>
+<div class="paragraph">
+<p>Similar to error codes, you can override messages for specific field + validation combinations:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  Messages:
+    email.Required: A valid email address is required
+    password.StringLength: Password must be at least 8 characters</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="super-class-hierarchy-search"><a class="anchor" href="#super-class-hierarchy-search"></a>3.4. Super class hierarchy search</h3>
+<div class="paragraph">
+<p>By default, the library will only match <a href="#http-response-status">HTTP response status</a>, <a href="#error-codes">Error codes</a> or <a href="#error-messages">Error messages</a> settings when there is an exact match with the full qualified name of the <code>Exception</code>.</p>
+</div>
+<div class="paragraph">
+<p>If you want to define settings for a group of Exceptions that share a common base class, enable the <code>SearchSuperClassHierarchy</code> setting:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "SearchSuperClassHierarchy": true
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With this in place, you can set properties for any <code>Exception</code> sub-class like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "SearchSuperClassHierarchy": true,
+    "HttpStatuses": {
+      "System.InvalidOperationException": 400
+    },
+    "Codes": {
+      "System.InvalidOperationException": "INVALID_OPERATION"
+    },
+    "Messages": {
+      "System.InvalidOperationException": "An invalid operation occurred"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Any exception that extends <code>InvalidOperationException</code> will match these settings.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="exception-handlers"><a class="anchor" href="#exception-handlers"></a>3.5. Exception handlers</h3>
+<div class="sect3">
+<h4 id="validation"><a class="anchor" href="#validation"></a>3.5.1. Validation</h4>
+<div class="paragraph">
+<p>There are multiple scenarios where the library creates specific JSON responses for validation errors:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>When using <code>[ApiController]</code> with DataAnnotations validation attributes on a request body model.
+This requires <code>OverrideModelStateValidation</code> to be set to <code>true</code> (see <a href="#validation-exception-handling">Validation exception handling</a>).
+The library intercepts the model validation failure and returns a structured response with <code>fieldErrors</code>.</p>
+</li>
+<li>
+<p>When validation fails on query parameters or route parameters.
+These appear as <code>parameterErrors</code> in the response.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>In all cases, the response JSON will be similar to this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "REQUIRED_NOT_NULL",
+      "property": "email",
+      "message": "Email is required",
+      "rejectedValue": null,
+      "path": "email"
+    },
+    {
+      "code": "INVALID_SIZE",
+      "property": "name",
+      "message": "Name must be between 2 and 100 characters",
+      "rejectedValue": "A",
+      "path": "name"
+    }
+  ],
+  "globalErrors": [
+    {
+      "code": "PASSWORDS_MUST_MATCH",
+      "message": "Password and confirmation must match"
+    }
+  ],
+  "parameterErrors": [
+    {
+      "code": "REQUIRED_NOT_NULL",
+      "message": "Id is required",
+      "parameter": "id",
+      "rejectedValue": null
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Breakdown:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>code</code> is always <code>VALIDATION_FAILED</code> (unless there was an override defined).</p>
+</li>
+<li>
+<p>The <code>message</code> indicates that validation failed.</p>
+</li>
+<li>
+<p>The <code>fieldErrors</code> array contains all field-level validation problems. It shows the name of the property that failed validation, the error code, message, and the rejected value.</p>
+</li>
+<li>
+<p>The <code>parameterErrors</code> array contains all the parameter-level validation problems.</p>
+</li>
+<li>
+<p>The <code>globalErrors</code> array contains the class-level validation problems.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="unreadable-http-message"><a class="anchor" href="#unreadable-http-message"></a>3.5.2. Unreadable HTTP message</h4>
+<div class="paragraph">
+<p>If a controller receives a message it cannot read (e.g., invalid JSON), a <code>BadHttpRequestException</code> is thrown.
+The library will return a structured response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "BAD_REQUEST",
+  "message": "Failed to read the request body."
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="type-conversion-exceptions"><a class="anchor" href="#type-conversion-exceptions"></a>3.5.3. Type conversion exceptions</h4>
+<div class="paragraph">
+<p>Type conversion exceptions like <code>FormatException</code> and <code>InvalidCastException</code> are handled with extra information:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "TYPE_MISMATCH",
+  "message": "Input string was not in a correct format."
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="json-parsing-exceptions"><a class="anchor" href="#json-parsing-exceptions"></a>3.5.4. JSON parsing exceptions</h4>
+<div class="paragraph">
+<p>When invalid JSON is sent, a <code>JsonException</code> is caught:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "MESSAGE_NOT_READABLE",
+  "message": "The request body could not be parsed as valid JSON"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="adding-extra-properties-in-the-response"><a class="anchor" href="#adding-extra-properties-in-the-response"></a>3.6. Adding extra properties in the response</h3>
+<div class="paragraph">
+<p>It is possible to add extra properties in the JSON response by using the <code>[ResponseErrorProperty]</code> attribute on your custom Exception class.</p>
+</div>
+<div class="sect3">
+<h4 id="via-property-annotation"><a class="anchor" href="#via-property-annotation"></a>3.6.1. Via property annotation</h4>
+<div class="paragraph">
+<p>This example annotates the <code>UserId</code> property with <code>[ResponseErrorProperty]</code> so that the value of the property is added to the JSON response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">using System.Net;
+using ErrorLens.ErrorHandling.Attributes;
+
+[ResponseErrorCode("USER_NOT_FOUND")]
+[ResponseStatus(HttpStatusCode.NotFound)]
+public class UserNotFoundException : Exception
+{
+    [ResponseErrorProperty("userId")] <i class="conum" data-value="1"></i><b>(1)</b>
+    public string UserId { get; }
+
+    public UserNotFoundException(string userId)
+        : base($"Could not find user with id {userId}")
+    {
+        UserId = userId;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Add the value of this property as an extra field in the response.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The resulting response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id abc-123",
+  "userId": "abc-123"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="multiple-properties"><a class="anchor" href="#multiple-properties"></a>3.6.2. Multiple properties</h4>
+<div class="paragraph">
+<p>You can annotate multiple properties:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">[ResponseErrorCode("INSUFFICIENT_FUNDS")]
+[ResponseStatus(HttpStatusCode.UnprocessableEntity)]
+public class InsufficientFundsException : Exception
+{
+    [ResponseErrorProperty("required")]
+    public decimal RequiredAmount { get; }
+
+    [ResponseErrorProperty("available")]
+    public decimal AvailableAmount { get; }
+
+    public InsufficientFundsException(decimal required, decimal available)
+        : base("Insufficient funds")
+    {
+        RequiredAmount = required;
+        AvailableAmount = available;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The resulting response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "INSUFFICIENT_FUNDS",
+  "message": "Insufficient funds",
+  "required": 500.00,
+  "available": 123.45
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="overriding-the-property-name"><a class="anchor" href="#overriding-the-property-name"></a>3.6.3. Overriding the property name</h4>
+<div class="paragraph">
+<p>It is possible to override the JSON property name by using the <code>name</code> parameter of the attribute:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">[ResponseErrorProperty("id")] <i class="conum" data-value="1"></i><b>(1)</b>
+public string UserId { get; }</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The JSON key will be <code>"id"</code> instead of <code>"userId"</code>.</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="null-handling"><a class="anchor" href="#null-handling"></a>3.6.4. Null handling</h4>
+<div class="paragraph">
+<p>If a property annotated with <code>[ResponseErrorProperty]</code> returns <code>null</code>, the JSON output will not contain the property by default.
+If you want to include it, use the <code>IncludeIfNull</code> property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">[ResponseErrorProperty("details")]
+public string? Details { get; set; }                    <i class="conum" data-value="1"></i><b>(1)</b>
+
+[ResponseErrorProperty(IncludeIfNull = true)]
+public string? OptionalInfo { get; set; }               <i class="conum" data-value="2"></i><b>(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Omitted from response when <code>null</code> (default).</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Included in response even when <code>null</code>.</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="global-customization-of-the-response-json"><a class="anchor" href="#global-customization-of-the-response-json"></a>3.6.5. Global customization of the response JSON</h4>
+<div class="paragraph">
+<p>The previous methods can only be used if you have access to the source code of the exception class.
+If you want to add some property globally for all exceptions, including those from libraries, you can implement <code>IApiErrorResponseCustomizer</code>.</p>
+</div>
+<div class="paragraph">
+<p>For example, suppose you want to add a timestamp and trace ID to all error responses.
+You can do so by implementing the following class and registering it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">using ErrorLens.ErrorHandling.Models;
+using ErrorLens.ErrorHandling.Services;
+
+public class RequestMetadataCustomizer : IApiErrorResponseCustomizer
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public RequestMetadataCustomizer(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public void Customize(ApiErrorResponse response)
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context == null) return;
+
+        response.AddProperty("traceId", context.TraceIdentifier);
+        response.AddProperty("timestamp", DateTime.UtcNow.ToString("o"));
+        response.AddProperty("path", context.Request.Path.Value);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Register it in <code>Program.cs</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Services.AddHttpContextAccessor();
+builder.Services.AddErrorResponseCustomizer&lt;RequestMetadataCustomizer&gt;();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>An example resulting response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id abc-123",
+  "traceId": "0HN4L2M8V3Q1S:00000001",
+  "timestamp": "2026-02-10T12:00:00.0000000Z",
+  "path": "/api/users/abc-123"
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can register multiple customizer beans in your application.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="custom-json-response-field-names"><a class="anchor" href="#custom-json-response-field-names"></a>3.7. Custom JSON response field names</h3>
+<div class="paragraph">
+<p>If the <code>code</code>, <code>message</code>, <code>fieldErrors</code>, <code>globalErrors</code>, <code>parameterErrors</code>, and other field names are not to your liking, you can customize them through configuration:</p>
+</div>
+<div class="sect4">
+<h5 id="json"><a class="anchor" href="#json"></a>JSON</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "JsonFieldNames": {
+      "Code": "type",
+      "Message": "detail",
+      "Status": "statusCode",
+      "FieldErrors": "fields",
+      "GlobalErrors": "errors",
+      "ParameterErrors": "params",
+      "Property": "field",
+      "RejectedValue": "value",
+      "Path": "jsonPath",
+      "Parameter": "paramName"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="yaml"><a class="anchor" href="#yaml"></a>YAML</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  JsonFieldNames:
+    Code: type
+    Message: detail
+    Status: statusCode
+    FieldErrors: fields
+    GlobalErrors: errors
+    ParameterErrors: params
+    Property: field
+    RejectedValue: value
+    Path: jsonPath
+    Parameter: paramName</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With these settings, a response will look similar to this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "type": "VALIDATION_FAILED",
+  "detail": "Validation failed",
+  "statusCode": 400,
+  "fields": [
+    {
+      "type": "REQUIRED_NOT_NULL",
+      "field": "email",
+      "detail": "Email is required",
+      "jsonPath": "email"
+    }
+  ],
+  "errors": [
+    {
+      "type": "PASSWORDS_MUST_MATCH",
+      "detail": "Passwords do not match"
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All configurable field names:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 16.6666%;">
+<col style="width: 50.0001%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Option</th>
+<th class="tableblock halign-left valign-top">Default</th>
+<th class="tableblock halign-left valign-top">Applies To</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Code</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>code</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Top-level + nested error objects</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Top-level + nested error objects</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Status</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>status</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Top-level response</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FieldErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fieldErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Top-level response</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GlobalErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>globalErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Top-level response</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ParameterErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parameterErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Top-level response</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Property</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>property</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Field error objects</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RejectedValue</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>rejectedValue</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Field + parameter error objects</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Field error objects</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Parameter</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parameter</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parameter error objects</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="logging"><a class="anchor" href="#logging"></a>3.8. Logging</h3>
+<div class="paragraph">
+<p>The library will log a single line to the configured logging output for each Exception that is handled.
+This behaviour can be changed to log either nothing at all (<code>None</code>), or to log full stack traces (<code>WithStacktrace</code>) via the <code>ExceptionLogging</code> property.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  ExceptionLogging: WithStacktrace</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you want to keep logging minimal, but still have a full stacktrace for some exceptions, you can use the <code>FullStacktraceClasses</code> property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  ExceptionLogging: MessageOnly
+  FullStacktraceClasses:
+    - System.NullReferenceException
+    - MyApp.Exceptions.CriticalException</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With this configuration, all exceptions will have a single log line, but <code>NullReferenceException</code> and <code>CriticalException</code> will have full stack traces printed.</p>
+</div>
+<div class="paragraph">
+<p>Another way to have additional logging is to specify a list of HTTP return codes that you want full stack traces for:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  FullStacktraceHttpStatuses:
+    - 5xx
+    - 403</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This configuration will print a full stack trace for all errors in the 5xx range and for the exact 403 error code.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The logging that is done on the response codes is <em>additionally</em> to the logging done on the exception type.
+You might want to only enable one of the two to avoid double stack traces.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>It is also possible to define on what log level the exception message (and the stacktrace if enabled) should be printed.
+By default, everything is printed on ERROR, but using the <code>LogLevels</code> property, this can be changed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  LogLevels:
+    400: Debug
+    401: Information
+    4xx: Warning
+    5xx: Error</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With this configuration, 400 Bad Request will be printed on Debug level.
+401 Unauthorized will be printed on Information.
+All other 4xx status codes will be printed on Warning.
+Finally, all status codes in the 5xx range will be printed on Error.</p>
+</div>
+<div class="sect3">
+<h4 id="filter-logging"><a class="anchor" href="#filter-logging"></a>3.8.1. Filter logging</h4>
+<div class="paragraph">
+<p>If you want to filter certain exceptions from being logged (while you still want the exception handling to happen), you can implement <code>ILoggingFilter</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">using ErrorLens.ErrorHandling.Models;
+using ErrorLens.ErrorHandling.Services;
+
+public class IgnoreNotFoundFilter : ILoggingFilter
+{
+    public bool ShouldLog(ApiErrorResponse response, Exception exception)
+    {
+        // Don't log 404 errors
+        return response.HttpStatusCode != HttpStatusCode.NotFound;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Register the filter in <code>Program.cs</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Services.AddSingleton&lt;ILoggingFilter, IgnoreNotFoundFilter&gt;();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can register multiple filters - all filters must return <code>true</code> for the exception to be logged.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="yaml-configuration"><a class="anchor" href="#yaml-configuration"></a>3.9. YAML configuration</h3>
+<div class="paragraph">
+<p>The library supports YAML configuration files as an alternative to <code>appsettings.json</code>.
+This is enabled by the <code>NetEscapades.Configuration.Yaml</code> package which is included as a dependency.</p>
+</div>
+<div class="sect3">
+<h4 id="setup"><a class="anchor" href="#setup"></a>3.9.1. Setup</h4>
+<div class="paragraph">
+<p>Add YAML support with a single line in <code>Program.cs</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Configuration.AddYamlErrorHandling("errorhandling.yml");
+builder.Services.AddErrorHandling(builder.Configuration);</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="example-yaml-configuration"><a class="anchor" href="#example-yaml-configuration"></a>3.9.2. Example YAML configuration</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  Enabled: true
+  HttpStatusInJsonResponse: true
+  DefaultErrorCodeStrategy: AllCaps
+  SearchSuperClassHierarchy: true
+  ExceptionLogging: WithStacktrace
+
+  JsonFieldNames:
+    Code: type
+    Message: detail
+
+  FullStacktraceHttpStatuses:
+    - 5xx
+
+  HttpStatuses:
+    MyApp.Exceptions.UserNotFoundException: 404
+    MyApp.Exceptions.DuplicateEmailException: 409
+
+  Codes:
+    MyApp.Exceptions.UserNotFoundException: USER_NOT_FOUND
+    email.Required: EMAIL_IS_REQUIRED
+    email.EmailAddress: EMAIL_FORMAT_INVALID
+
+  Messages:
+    MyApp.Exceptions.UserNotFoundException: The requested user was not found
+    email.Required: A valid email address is required
+
+  LogLevels:
+    4xx: Warning
+    5xx: Error
+    404: Debug</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A full YAML template with all options and comments is available in the repository at <code>docs/errorhandling-template.yml</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="problem-detail-format-rfc-9457"><a class="anchor" href="#problem-detail-format-rfc-9457"></a>3.10. Problem Detail format (RFC 9457)</h3>
+<div class="paragraph">
+<p>The library supports the <a href="https://www.rfc-editor.org/rfc/rfc9457">RFC 9457</a> Problem Detail format as an alternative to the default JSON response format.
+When enabled, error responses will use the standardized Problem Detail structure and the <code>application/problem+json</code> content type.</p>
+</div>
+<div class="sect3">
+<h4 id="enabling-problem-detail-format"><a class="anchor" href="#enabling-problem-detail-format"></a>3.10.1. Enabling Problem Detail format</h4>
+<div class="paragraph">
+<p>To enable Problem Detail format, set the following property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "ErrorHandling": {
+    "UseProblemDetailFormat": true
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or in YAML:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  UseProblemDetailFormat: true</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="response-format-comparison"><a class="anchor" href="#response-format-comparison"></a>3.10.2. Response format comparison</h4>
+<div class="paragraph">
+<p>When Problem Detail format is disabled (default), the response looks like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "code": "USER_NOT_FOUND",
+  "message": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When Problem Detail format is enabled, the same error produces:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "type": "https://example.com/errors/user-not-found",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find user with id 123",
+  "instance": "/api/users/123",
+  "code": "USER_NOT_FOUND"
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The Problem Detail format is built like this:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Problem Detail field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>type</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">URI reference identifying the problem type (prefix + error code in kebab-case)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>title</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The HTTP status reason phrase (e.g., "Not Found", "Bad Request")</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>status</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The numeric HTTP status code</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>detail</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Human-readable explanation (exception message)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>instance</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The request path where the error occurred</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>code</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The original error code from ErrorLens (extension member)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="configuring-the-type-prefix"><a class="anchor" href="#configuring-the-type-prefix"></a>3.10.3. Configuring the type prefix</h4>
+<div class="paragraph">
+<p>You can add a prefix to the <code>type</code> field to create fully qualified URIs:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  UseProblemDetailFormat: true
+  ProblemDetailTypePrefix: https://api.example.com/errors/</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With this configuration, the response becomes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "type": "https://api.example.com/errors/user-not-found",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="disabling-kebab-case-conversion"><a class="anchor" href="#disabling-kebab-case-conversion"></a>3.10.4. Disabling kebab-case conversion</h4>
+<div class="paragraph">
+<p>By default, error codes are converted to kebab-case for the <code>type</code> field (e.g., <code>USER_NOT_FOUND</code> becomes <code>user-not-found</code>).
+To preserve the original error code format:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">ErrorHandling:
+  UseProblemDetailFormat: true
+  ProblemDetailConvertToKebabCase: false</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Result:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "type": "USER_NOT_FOUND",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find user with id 123"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="validation-errors-with-problem-detail"><a class="anchor" href="#validation-errors-with-problem-detail"></a>3.10.5. Validation errors with Problem Detail</h4>
+<div class="paragraph">
+<p>Validation errors include <code>fieldErrors</code> and <code>globalErrors</code> as additional properties in the Problem Detail response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "type": "https://api.example.com/errors/validation-failed",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "REQUIRED_NOT_NULL",
+      "property": "email",
+      "message": "Email is required",
+      "path": "email"
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="custom-properties-with-problem-detail"><a class="anchor" href="#custom-properties-with-problem-detail"></a>3.10.6. Custom properties with Problem Detail</h4>
+<div class="paragraph">
+<p>Custom properties added via <code>[ResponseErrorProperty]</code> and <code>IApiErrorResponseCustomizer</code> are included as extension members in the Problem Detail response:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "type": "https://api.example.com/errors/user-not-found",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find user with id abc-123",
+  "instance": "/api/users/abc-123",
+  "userId": "abc-123",
+  "traceId": "0HN4L2M8V3Q1S:00000001"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="custom-exception-handler"><a class="anchor" href="#custom-exception-handler"></a>4. Custom exception handler</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If the <a href="#configuration">extensive customization options</a> are not enough, you can write your own <code>IApiExceptionHandler</code> implementation.</p>
+</div>
+<div class="paragraph">
+<p>The contract that you need to implement:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">public interface IApiExceptionHandler
+{
+    /// &lt;summary&gt;
+    /// Handler priority. Lower values run first.
+    /// &lt;/summary&gt;
+    int Order { get; }
+
+    /// &lt;summary&gt;
+    /// Returns true if this handler can process the exception.
+    /// &lt;/summary&gt;
+    bool CanHandle(Exception exception);
+
+    /// &lt;summary&gt;
+    /// Creates the error response for the exception.
+    /// &lt;/summary&gt;
+    ApiErrorResponse Handle(Exception exception);
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+There is also the <code>AbstractApiExceptionHandler</code> base class that you can use as a starting point.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>As an example, imagine you want to handle infrastructure exceptions:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">using ErrorLens.ErrorHandling.Handlers;
+using ErrorLens.ErrorHandling.Models;
+
+public class InfrastructureExceptionHandler : IApiExceptionHandler <i class="conum" data-value="1"></i><b>(1)</b>
+{
+    public int Order =&gt; 100; <i class="conum" data-value="2"></i><b>(2)</b>
+
+    public bool CanHandle(Exception exception) <i class="conum" data-value="3"></i><b>(3)</b>
+    {
+        return exception is DatabaseTimeoutException
+            or ServiceUnavailableException;
+    }
+
+    public ApiErrorResponse Handle(Exception exception) <i class="conum" data-value="4"></i><b>(4)</b>
+    {
+        return exception switch
+        {
+            DatabaseTimeoutException dbEx =&gt; new ApiErrorResponse(
+                HttpStatusCode.ServiceUnavailable,
+                "DATABASE_TIMEOUT",
+                dbEx.Message),
+
+            ServiceUnavailableException svcEx =&gt; new ApiErrorResponse(
+                HttpStatusCode.ServiceUnavailable,
+                "SERVICE_UNAVAILABLE",
+                svcEx.Message),
+
+            _ =&gt; new ApiErrorResponse("INFRASTRUCTURE_ERROR", exception.Message)
+        };
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Implement the <code>IApiExceptionHandler</code> interface.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Set the handler priority. Lower values run first.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Check if this handler can process the exception.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Create the <code>ApiErrorResponse</code> instance.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Register it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-csharp hljs" data-lang="csharp">builder.Services.AddExceptionHandler&lt;InfrastructureExceptionHandler&gt;();</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="handler-ordering"><a class="anchor" href="#handler-ordering"></a>4.1. Handler ordering</h4>
+<div class="paragraph">
+<p>Handlers are executed in order of their <code>Order</code> property (lowest first).
+The first handler whose <code>CanHandle()</code> returns <code>true</code> processes the exception.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 40%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Order</th>
+<th class="tableblock halign-left valign-top">Handler</th>
+<th class="tableblock halign-left valign-top">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">90</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ModelStateValidationExceptionHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>[ApiController]</code> model validation (requires <code>OverrideModelStateValidation: true</code>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ValidationExceptionHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DataAnnotations validation</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">120</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonExceptionHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonException</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">130</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TypeMismatchExceptionHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FormatException</code>, <code>InvalidCastException</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">150</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>BadRequestExceptionHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bad HTTP requests</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Custom (e.g. 200)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Your handlers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain/infrastructure specific</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>int.MaxValue</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DefaultFallbackHandler</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Catch-all fallback</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The <code>DefaultFallbackHandler</code> always runs last as the catch-all.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="properties"><a class="anchor" href="#properties"></a>5. Properties</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Enabled</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Allows to enable or disable the error handling.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>true</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DefaultErrorCodeStrategy</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Determines how an Exception is converted into a <code>code</code>. One of: <code>AllCaps</code>, <code>FullQualifiedName</code>.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>AllCaps</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>HttpStatusInJsonResponse</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Boolean that allows adding a <code>status</code> field with the HTTP response code in the response JSON body.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>false</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SearchSuperClassHierarchy</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>When set to <code>true</code>, the library will search base classes when matching <code>HttpStatuses</code>, <code>Codes</code>, or <code>Messages</code>.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>false</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AddPathToError</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Allows to remove the <code>path</code> property in field error responses when set to <code>false</code>.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>true</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>OverrideModelStateValidation</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>When set to <code>true</code>, the library intercepts <code>[ApiController]</code> automatic model validation and returns ErrorLens structured <code>fieldErrors</code> format instead of ASP.NET Core&#8217;s default <code>ProblemDetails</code> response.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>false</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ExceptionLogging</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Controls how the exception should be logged. One of: <code>None</code>, <code>MessageOnly</code>, <code>WithStacktrace</code>.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>MessageOnly</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>UseProblemDetailFormat</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>true</code> to use the RFC 9457 Problem Detail format for error responses.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>false</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ProblemDetailTypePrefix</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The prefix to use for the <code>type</code> field in Problem Detail responses.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code><a href="https://example.com/errors/" class="bare">example.com/errors/</a></code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ProblemDetailConvertToKebabCase</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Controls whether the error code is converted to kebab-case for the Problem Detail <code>type</code> field.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>true</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>HttpStatuses</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Map of exception full qualified names to HTTP status codes.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Empty</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Codes</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Map of exception full qualified names or <code>fieldName.validationType</code> to error code strings.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Empty</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Messages</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Map of exception full qualified names or <code>fieldName.validationType</code> to error message strings.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Empty</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LogLevels</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Map of HTTP status codes or patterns (e.g., <code>4xx</code>, <code>5xx</code>, <code>404</code>) to log levels.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Empty</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FullStacktraceHttpStatuses</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>List of HTTP status codes or patterns that force full stack trace logging.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Empty</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FullStacktraceClasses</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>List of exception full qualified names that force full stack trace logging.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Empty</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.Code</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name used to serialize the <code>code</code> to JSON.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>code</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.Message</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name used to serialize the <code>message</code> to JSON.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>message</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.Status</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name used to serialize the <code>status</code> to JSON.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>status</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.FieldErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name used to serialize the <code>fieldErrors</code> to JSON.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>fieldErrors</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.GlobalErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name used to serialize the <code>globalErrors</code> to JSON.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>globalErrors</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.ParameterErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name used to serialize the <code>parameterErrors</code> to JSON.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>parameterErrors</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.Property</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name for property names in field errors.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>property</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.RejectedValue</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name for rejected values in field/parameter errors.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>rejectedValue</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.Path</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name for property paths in field errors.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>path</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonFieldNames.Parameter</code></p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The field name for parameter names in parameter errors.</p>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>parameter</code></p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="samples"><a class="anchor" href="#samples"></a>6. Samples</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The repository includes three sample projects:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Sample</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>MinimalApiSample</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Zero-config minimal API setup. Demonstrates the library works with just <code>AddErrorHandling()</code> and <code>UseErrorHandling()</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FullApiSample</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Controller-based API with custom exception handlers, response customizers, and configuration binding.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ShowcaseSample</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Comprehensive sample demonstrating all features: YAML configuration, custom JSON field names, exception attributes, custom handlers, response customizers, and RFC 9457 Problem Details.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="support"><a class="anchor" href="#support"></a>7. Support</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you have problems with the library, or you are missing a feature, feel free to create an issue on GitHub at <a href="https://github.com/AhmedV20/errorLens-errorhandling" class="bare">github.com/AhmedV20/errorLens-errorhandling</a>.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2026-02-11 16:38:34 UTC
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
+<script>
+if (!hljs.initHighlighting.called) {
+  hljs.initHighlighting.called = true
+  ;[].slice.call(document.querySelectorAll('pre.highlight > code[data-lang]')).forEach(function (el) { hljs.highlightBlock(el) })
+}
+</script>
+</body>
+</html>
