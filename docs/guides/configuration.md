@@ -47,10 +47,11 @@ A full YAML template is available at [`errorhandling-template.yml`](../errorhand
 | `DefaultErrorCodeStrategy` | `enum` | `AllCaps` | `AllCaps` or `FullQualifiedName` |
 | `SearchSuperClassHierarchy` | `bool` | `false` | Search base classes for config matches |
 | `AddPathToError` | `bool` | `true` | Include property path in field errors |
+| `OverrideModelStateValidation` | `bool` | `false` | Intercept `[ApiController]` validation to use ErrorLens `fieldErrors` format |
 | `UseProblemDetailFormat` | `bool` | `false` | Enable RFC 9457 Problem Details format |
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` | Type URI prefix for Problem Details |
 | `ProblemDetailConvertToKebabCase` | `bool` | `true` | Convert error codes to kebab-case in type URI |
-| `ExceptionLogging` | `enum` | `MessageOnly` | `NoLogging`, `MessageOnly`, `WithStacktrace` |
+| `ExceptionLogging` | `enum` | `MessageOnly` | `None`, `MessageOnly`, `WithStacktrace` |
 
 ## Dictionary Mappings
 

@@ -47,6 +47,7 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `DefaultErrorCodeStrategy` | `ErrorCodeStrategy` | `AllCaps` |
 | `SearchSuperClassHierarchy` | `bool` | `false` |
 | `AddPathToError` | `bool` | `true` |
+| `OverrideModelStateValidation` | `bool` | `false` |
 | `UseProblemDetailFormat` | `bool` | `false` |
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` |
 | `ProblemDetailConvertToKebabCase` | `bool` | `true` |
@@ -85,7 +86,7 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 
 | Value | Description |
 |-------|-------------|
-| `NoLogging` | No exception logging |
+| `None` | No exception logging |
 | `MessageOnly` | Log message only |
 | `WithStacktrace` | Log full exception with stack trace |
 
@@ -105,6 +106,12 @@ public class ApiErrorResponse
     public Dictionary<string, object?>? Properties { get; set; }
     public HttpStatusCode HttpStatusCode { get; set; }
 
+    // Constructors
+    public ApiErrorResponse(string code);
+    public ApiErrorResponse(string code, string? message);
+    public ApiErrorResponse(HttpStatusCode statusCode, string code, string? message);
+
+    // Methods
     public void AddProperty(string name, object? value);
     public void AddFieldError(ApiFieldError fieldError);
     public void AddGlobalError(ApiGlobalError globalError);
@@ -122,6 +129,10 @@ public class ApiFieldError
     public string Message { get; set; }
     public object? RejectedValue { get; set; }
     public string? Path { get; set; }
+
+    // Constructors
+    public ApiFieldError(string code, string property, string message);
+    public ApiFieldError(string code, string property, string message, object? rejectedValue, string? path = null);
 }
 ```
 
@@ -132,6 +143,9 @@ public class ApiGlobalError
 {
     public string Code { get; set; }
     public string Message { get; set; }
+
+    // Constructor
+    public ApiGlobalError(string code, string message);
 }
 ```
 
@@ -144,6 +158,10 @@ public class ApiParameterError
     public string Parameter { get; set; }
     public string Message { get; set; }
     public object? RejectedValue { get; set; }
+
+    // Constructors
+    public ApiParameterError(string code, string parameter, string message);
+    public ApiParameterError(string code, string parameter, string message, object? rejectedValue);
 }
 ```
 
@@ -183,7 +201,7 @@ public interface IApiErrorResponseCustomizer
 ```csharp
 public interface ILoggingFilter
 {
-    bool ShouldLog(Exception exception, HttpStatusCode statusCode);
+    bool ShouldLog(ApiErrorResponse response, Exception exception);
 }
 ```
 
@@ -192,7 +210,8 @@ public interface ILoggingFilter
 ```csharp
 public interface IErrorCodeMapper
 {
-    string MapErrorCode(Exception exception);
+    string GetErrorCode(Exception exception);
+    string GetErrorCode(string fieldSpecificKey, string defaultCode);
 }
 ```
 
@@ -201,7 +220,8 @@ public interface IErrorCodeMapper
 ```csharp
 public interface IErrorMessageMapper
 {
-    string? MapErrorMessage(Exception exception);
+    string? GetErrorMessage(Exception exception);
+    string GetErrorMessage(string fieldSpecificKey, string defaultCode, string defaultMessage);
 }
 ```
 
@@ -210,7 +230,8 @@ public interface IErrorMessageMapper
 ```csharp
 public interface IHttpStatusMapper
 {
-    HttpStatusCode MapHttpStatus(Exception exception);
+    HttpStatusCode GetHttpStatus(Exception exception);
+    HttpStatusCode GetHttpStatus(Exception exception, HttpStatusCode defaultStatus);
 }
 ```
 
@@ -220,6 +241,7 @@ public interface IHttpStatusMapper
 public interface IProblemDetailFactory
 {
     ProblemDetailResponse CreateFromApiError(ApiErrorResponse apiError);
+    ProblemDetailResponse CreateFromException(Exception exception, HttpStatusCode statusCode);
 }
 ```
 
@@ -244,13 +266,14 @@ public class ResponseStatusAttribute : Attribute
 {
     public HttpStatusCode StatusCode { get; }
     public ResponseStatusAttribute(HttpStatusCode statusCode);
+    public ResponseStatusAttribute(int statusCode);
 }
 ```
 
 ### ResponseErrorPropertyAttribute
 
 ```csharp
-[AttributeUsage(AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Method, Inherited = false)]
 public class ResponseErrorPropertyAttribute : Attribute
 {
     public string? Name { get; set; }

@@ -5,7 +5,63 @@ All notable changes to ErrorLens.ErrorHandling will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2024-01-15
+## [Unreleased]
+
+### Planned
+
+- OpenTelemetry integration for distributed tracing
+- Swagger/OpenAPI schema generation for error responses
+- Localization support for error messages
+- Rate limiting integration
+
+## [1.1.0] - 2026-02-11
+
+### Added
+
+- **Custom JSON Field Names**
+  - `JsonFieldNamesOptions` now fully wired into serialization pipeline
+  - Custom `ApiErrorResponseConverter` for runtime-configurable field names
+  - Rename any JSON property: `code` → `type`, `message` → `detail`, etc.
+  - Applies to top-level response and all nested error objects
+  - Expanded from 5 to 10 configurable field names (added Status, Property, RejectedValue, Path, Parameter)
+
+- **YAML Configuration Support**
+  - `AddYamlErrorHandling()` extension method for `IConfigurationBuilder`
+  - Full `errorhandling.yml` template with all options documented
+  - Same `ErrorHandling` section name as JSON configuration
+  - Dependency: NetEscapades.Configuration.Yaml 3.1.0
+
+- **ShowcaseSample Project**
+  - Comprehensive sample demonstrating all features in one project
+  - 5 controllers: BasicErrors, Validation, Attributes, ConfigDriven, ProblemDetails
+  - Custom exception handler (InfrastructureExceptionHandler)
+  - Response customizer (RequestMetadataCustomizer) with traceId, timestamp, path
+  - YAML configuration with custom field names, exception mappings, log levels
+
+- **Professional Documentation**
+  - AsciiDoc index page (`docs/index.adoc`) with feature matrix
+  - Guides: Getting Started, Configuration, Validation Errors, Logging
+  - Features: Custom Handlers, Attributes, Response Customization, Problem Details, JSON Field Names
+  - API Reference with all public types, interfaces, and extension methods
+  - Full YAML configuration template
+
+- **OverrideModelStateValidation Option**
+  - Opt-in interception of `[ApiController]` automatic model validation
+  - Returns ErrorLens structured `fieldErrors` format instead of ASP.NET Core's default `ProblemDetails`
+  - `ModelStateValidationExceptionHandler` (Order 90) converts `ModelStateDictionary` into structured response
+  - Configurable via code, JSON, or YAML (`OverrideModelStateValidation: true`)
+
+- **Expanded Test Coverage**
+  - 18 unit tests for ApiErrorResponseConverter
+  - 5 integration tests for JsonFieldNames end-to-end
+  - 10 integration tests for YAML configuration binding
+  - Total: 175 tests (up from 142)
+
+### Changed
+
+- README.md rewritten with badges, YAML/JSON side-by-side config, custom field names section, samples table
+
+## [1.0.0] - 2026-02-10
 
 ### Added
 
@@ -37,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `IApiExceptionHandler` interface for custom handling
   - `AbstractApiExceptionHandler` base class with default Order
   - Priority ordering (lower Order = higher priority)
-  - Built-in handlers: Validation, BadRequest, Json, TypeMismatch
+  - Built-in handlers: ModelStateValidation, Validation, BadRequest (Json and TypeMismatch available but not registered by default)
 
 - **RFC 9457 Problem Details Format**
   - Optional RFC 9457 compliant response format
@@ -68,53 +124,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Minimal dependencies (Microsoft.Extensions.Options, Microsoft.Extensions.Logging.Abstractions)
 - Full XML documentation
 - 142 unit and integration tests
-
-## [Unreleased]
-
-### Planned
-
-- OpenTelemetry integration for distributed tracing
-- Swagger/OpenAPI schema generation for error responses
-- Localization support for error messages
-- Rate limiting integration
-
-## [1.1.0] - 2026-02-10
-
-### Added
-
-- **Custom JSON Field Names**
-  - `JsonFieldNamesOptions` now fully wired into serialization pipeline
-  - Custom `ApiErrorResponseConverter` for runtime-configurable field names
-  - Rename any JSON property: `code` → `type`, `message` → `detail`, etc.
-  - Applies to top-level response and all nested error objects
-  - Expanded from 5 to 10 configurable field names (added Status, Property, RejectedValue, Path, Parameter)
-
-- **YAML Configuration Support**
-  - `AddYamlErrorHandling()` extension method for `IConfigurationBuilder`
-  - Full `errorhandling.yml` template with all options documented
-  - Same `ErrorHandling` section name as JSON configuration
-  - Dependency: NetEscapades.Configuration.Yaml 3.1.0
-
-- **ShowcaseSample Project**
-  - Comprehensive sample demonstrating all features in one project
-  - 5 controllers: BasicErrors, Validation, Attributes, ConfigDriven, ProblemDetails
-  - Custom exception handler (InfrastructureExceptionHandler)
-  - Response customizer (RequestMetadataCustomizer) with traceId, timestamp, path
-  - YAML configuration with custom field names, exception mappings, log levels
-
-- **Professional Documentation**
-  - AsciiDoc index page (`docs/index.adoc`) with feature matrix
-  - Guides: Getting Started, Configuration, Validation Errors, Logging
-  - Features: Custom Handlers, Attributes, Response Customization, Problem Details, JSON Field Names
-  - API Reference with all public types, interfaces, and extension methods
-  - Full YAML configuration template
-
-- **Expanded Test Coverage**
-  - 18 unit tests for ApiErrorResponseConverter
-  - 5 integration tests for JsonFieldNames end-to-end
-  - 10 integration tests for YAML configuration binding
-  - Total: 175 tests (up from 142)
-
-### Changed
-
-- README.md rewritten with badges, YAML/JSON side-by-side config, custom field names section, samples table

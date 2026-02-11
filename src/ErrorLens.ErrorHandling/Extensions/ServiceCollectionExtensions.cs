@@ -4,9 +4,11 @@ using ErrorLens.ErrorHandling.Integration;
 using ErrorLens.ErrorHandling.Mappers;
 using ErrorLens.ErrorHandling.ProblemDetails;
 using ErrorLens.ErrorHandling.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace ErrorLens.ErrorHandling.Extensions;
 
@@ -73,8 +75,23 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IFallbackApiExceptionHandler, DefaultFallbackHandler>();
 
         // Register built-in exception handlers
+        services.AddSingleton<IApiExceptionHandler, ModelStateValidationExceptionHandler>();
         services.AddSingleton<IApiExceptionHandler, ValidationExceptionHandler>();
         services.AddSingleton<IApiExceptionHandler, BadRequestExceptionHandler>();
+
+        // Conditionally intercept [ApiController] automatic model validation
+        // Only when OverrideModelStateValidation is true
+        services.AddOptions<ApiBehaviorOptions>()
+            .Configure<IOptions<ErrorHandlingOptions>>((apiBehavior, errorOptions) =>
+            {
+                if (errorOptions.Value.OverrideModelStateValidation)
+                {
+                    apiBehavior.InvalidModelStateResponseFactory = context =>
+                    {
+                        throw new ModelStateValidationException(context.ModelState);
+                    };
+                }
+            });
 
         // Register facade
         services.TryAddSingleton<ErrorHandlingFacade>();

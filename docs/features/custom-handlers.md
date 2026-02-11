@@ -94,9 +94,12 @@ Handlers are executed in order of their `Order` property (lowest first). The fir
 
 | Order | Handler | Purpose |
 |-------|---------|---------|
-| 50 | PaymentExceptionHandler | Domain-specific |
-| 100 | InfrastructureExceptionHandler | Infrastructure |
-| 200 | ValidationExceptionHandler | Built-in validation |
+| 90 | ModelStateValidationExceptionHandler | `[ApiController]` model validation (requires `OverrideModelStateValidation: true`) |
+| 100 | ValidationExceptionHandler | Built-in validation |
+| 120 | JsonExceptionHandler | JSON parsing errors |
+| 130 | TypeMismatchExceptionHandler | Type conversion errors |
+| 150 | BadRequestExceptionHandler | Bad HTTP requests |
+| 200+ | Your custom handlers | Domain/infrastructure specific |
 | int.MaxValue | DefaultFallbackHandler | Catch-all fallback |
 
 The `DefaultFallbackHandler` always runs last as the catch-all.
@@ -105,8 +108,16 @@ The `DefaultFallbackHandler` always runs last as the catch-all.
 
 | Handler | Handles | Priority |
 |---------|---------|----------|
-| `ValidationExceptionHandler` | `ValidationException` | Built-in |
-| `BadRequestExceptionHandler` | `BadHttpRequestException` | Built-in |
-| `TypeMismatchExceptionHandler` | `FormatException`, `InvalidCastException` | Built-in |
-| `JsonExceptionHandler` | `JsonException` | Built-in |
+| `ModelStateValidationExceptionHandler` | `ModelStateValidationException` (from `[ApiController]`) | 90 (requires `OverrideModelStateValidation: true`) |
+| `ValidationExceptionHandler` | `ValidationException` | 100 |
+| `BadRequestExceptionHandler` | `BadHttpRequestException` | 150 |
+| `TypeMismatchExceptionHandler` | `FormatException`, `InvalidCastException` | Available (not registered by default) |
+| `JsonExceptionHandler` | `JsonException` | Available (not registered by default) |
 | `DefaultFallbackHandler` | All unhandled exceptions | Fallback |
+
+**Note:** `ModelStateValidationExceptionHandler`, `ValidationExceptionHandler`, and `BadRequestExceptionHandler` are registered by default. `JsonExceptionHandler` and `TypeMismatchExceptionHandler` must be registered manually if needed:
+
+```csharp
+builder.Services.AddExceptionHandler<JsonExceptionHandler>();
+builder.Services.AddExceptionHandler<TypeMismatchExceptionHandler>();
+```

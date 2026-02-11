@@ -60,7 +60,7 @@ The `type` field is generated from the error code:
 | Error Code | Type URI |
 |-----------|----------|
 | `USER_NOT_FOUND` | `https://api.example.com/errors/user-not-found` |
-| `VALIDATION_ERROR` | `https://api.example.com/errors/validation-error` |
+| `VALIDATION_FAILED` | `https://api.example.com/errors/validation-failed` |
 | `INTERNAL_ERROR` | `https://api.example.com/errors/internal-error` |
 
 ## Configuration Options

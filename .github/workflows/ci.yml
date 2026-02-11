@@ -2,9 +2,32 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'release/**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'LICENSE'
+      - '**.png'
+      - '**.svg'
+      - '.editorconfig'
+      - '.gitignore'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'LICENSE'
+      - '**.png'
+      - '**.svg'
+      - '.editorconfig'
+      - '.gitignore'
 
 jobs:
   build:
@@ -20,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET ${{ matrix.dotnet-version }}
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
@@ -28,6 +51,7 @@ jobs:
             7.0.x
             8.0.x
             9.0.x
+            10.0.x
 
       - name: Restore dependencies
         run: dotnet restore
@@ -47,6 +71,7 @@ jobs:
   pack:
     runs-on: ubuntu-latest
     needs: build
+    # Only pack on main branch push (not PRs, not feature branches)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
@@ -65,3 +90,4 @@ jobs:
         with:
           name: nuget-package
           path: ./artifacts/*.nupkg
+          retention-days: 30

@@ -2,11 +2,18 @@ name: Documentation
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'docs/**'
+      - 'src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
+
+# Only allow one docs deployment at a time
+concurrency:
+  group: docs-deploy
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -26,9 +33,10 @@ jobs:
           gem install asciidoctor-rouge
 
       - name: Extract version from csproj
+        id: version
         run: |
           VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj)
-          echo "RELEASE_VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Detected version: ${VERSION}"
 
       - name: Generate HTML documentation
@@ -36,7 +44,7 @@ jobs:
           mkdir -p build/generated-docs
           asciidoctor \
             -b html5 \
-            -a project-version=${{ env.RELEASE_VERSION }} \
+            -a project-version=${{ steps.version.outputs.version }} \
             -a source-highlighter=highlight.js \
             -a icons=font \
             -a toc=left \
@@ -48,21 +56,21 @@ jobs:
 
       - name: Copy additional assets
         run: |
-          # Copy YAML template if it exists
+          # Copy YAML template
           if [ -f docs/errorhandling-template.yml ]; then
             cp docs/errorhandling-template.yml build/generated-docs/
           fi
 
-      - name: GitHub Pages action
+      - name: Deploy to GitHub Pages (current)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/generated-docs
           destination_dir: current
 
-      - name: GitHub Pages action (versioned dir)
+      - name: Deploy to GitHub Pages (versioned)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/generated-docs
-          destination_dir: ${{ env.RELEASE_VERSION }}
+          destination_dir: ${{ steps.version.outputs.version }}

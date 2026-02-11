@@ -7,6 +7,7 @@ ErrorHandling:
   DefaultErrorCodeStrategy: AllCaps
   SearchSuperClassHierarchy: true
   ExceptionLogging: WithStacktrace
+  OverrideModelStateValidation: true
 
   # Customize JSON field names (rename "code" → "type", "message" → "detail")
   JsonFieldNames:

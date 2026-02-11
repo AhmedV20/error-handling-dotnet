@@ -39,6 +39,13 @@ public class ErrorHandlingOptions
     public bool AddPathToError { get; set; } = true;
 
     /// <summary>
+    /// Override [ApiController] automatic model validation to use ErrorLens structured fieldErrors format.
+    /// When false (default), ASP.NET Core's built-in validation response is used.
+    /// When true, validation errors are intercepted and returned as ErrorLens fieldErrors.
+    /// </summary>
+    public bool OverrideModelStateValidation { get; set; } = false;
+
+    /// <summary>
     /// Use RFC 9457 Problem Details format. Default: false
     /// </summary>
     public bool UseProblemDetailFormat { get; set; } = false;

@@ -13,7 +13,7 @@ ErrorHandling:
 
 | Value | Description |
 |-------|-------------|
-| `NoLogging` | No exception logging at all |
+| `None` | No exception logging at all |
 | `MessageOnly` | Log exception message only (default) |
 | `WithStacktrace` | Log full exception including stack trace |
 
@@ -66,12 +66,14 @@ Without any logging configuration:
 Implement `ILoggingFilter` to suppress logging for specific exceptions:
 
 ```csharp
+using ErrorLens.ErrorHandling.Models;
+
 public class IgnoreNotFoundFilter : ILoggingFilter
 {
-    public bool ShouldLog(Exception exception, HttpStatusCode statusCode)
+    public bool ShouldLog(ApiErrorResponse response, Exception exception)
     {
         // Don't log 404 errors
-        return statusCode != HttpStatusCode.NotFound;
+        return response.HttpStatusCode != HttpStatusCode.NotFound;
     }
 }
 ```

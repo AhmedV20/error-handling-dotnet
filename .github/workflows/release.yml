@@ -7,9 +7,37 @@ on:
 permissions:
   packages: write
   contents: read
+  id-token: write  # For OIDC token for NuGet trusted publishing (optional)
+
+# Prevent concurrent releases
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  publish:
+  # Verify CI passed before releasing
+  verify-ci:
+    runs-on: ubuntu-latest
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+
+    steps:
+      - name: Check release is from main branch
+        id: check
+        run: |
+          # Only allow releases from main branch
+          if [[ "${{ github.event.release.target_commitish }}" == "main" ]]; then
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "✅ Release is from main branch"
+          else
+            echo "should-release=false" >> $GITHUB_OUTPUT
+            echo "❌ Release must be from main branch, got: ${{ github.event.release.target_commitish }}"
+            exit 1
+          fi
+
+  # Run full CI before publishing
+  ci:
+    needs: verify-ci
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +51,7 @@ jobs:
             7.0.x
             8.0.x
             9.0.x
+            10.0.x
 
       - name: Restore dependencies
         run: dotnet restore
@@ -33,11 +62,50 @@ jobs:
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
 
-      - name: Pack
+  # Publish to NuGet and GitHub Packages
+  publish:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.0.x
+            7.0.x
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Pack with release version
         run: dotnet pack src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj --configuration Release --output ./artifacts /p:Version=${{ github.event.release.tag_name }}
 
-      - name: Push to NuGet
+      - name: Display package info
+        run: |
+          echo "📦 Package created:"
+          ls -la ./artifacts/
+          echo "Version: ${{ github.event.release.tag_name }}"
+
+      - name: Push to NuGet.org
         run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Push to GitHub Packages
         run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
+
+      - name: Summary
+        run: |
+          echo "## 🚀 Release Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **NuGet:** https://www.nuget.org/packages/ErrorLens.ErrorHandling/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Packages:** Published to ${{ github.repository_owner }} registry" >> $GITHUB_STEP_SUMMARY

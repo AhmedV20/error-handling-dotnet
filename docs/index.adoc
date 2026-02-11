@@ -127,10 +127,22 @@ The library maps common .NET exception types to appropriate HTTP status codes ou
 |`ArgumentException` / `ArgumentNullException`
 |400 Bad Request
 
+|`FormatException`
+|400 Bad Request
+
 |`UnauthorizedAccessException`
 |401 Unauthorized
 
-|`KeyNotFoundException`
+|`KeyNotFoundException` / `FileNotFoundException`
+|404 Not Found
+
+|`TimeoutException`
+|408 Request Timeout
+
+|`OperationCanceledException`
+|400 Bad Request
+
+|`DirectoryNotFoundException`
 |404 Not Found
 
 |`NotImplementedException`
@@ -143,6 +155,31 @@ The library maps common .NET exception types to appropriate HTTP status codes ou
 ==== Validation exception handling
 
 For validation exceptions there is special handling and extra information is returned in the response.
+
+IMPORTANT: By default, `[ApiController]` automatic model validation uses ASP.NET Core's built-in `ProblemDetails` response.
+To use ErrorLens's structured `fieldErrors` format instead, you must enable the `OverrideModelStateValidation` option:
+
+[source,csharp]
+----
+builder.Services.AddErrorHandling(options =>
+{
+    options.OverrideModelStateValidation = true;
+});
+----
+
+Or via configuration:
+
+[source,json]
+----
+{
+  "ErrorHandling": {
+    "OverrideModelStateValidation": true
+  }
+}
+----
+
+When `false` (default), ASP.NET Core's built-in validation response is preserved — ErrorLens only handles thrown exceptions.
+When `true`, validation errors are intercepted and returned using ErrorLens's structured format with `fieldErrors`, `globalErrors`, and custom JSON field names.
 
 For example, suppose you have this class:
 
@@ -193,32 +230,31 @@ When sending a JSON request body like this:
 
 The validation fails, and the following JSON response will be returned:
 
+NOTE: This response requires `OverrideModelStateValidation: true`. Without it, ASP.NET Core returns its default `ProblemDetails` format.
+
 [source,json]
 ----
 {
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "fieldErrors": [
     {
-      "code": "STRING_LENGTH",
-      "property": "Name",
+      "code": "INVALID_SIZE",
+      "property": "name",
       "message": "The field Name must be a string with a minimum length of 2 and a maximum length of 100.",
-      "rejectedValue": "A",
-      "path": "Name"
+      "path": "name"
     },
     {
-      "code": "EMAIL_ADDRESS",
-      "property": "Email",
+      "code": "INVALID_EMAIL",
+      "property": "email",
       "message": "Invalid email format",
-      "rejectedValue": "not-an-email",
-      "path": "Email"
+      "path": "email"
     },
     {
-      "code": "RANGE",
-      "property": "Age",
+      "code": "VALUE_OUT_OF_RANGE",
+      "property": "age",
       "message": "Age must be between 18 and 120",
-      "rejectedValue": 5,
-      "path": "Age"
+      "path": "age"
     }
   ]
 }
@@ -442,7 +478,7 @@ public class CreateUserRequest
 }
 ----
 
-By default, the error code for `[Required]` is `REQUIRED`.
+By default, the error code for `[Required]` is `REQUIRED_NOT_NULL`.
 If you want to override this specifically for the `email` field:
 
 [source,json]
@@ -472,14 +508,14 @@ This results in:
 [source,json]
 ----
 {
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "fieldErrors": [
     {
       "code": "EMAIL_IS_REQUIRED",
-      "property": "Email",
+      "property": "email",
       "message": "The Email field is required.",
-      "path": "Email"
+      "path": "email"
     }
   ]
 }
@@ -593,6 +629,7 @@ Any exception that extends `InvalidOperationException` will match these settings
 There are multiple scenarios where the library creates specific JSON responses for validation errors:
 
 . When using `[ApiController]` with DataAnnotations validation attributes on a request body model.
+This requires `OverrideModelStateValidation` to be set to `true` (see <<Validation exception handling>>).
 The library intercepts the model validation failure and returns a structured response with `fieldErrors`.
 
 . When validation fails on query parameters or route parameters.
@@ -603,18 +640,18 @@ In all cases, the response JSON will be similar to this:
 [source,json]
 ----
 {
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "fieldErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "property": "email",
       "message": "Email is required",
       "rejectedValue": null,
       "path": "email"
     },
     {
-      "code": "STRING_LENGTH",
+      "code": "INVALID_SIZE",
       "property": "name",
       "message": "Name must be between 2 and 100 characters",
       "rejectedValue": "A",
@@ -629,7 +666,7 @@ In all cases, the response JSON will be similar to this:
   ],
   "parameterErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "message": "Id is required",
       "parameter": "id",
       "rejectedValue": null
@@ -640,7 +677,7 @@ In all cases, the response JSON will be similar to this:
 
 Breakdown:
 
-* The `code` is always `VALIDATION_ERROR` (unless there was an override defined).
+* The `code` is always `VALIDATION_FAILED` (unless there was an override defined).
 * The `message` indicates that validation failed.
 * The `fieldErrors` array contains all field-level validation problems. It shows the name of the property that failed validation, the error code, message, and the rejected value.
 * The `parameterErrors` array contains all the parameter-level validation problems.
@@ -666,7 +703,7 @@ Type conversion exceptions like `FormatException` and `InvalidCastException` are
 [source,json]
 ----
 {
-  "code": "FORMAT",
+  "code": "TYPE_MISMATCH",
   "message": "Input string was not in a correct format."
 }
 ----
@@ -678,8 +715,8 @@ When invalid JSON is sent, a `JsonException` is caught:
 [source,json]
 ----
 {
-  "code": "JSON",
-  "message": "The JSON value could not be converted..."
+  "code": "MESSAGE_NOT_READABLE",
+  "message": "The request body could not be parsed as valid JSON"
 }
 ----
 
@@ -901,7 +938,7 @@ With these settings, a response will look similar to this:
   "statusCode": 400,
   "fields": [
     {
-      "type": "REQUIRED",
+      "type": "REQUIRED_NOT_NULL",
       "field": "email",
       "detail": "Email is required",
       "jsonPath": "email"
@@ -966,7 +1003,7 @@ All configurable field names:
 === Logging
 
 The library will log a single line to the configured logging output for each Exception that is handled.
-This behaviour can be changed to log either nothing at all (`NoLogging`), or to log full stack traces (`WithStacktrace`) via the `ExceptionLogging` property.
+This behaviour can be changed to log either nothing at all (`None`), or to log full stack traces (`WithStacktrace`) via the `ExceptionLogging` property.
 
 [source,yaml]
 ----
@@ -1026,17 +1063,27 @@ If you want to filter certain exceptions from being logged (while you still want
 
 [source,csharp]
 ----
+using ErrorLens.ErrorHandling.Models;
 using ErrorLens.ErrorHandling.Services;
 
 public class IgnoreNotFoundFilter : ILoggingFilter
 {
-    public bool ShouldLog(Exception exception, HttpStatusCode statusCode)
+    public bool ShouldLog(ApiErrorResponse response, Exception exception)
     {
         // Don't log 404 errors
-        return statusCode != HttpStatusCode.NotFound;
+        return response.HttpStatusCode != HttpStatusCode.NotFound;
     }
 }
 ----
+
+Register the filter in `Program.cs`:
+
+[source,csharp]
+----
+builder.Services.AddSingleton<ILoggingFilter, IgnoreNotFoundFilter>();
+----
+
+You can register multiple filters - all filters must return `true` for the exception to be logged.
 
 === YAML configuration
 
@@ -1223,13 +1270,13 @@ Validation errors include `fieldErrors` and `globalErrors` as additional propert
 [source,json]
 ----
 {
-  "type": "https://api.example.com/errors/validation-error",
+  "type": "https://api.example.com/errors/validation-failed",
   "title": "Bad Request",
   "status": 400,
   "detail": "Validation failed",
   "fieldErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "property": "email",
       "message": "Email is required",
       "path": "email"
@@ -1342,23 +1389,27 @@ The first handler whose `CanHandle()` returns `true` processes the exception.
 |===
 |Order |Handler |Purpose
 
-|Built-in
+|90
+|`ModelStateValidationExceptionHandler`
+|`[ApiController]` model validation (requires `OverrideModelStateValidation: true`)
+
+|100
 |`ValidationExceptionHandler`
 |DataAnnotations validation
 
-|Built-in
-|`BadRequestExceptionHandler`
-|Bad HTTP requests
-
-|Built-in
-|`TypeMismatchExceptionHandler`
-|`FormatException`, `InvalidCastException`
-
-|Built-in
+|120
 |`JsonExceptionHandler`
 |`JsonException`
 
-|Custom (e.g. 100)
+|130
+|`TypeMismatchExceptionHandler`
+|`FormatException`, `InvalidCastException`
+
+|150
+|`BadRequestExceptionHandler`
+|Bad HTTP requests
+
+|Custom (e.g. 200)
 |Your handlers
 |Domain/infrastructure specific
 
@@ -1395,8 +1446,12 @@ The `DefaultFallbackHandler` always runs last as the catch-all.
 |Allows to remove the `path` property in field error responses when set to `false`.
 |`true`
 
+|OverrideModelStateValidation
+|When set to `true`, the library intercepts `[ApiController]` automatic model validation and returns ErrorLens structured `fieldErrors` format instead of ASP.NET Core's default `ProblemDetails` response.
+|`false`
+
 |ExceptionLogging
-|Controls how the exception should be logged. One of: `NoLogging`, `MessageOnly`, `WithStacktrace`.
+|Controls how the exception should be logged. One of: `None`, `MessageOnly`, `WithStacktrace`.
 |`MessageOnly`
 
 |UseProblemDetailFormat
