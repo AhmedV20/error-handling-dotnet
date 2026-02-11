@@ -20,7 +20,12 @@ ErrorHandling:
   # Include property path in field errors (default: true)
   AddPathToError: true
 
-  # Exception logging verbosity: NoLogging | MessageOnly | WithStacktrace (default: MessageOnly)
+  # Override [ApiController] automatic model validation (default: false)
+  # When true, intercepts model validation and returns ErrorLens structured
+  # fieldErrors format instead of ASP.NET Core's default ProblemDetails response.
+  OverrideModelStateValidation: false
+
+  # Exception logging verbosity: None | MessageOnly | WithStacktrace (default: MessageOnly)
   ExceptionLogging: WithStacktrace
 
   # --- RFC 9457 Problem Details ---

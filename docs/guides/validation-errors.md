@@ -1,10 +1,42 @@
 # Validation Errors
 
-ErrorLens.ErrorHandling automatically handles ASP.NET Core model validation errors, producing detailed field-level error information.
+ErrorLens.ErrorHandling can handle ASP.NET Core model validation errors, producing detailed field-level error information.
+
+## Enabling Unified Validation Format
+
+By default, `[ApiController]` automatic model validation uses ASP.NET Core's built-in `ProblemDetails` response. To use ErrorLens's structured `fieldErrors` format instead, enable the `OverrideModelStateValidation` option:
+
+### YAML
+
+```yaml
+ErrorHandling:
+  OverrideModelStateValidation: true
+```
+
+### JSON
+
+```json
+{
+  "ErrorHandling": {
+    "OverrideModelStateValidation": true
+  }
+}
+```
+
+### Code
+
+```csharp
+builder.Services.AddErrorHandling(options =>
+{
+    options.OverrideModelStateValidation = true;
+});
+```
+
+When `false` (default), ASP.NET Core's built-in validation response is preserved — ErrorLens only handles thrown exceptions. When `true`, validation errors are intercepted and returned using ErrorLens's structured format with `fieldErrors`, `globalErrors`, and custom JSON field names.
 
 ## How It Works
 
-When ASP.NET Core model validation fails (via `[ApiController]` and DataAnnotations), the library intercepts the `BadHttpRequestException` and produces a structured response with `fieldErrors`.
+When `OverrideModelStateValidation` is enabled and ASP.NET Core model validation fails (via `[ApiController]` and DataAnnotations), the library intercepts the `ModelStateDictionary` and produces a structured response with `fieldErrors`.
 
 ## Example
 
@@ -43,29 +75,26 @@ Content-Type: application/json
 
 ```json
 {
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "fieldErrors": [
     {
-      "code": "STRING_LENGTH",
-      "property": "Name",
+      "code": "INVALID_SIZE",
+      "property": "name",
       "message": "The field Name must be a string with a minimum length of 2 and a maximum length of 100.",
-      "rejectedValue": "A",
-      "path": "Name"
+      "path": "name"
     },
     {
-      "code": "EMAIL_ADDRESS",
-      "property": "Email",
+      "code": "INVALID_EMAIL",
+      "property": "email",
       "message": "Invalid email format",
-      "rejectedValue": "not-an-email",
-      "path": "Email"
+      "path": "email"
     },
     {
-      "code": "RANGE",
-      "property": "Age",
+      "code": "VALUE_OUT_OF_RANGE",
+      "property": "age",
       "message": "Age must be between 18 and 120",
-      "rejectedValue": 5,
-      "path": "Age"
+      "path": "age"
     }
   ]
 }
@@ -110,7 +139,7 @@ For cross-field or class-level validation errors:
 
 ```json
 {
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "globalErrors": [
     {
@@ -127,11 +156,11 @@ For method parameter validation errors:
 
 ```json
 {
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "parameterErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "parameter": "id",
       "message": "Id is required",
       "rejectedValue": null

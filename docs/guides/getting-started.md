@@ -77,7 +77,7 @@ By default, the exception class name is converted to `ALL_CAPS` format:
 | Exception Class | Error Code |
 |----------------|------------|
 | `InvalidOperationException` | `INVALID_OPERATION` |
-| `ArgumentNullException` | `ARGUMENT_NULL` |
+| `ArgumentNullException` | `ARGUMENT` |
 | `UserNotFoundException` | `USER_NOT_FOUND` |
 | `Exception` (base) | `INTERNAL_ERROR` |
 
@@ -87,8 +87,12 @@ By default, the exception class name is converted to `ALL_CAPS` format:
 |---------------|-------------|
 | `InvalidOperationException` | 400 Bad Request |
 | `ArgumentException` / `ArgumentNullException` | 400 Bad Request |
+| `FormatException` | 400 Bad Request |
+| `OperationCanceledException` | 400 Bad Request |
 | `UnauthorizedAccessException` | 401 Unauthorized |
-| `KeyNotFoundException` | 404 Not Found |
+| `KeyNotFoundException` / `FileNotFoundException` | 404 Not Found |
+| `DirectoryNotFoundException` | 404 Not Found |
+| `TimeoutException` | 408 Request Timeout |
 | `NotImplementedException` | 501 Not Implemented |
 | All others | 500 Internal Server Error |
 

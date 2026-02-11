@@ -76,12 +76,12 @@ Note: `Code` and `Message` are shared — they apply to both the top-level respo
 
 ```json
 {
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "status": 400,
   "fieldErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "property": "email",
       "message": "Email is required",
       "path": "email"
@@ -106,12 +106,12 @@ JsonFieldNames:
 Output:
 ```json
 {
-  "type": "VALIDATION_ERROR",
+  "type": "VALIDATION_FAILED",
   "detail": "Validation failed",
   "statusCode": 400,
   "fields": [
     {
-      "type": "REQUIRED",
+      "type": "REQUIRED_NOT_NULL",
       "field": "email",
       "detail": "Email is required",
       "jsonPath": "email"

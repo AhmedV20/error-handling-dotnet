@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0;net9.0;net8.0;net7.0;net6.0;</TargetFrameworks>
     <LangVersion>12.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -11,20 +11,28 @@
 
     <!-- Package metadata -->
     <PackageId>ErrorLens.ErrorHandling</PackageId>
-    <Version>1.0.0</Version>
-    <Authors>ErrorLens</Authors>
+    <Version>1.1.0</Version>
+    <Authors>AhmedV20</Authors>
     <Company>ErrorLens</Company>
     <Product>ErrorLens.ErrorHandling</Product>
-    <Description>Automatic, consistent error handling for ASP.NET Core APIs with structured JSON responses, validation error details, RFC 9457 Problem Details support, and extensive configurability via appsettings.json.</Description>
-    <PackageTags>aspnetcore;error-handling;exception;api;json;validation;problem-details;rfc9457</PackageTags>
+    <Description>Automatic, consistent error handling for ASP.NET Core APIs with structured JSON responses, validation error details, custom JSON field names, YAML configuration, RFC 9457 Problem Details support, and extensive configurability.</Description>
+    <PackageTags>aspnetcore;dotnet;error-handling;exception-handling;exception;api;rest;json;validation;model-validation;field-errors;problem-details;rfc9457;rfc7807;yaml;configuration;middleware;error-response;api-error;structured-errors;error-codes;http-status;webapi;minimal-api;dotnet8;dotnet9;dotnet10</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/AhmedV20/errorLens-errorhandling</PackageProjectUrl>
+    <PackageProjectUrl>https://ahmedv20.github.io/errorLens-errorhandling/current/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/AhmedV20/errorLens-errorhandling</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Initial release with full feature support</PackageReleaseNotes>
-    <Copyright>Copyright (c) ErrorLens 2024</Copyright>
+    <PackageReleaseNotes>v1.1.0:
+- Custom JSON field names (rename code→type, message→detail, etc.)
+- YAML configuration support via AddYamlErrorHandling()
+- OverrideModelStateValidation option for [ApiController] validation interception
+- ModelStateValidationExceptionHandler with structured fieldErrors format
+- Professional documentation with AsciiDoc
+- 175 tests (up from 142)
+
+Full changelog: https://github.com/AhmedV20/errorLens-errorhandling/blob/main/CHANGELOG.md</PackageReleaseNotes>
+    <Copyright>Copyright (c) ErrorLens 2026</Copyright>
 
     <!-- SourceLink support -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

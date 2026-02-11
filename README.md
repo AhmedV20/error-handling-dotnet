@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.svg)](https://www.nuget.org/packages/ErrorLens.ErrorHandling)
 [![Build](https://github.com/AhmedV20/errorLens-errorhandling/actions/workflows/ci.yml/badge.svg)](https://github.com/AhmedV20/errorLens-errorhandling/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![.NET 6.0+](https://img.shields.io/badge/.NET-6.0%20|%207.0%20|%208.0%20|%209.0%20|%2010.0-blue)
+![.NET 6.0+](https://img.shields.io/badge/.NET-10.0%20|%209.0%20|%208.0%20|%207.0%20|%206.0-512BD4)
 
 Automatic, consistent error handling for ASP.NET Core APIs. Transform unhandled exceptions into structured JSON responses with zero configuration — or customize everything via attributes, configuration files, and custom handlers.
 
@@ -57,6 +57,8 @@ All unhandled exceptions now return structured JSON:
     "Enabled": true,
     "HttpStatusInJsonResponse": true,
     "DefaultErrorCodeStrategy": "AllCaps",
+    "AddPathToError": true,
+    "OverrideModelStateValidation": true,
     "SearchSuperClassHierarchy": true,
     "ExceptionLogging": "WithStacktrace",
 
@@ -95,6 +97,8 @@ ErrorHandling:
   Enabled: true
   HttpStatusInJsonResponse: true
   DefaultErrorCodeStrategy: AllCaps
+  AddPathToError: true
+  OverrideModelStateValidation: true
   SearchSuperClassHierarchy: true
   ExceptionLogging: WithStacktrace
 
@@ -186,7 +190,7 @@ Register custom handlers for specialized exception types:
 ```csharp
 public class InfrastructureExceptionHandler : IApiExceptionHandler
 {
-    public int Order => 100; // Lower = higher priority
+    public int Order => 50; // Lower = higher priority (runs before built-in handlers at 100+)
 
     public bool CanHandle(Exception ex) => ex is DatabaseTimeoutException;
 
@@ -218,15 +222,15 @@ builder.Services.AddErrorResponseCustomizer<TraceIdCustomizer>();
 
 ## Validation Errors
 
-Validation exceptions automatically include field-level details:
+Validation exceptions automatically include field-level details. Enable `OverrideModelStateValidation: true` to intercept `[ApiController]` automatic validation and use ErrorLens structured format:
 
 ```json
 {
-  "code": "VALIDATION_ERROR",
+  "code": "VALIDATION_FAILED",
   "message": "Validation failed",
   "fieldErrors": [
     {
-      "code": "REQUIRED",
+      "code": "REQUIRED_NOT_NULL",
       "property": "email",
       "message": "Email is required",
       "rejectedValue": null,
@@ -244,7 +248,8 @@ Enable RFC 9457 compliant `application/problem+json` responses:
 {
   "ErrorHandling": {
     "UseProblemDetailFormat": true,
-    "ProblemDetailTypePrefix": "https://api.example.com/errors/"
+    "ProblemDetailTypePrefix": "https://api.example.com/errors/",
+    "ProblemDetailConvertToKebabCase": true
   }
 }
 ```
@@ -263,17 +268,19 @@ Response:
 
 ## Logging
 
-Control logging verbosity per HTTP status code:
+Control logging verbosity per HTTP status code or exception type:
 
 ```yaml
 ErrorHandling:
-  ExceptionLogging: WithStacktrace   # NoLogging | MessageOnly | WithStacktrace
+  ExceptionLogging: WithStacktrace   # None | MessageOnly | WithStacktrace
   LogLevels:
     4xx: Warning
     5xx: Error
     404: Debug
   FullStacktraceHttpStatuses:
     - 5xx
+  FullStacktraceClasses:
+    - MyApp.CriticalException
 ```
 
 ## Error Code Strategies
@@ -282,6 +289,22 @@ ErrorHandling:
 |----------|--------------|--------|
 | `AllCaps` (default) | `UserNotFoundException` | `USER_NOT_FOUND` |
 | `FullQualifiedName` | `UserNotFoundException` | `MyApp.Exceptions.UserNotFoundException` |
+
+## Default HTTP Status Mappings
+
+| Exception Type | HTTP Status |
+|---------------|-------------|
+| `ArgumentException` / `ArgumentNullException` | 400 Bad Request |
+| `InvalidOperationException` | 400 Bad Request |
+| `FormatException` | 400 Bad Request |
+| `OperationCanceledException` | 400 Bad Request |
+| `UnauthorizedAccessException` | 401 Unauthorized |
+| `KeyNotFoundException` | 404 Not Found |
+| `FileNotFoundException` | 404 Not Found |
+| `DirectoryNotFoundException` | 404 Not Found |
+| `TimeoutException` | 408 Request Timeout |
+| `NotImplementedException` | 501 Not Implemented |
+| All others | 500 Internal Server Error |
 
 ## Samples
 
@@ -304,14 +327,11 @@ ErrorHandling:
 - [Logging](docs/guides/logging.md)
 - [API Reference](docs/reference/api-reference.md)
 - [YAML Template](docs/errorhandling-template.yml)
+- [Changelog](CHANGELOG.md)
 
 ## 🤝 Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-<a href="https://github.com/AhmedV20/errorLens-errorhandling/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=AhmedV20/errorLens-errorhandling" />
-</a>
 
 ## License
 
