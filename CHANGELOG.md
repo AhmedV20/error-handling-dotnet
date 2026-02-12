@@ -14,6 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Localization support for error messages
 - Rate limiting integration
 
+## [1.1.1] - 2026-02-12
+
+### Fixed
+
+- **Critical Bug**: `ILoggingService` was not registered in DI container, causing exception logging to be silently disabled in v1.1.0
+  - Added `services.TryAddSingleton<ILoggingService, LoggingService>()` to `RegisterCoreServices()`
+  - Logging now works correctly with all providers (console, Seq, Serilog, etc.)
+- **Documentation**: Handler ordering table in `custom-handlers.md` and `index.adoc` now clearly marks `JsonExceptionHandler` and `TypeMismatchExceptionHandler` as opt-in (not registered by default)
+
+### Added
+
+- **Sample Project READMEs**: Comprehensive documentation for all three samples
+  - MinimalApiSample: Zero-config setup guide with curl examples
+  - FullApiSample: Custom handlers and customizers walkthrough
+  - ShowcaseSample: Feature matrix with YAML config explanation
+
 ## [1.1.0] - 2026-02-11
 
 ### Added

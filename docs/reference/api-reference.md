@@ -60,6 +60,8 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `FullStacktraceClasses` | `HashSet<string>` | `{}` |
 | `JsonFieldNames` | `JsonFieldNamesOptions` | (defaults) |
 
+> **See also:** [Configuration Guide](../guides/configuration.md)
+
 ### JsonFieldNamesOptions
 
 | Property | Type | Default |
@@ -75,6 +77,8 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `Path` | `string` | `path` |
 | `Parameter` | `string` | `parameter` |
 
+> **See also:** [JSON Field Names](../features/json-field-names.md)
+
 ### ErrorCodeStrategy
 
 | Value | Description |
@@ -89,6 +93,8 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `None` | No exception logging |
 | `MessageOnly` | Log message only |
 | `WithStacktrace` | Log full exception with stack trace |
+
+> **See also:** [Logging Guide](../guides/logging.md)
 
 ## Models
 
@@ -178,6 +184,8 @@ public interface IApiExceptionHandler
 }
 ```
 
+> **See also:** [Custom Handlers](../features/custom-handlers.md)
+
 ### IFallbackApiExceptionHandler
 
 ```csharp
@@ -195,6 +203,8 @@ public interface IApiErrorResponseCustomizer
     void Customize(ApiErrorResponse response);
 }
 ```
+
+> **See also:** [Response Customization](../features/response-customization.md)
 
 ### ILoggingFilter
 
@@ -281,4 +291,7 @@ public class ResponseErrorPropertyAttribute : Attribute
     public ResponseErrorPropertyAttribute();
     public ResponseErrorPropertyAttribute(string name);
 }
+```
+
+> **See also:** [Attributes Guide](../features/attributes.md)
 ```

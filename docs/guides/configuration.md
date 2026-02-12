@@ -120,9 +120,26 @@ FullStacktraceClasses:
 
 ## Configuration Priority
 
-Configuration is resolved in this order (highest priority first):
+Settings are resolved in this order (highest priority first):
 
-1. Inline options (`Action<ErrorHandlingOptions>`)
-2. Configuration binding (`IConfiguration`)
-3. Exception attributes (`[ResponseErrorCode]`, `[ResponseStatus]`)
-4. Default conventions (class name → ALL_CAPS)
+1. **Inline options** (`Action<ErrorHandlingOptions>` in `AddErrorHandling(options => { ... })`) — overrides everything
+2. **Configuration binding** (`appsettings.json` or `errorhandling.yml`) — merged into options
+3. **Exception attributes** (`[ResponseErrorCode]`, `[ResponseStatus]`) — checked at runtime
+4. **Default conventions** (class name → `ALL_CAPS`, built-in HTTP status mappings)
+
+### How It Works
+
+When you use both configuration binding AND inline options:
+
+```csharp
+// appsettings.json sets HttpStatusInJsonResponse = true
+// Inline option overrides it to false
+builder.Services.AddErrorHandling(options =>
+{
+    options.HttpStatusInJsonResponse = false; // Wins — inline runs AFTER binding
+});
+```
+
+Inline options run AFTER `IConfiguration` binding, so they always win when both define the same setting.
+
+When using both JSON and YAML, the last file loaded wins (standard ASP.NET Core behavior).

@@ -71,6 +71,9 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IErrorMessageMapper, ErrorMessageMapper>();
         services.TryAddSingleton<IHttpStatusMapper, HttpStatusMapper>();
 
+        // Register logging service
+        services.TryAddSingleton<ILoggingService, LoggingService>();
+
         // Register fallback handler
         services.TryAddSingleton<IFallbackApiExceptionHandler, DefaultFallbackHandler>();
 
