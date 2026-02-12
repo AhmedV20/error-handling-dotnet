@@ -553,7 +553,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>This documentation is for version 1.1.0.</p>
+<p>This documentation is for version 1.1.1.</p>
 </div>
 </div>
 </div>
@@ -2279,15 +2279,17 @@ The first handler whose <code>CanHandle()</code> returns <code>true</code> proce
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 20%;">
-<col style="width: 40%;">
-<col style="width: 40%;">
+<col style="width: 16.6666%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 16.6668%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">Order</th>
 <th class="tableblock halign-left valign-top">Handler</th>
 <th class="tableblock halign-left valign-top">Purpose</th>
+<th class="tableblock halign-left valign-top">Default?</th>
 </tr>
 </thead>
 <tbody>
@@ -2295,36 +2297,43 @@ The first handler whose <code>CanHandle()</code> returns <code>true</code> proce
 <td class="tableblock halign-left valign-top"><p class="tableblock">90</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ModelStateValidationExceptionHandler</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>[ApiController]</code> model validation (requires <code>OverrideModelStateValidation: true</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes (with config)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ValidationExceptionHandler</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DataAnnotations validation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">120</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonExceptionHandler</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>JsonException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No (opt-in)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">130</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>TypeMismatchExceptionHandler</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>FormatException</code>, <code>InvalidCastException</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No (opt-in)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">150</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>BadRequestExceptionHandler</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Bad HTTP requests</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Custom (e.g. 200)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Your handlers</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain/infrastructure specific</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Manual</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>int.MaxValue</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>DefaultFallbackHandler</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Catch-all fallback</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
 </tr>
 </tbody>
 </table>
@@ -2627,14 +2636,14 @@ The first handler whose <code>CanHandle()</code> returns <code>true</code> proce
 <h2 id="support"><a class="anchor" href="#support"></a>7. Support</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>If you have problems with the library, or you are missing a feature, feel free to create an issue on GitHub at <a href="https://github.com/AhmedV20/errorLens-errorhandling" class="bare">github.com/AhmedV20/errorLens-errorhandling</a>.</p>
+<p>If you have problems with the library, or you are missing a feature, feel free to create an issue on GitHub at <a href="https://github.com/AhmedV20/error-handling-dotnet" class="bare">github.com/AhmedV20/error-handling-dotnet</a>.</p>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-02-11 16:38:34 UTC
+Last updated 2026-02-12 23:06:41 UTC
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.3/highlight.min.js"></script>
