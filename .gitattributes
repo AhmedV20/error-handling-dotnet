@@ -1,0 +1,37 @@
+# Auto detect text files and normalize line endings to LF on checkout
+* text=auto
+
+# C# source files
+*.cs text diff=csharp eol=lf
+
+# Project files
+*.csproj text diff=xml eol=lf
+*.slnx text diff=xml eol=lf
+*.sln text diff=csharp eol=lf
+
+# Configuration files
+*.json text diff=json eol=lf
+*.yml text diff=yaml eol=lf
+*.yaml text diff=yaml eol=lf
+
+# Documentation
+*.md text diff=markdown eol=lf
+*.adoc text eol=lf
+
+# Shell scripts (LF)
+*.sh text eol=lf
+
+# PowerShell scripts (CRLF on Windows)
+*.ps1 text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+
+# NuGet packages
+*.nupkg binary
+*.snupkg binary

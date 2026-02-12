@@ -1,7 +1,7 @@
 # ErrorLens.ErrorHandling
 
 [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.svg)](https://www.nuget.org/packages/ErrorLens.ErrorHandling)
-[![Build](https://github.com/AhmedV20/errorLens-errorhandling/actions/workflows/ci.yml/badge.svg)](https://github.com/AhmedV20/errorLens-errorhandling/actions/workflows/ci.yml)
+[![Build](https://github.com/AhmedV20/error-handling-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/AhmedV20/error-handling-dotnet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![.NET 6.0+](https://img.shields.io/badge/.NET-10.0%20|%209.0%20|%208.0%20|%207.0%20|%206.0-512BD4)
 

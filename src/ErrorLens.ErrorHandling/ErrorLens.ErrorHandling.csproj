@@ -11,7 +11,7 @@
 
     <!-- Package metadata -->
     <PackageId>ErrorLens.ErrorHandling</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>AhmedV20</Authors>
     <Company>ErrorLens</Company>
     <Product>ErrorLens.ErrorHandling</Product>
@@ -20,10 +20,13 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageProjectUrl>https://ahmedv20.github.io/errorLens-errorhandling/current/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/AhmedV20/errorLens-errorhandling</RepositoryUrl>
+    <PackageProjectUrl>https://ahmedv20.github.io/error-handling-dotnet/current/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/AhmedV20/error-handling-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>v1.1.0:
+    <PackageReleaseNotes>v1.1.1:
+- Fix: Register ILoggingService in DI container (logging was not working in v1.1.0)
+
+v1.1.0:
 - Custom JSON field names (rename code→type, message→detail, etc.)
 - YAML configuration support via AddYamlErrorHandling()
 - OverrideModelStateValidation option for [ApiController] validation interception
@@ -31,7 +34,7 @@
 - Professional documentation with AsciiDoc
 - 175 tests (up from 142)
 
-Full changelog: https://github.com/AhmedV20/errorLens-errorhandling/blob/main/CHANGELOG.md</PackageReleaseNotes>
+Full changelog: https://github.com/AhmedV20/error-handling-dotnet/blob/main/CHANGELOG.md</PackageReleaseNotes>
     <Copyright>Copyright (c) ErrorLens 2026</Copyright>
 
     <!-- SourceLink support -->

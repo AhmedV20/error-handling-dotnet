@@ -1385,37 +1385,44 @@ builder.Services.AddExceptionHandler<InfrastructureExceptionHandler>();
 Handlers are executed in order of their `Order` property (lowest first).
 The first handler whose `CanHandle()` returns `true` processes the exception.
 
-[cols="1,2,2"]
+[cols="1,2,2,1"]
 |===
-|Order |Handler |Purpose
+|Order |Handler |Purpose |Default?
 
 |90
 |`ModelStateValidationExceptionHandler`
 |`[ApiController]` model validation (requires `OverrideModelStateValidation: true`)
+|Yes (with config)
 
 |100
 |`ValidationExceptionHandler`
 |DataAnnotations validation
+|Yes
 
 |120
 |`JsonExceptionHandler`
 |`JsonException`
+|No (opt-in)
 
 |130
 |`TypeMismatchExceptionHandler`
 |`FormatException`, `InvalidCastException`
+|No (opt-in)
 
 |150
 |`BadRequestExceptionHandler`
 |Bad HTTP requests
+|Yes
 
 |Custom (e.g. 200)
 |Your handlers
 |Domain/infrastructure specific
+|Manual
 
 |`int.MaxValue`
 |`DefaultFallbackHandler`
 |Catch-all fallback
+|Yes
 |===
 
 The `DefaultFallbackHandler` always runs last as the catch-all.
@@ -1551,4 +1558,4 @@ The repository includes three sample projects:
 
 == Support
 
-If you have problems with the library, or you are missing a feature, feel free to create an issue on GitHub at https://github.com/AhmedV20/errorLens-errorhandling.
+If you have problems with the library, or you are missing a feature, feel free to create an issue on GitHub at https://github.com/AhmedV20/error-handling-dotnet.

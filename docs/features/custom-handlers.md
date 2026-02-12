@@ -60,6 +60,7 @@ public class InfrastructureExceptionHandler : IApiExceptionHandler
 ## Registration
 
 ```csharp
+// ErrorLens extension method - registers custom exception handler
 builder.Services.AddExceptionHandler<InfrastructureExceptionHandler>();
 ```
 
@@ -92,15 +93,15 @@ public class PaymentExceptionHandler : AbstractApiExceptionHandler
 
 Handlers are executed in order of their `Order` property (lowest first). The first handler whose `CanHandle()` returns `true` processes the exception.
 
-| Order | Handler | Purpose |
-|-------|---------|---------|
-| 90 | ModelStateValidationExceptionHandler | `[ApiController]` model validation (requires `OverrideModelStateValidation: true`) |
-| 100 | ValidationExceptionHandler | Built-in validation |
-| 120 | JsonExceptionHandler | JSON parsing errors |
-| 130 | TypeMismatchExceptionHandler | Type conversion errors |
-| 150 | BadRequestExceptionHandler | Bad HTTP requests |
-| 200+ | Your custom handlers | Domain/infrastructure specific |
-| int.MaxValue | DefaultFallbackHandler | Catch-all fallback |
+| Order | Handler | Purpose | Default? |
+|-------|---------|---------|----------|
+| 90 | ModelStateValidationExceptionHandler | `[ApiController]` model validation (requires `OverrideModelStateValidation: true`) | Yes (with config) |
+| 100 | ValidationExceptionHandler | Built-in validation | Yes |
+| 120 | JsonExceptionHandler | JSON parsing errors | No (opt-in) |
+| 130 | TypeMismatchExceptionHandler | Type conversion errors | No (opt-in) |
+| 150 | BadRequestExceptionHandler | Bad HTTP requests | Yes |
+| 200+ | Your custom handlers | Domain/infrastructure specific | Manual |
+| int.MaxValue | DefaultFallbackHandler | Catch-all fallback | Yes |
 
 The `DefaultFallbackHandler` always runs last as the catch-all.
 

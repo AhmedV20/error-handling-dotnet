@@ -10,7 +10,7 @@ Please be respectful and constructive in all interactions. We welcome contributo
 
 ### Reporting Bugs
 
-1. Check if the bug has already been reported in [Issues](https://github.com/AhmedV20/errorLens-errorhandling/issues)
+1. Check if the bug has already been reported in [Issues](https://github.com/AhmedV20/error-handling-dotnet/issues)
 2. If not, create a new issue using the Bug Report template
 3. Include a minimal reproducible example
 
@@ -41,8 +41,8 @@ Please be respectful and constructive in all interactions. We welcome contributo
 ### Building
 
 ```bash
-git clone https://github.com/AhmedV20/errorLens-errorhandling.git
-cd errorLens-errorhandling
+git clone https://github.com/AhmedV20/error-handling-dotnet.git
+cd error-handling-dotnet
 dotnet build
 ```
 
