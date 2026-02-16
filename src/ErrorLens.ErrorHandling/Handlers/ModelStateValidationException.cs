@@ -17,6 +17,7 @@ public class ModelStateValidationException : Exception
     public ModelStateValidationException(ModelStateDictionary modelState)
         : base("Validation failed")
     {
+        ArgumentNullException.ThrowIfNull(modelState);
         ModelState = modelState;
     }
 }

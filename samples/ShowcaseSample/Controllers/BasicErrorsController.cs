@@ -81,4 +81,25 @@ public class BasicErrorsController : ControllerBase
     {
         throw new UnauthorizedAccessException("You must be logged in");
     }
+
+    /// <summary>
+    /// GET /api/basicerrors/aggregate → Unwraps single inner exception
+    /// </summary>
+    [HttpGet("aggregate")]
+    public IActionResult AggregateError()
+    {
+        throw new AggregateException(
+            new InvalidOperationException("Something went wrong inside a Task"));
+    }
+
+    /// <summary>
+    /// GET /api/basicerrors/aggregate-multi → Multiple inner exceptions → fallback handler
+    /// </summary>
+    [HttpGet("aggregate-multi")]
+    public IActionResult AggregateMultiError()
+    {
+        throw new AggregateException(
+            new InvalidOperationException("First error"),
+            new ArgumentException("Second error"));
+    }
 }

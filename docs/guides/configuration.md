@@ -52,6 +52,7 @@ A full YAML template is available at [`errorhandling-template.yml`](../errorhand
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` | Type URI prefix for Problem Details |
 | `ProblemDetailConvertToKebabCase` | `bool` | `true` | Convert error codes to kebab-case in type URI |
 | `ExceptionLogging` | `enum` | `MessageOnly` | `None`, `MessageOnly`, `WithStacktrace` |
+| `JsonFieldNames` | `JsonFieldNamesOptions` | (defaults) | Custom JSON property names for error responses |
 
 ## Dictionary Mappings
 
@@ -143,3 +144,124 @@ builder.Services.AddErrorHandling(options =>
 Inline options run AFTER `IConfiguration` binding, so they always win when both define the same setting.
 
 When using both JSON and YAML, the last file loaded wins (standard ASP.NET Core behavior).
+
+## Custom JSON Field Names
+
+Customize the property names in error responses to match your API conventions:
+
+```yaml
+ErrorHandling:
+  JsonFieldNames:
+    Code: type            # "code" → "type"
+    Message: detail       # "message" → "detail"
+    Status: statusCode    # "status" → "statusCode"
+    FieldErrors: fields   # "fieldErrors" → "fields"
+    GlobalErrors: errors  # "globalErrors" → "errors"
+    ParameterErrors: params # "parameterErrors" → "params"
+    Property: field       # "property" → "field"
+    RejectedValue: value  # "rejectedValue" → "value"
+    Path: jsonPath        # "path" → "jsonPath"
+    Parameter: paramName  # "parameter" → "paramName"
+```
+
+> **See also:** [JSON Field Names](../features/json-field-names.md)
+
+## Extending Error Handling
+
+### Custom Exception Handlers
+
+Register your own exception handlers for specialized exception types:
+
+```csharp
+builder.Services.AddApiExceptionHandler<InfrastructureExceptionHandler>();
+```
+
+> **See also:** [Custom Handlers](../features/custom-handlers.md)
+
+### Response Customizers
+
+Add global properties to all error responses:
+
+```csharp
+builder.Services.AddErrorResponseCustomizer<TraceIdCustomizer>();
+```
+
+> **See also:** [Response Customization](../features/response-customization.md)
+
+### Localization
+
+Enable error message localization using `IStringLocalizer<TResource>`:
+
+```csharp
+builder.Services.AddErrorHandlingLocalization<MySharedResource>();
+```
+
+This replaces the default no-op localizer with a bridge to ASP.NET Core's localization system. Error codes are used as resource keys for message lookup.
+
+### OpenAPI Schema Generation
+
+For .NET 9+ projects using `Microsoft.AspNetCore.OpenApi`:
+
+```csharp
+builder.Services.AddErrorHandlingOpenApi();
+```
+
+For .NET 6-8 projects using Swashbuckle:
+
+```csharp
+builder.Services.AddErrorHandlingSwashbuckle();
+```
+
+Configure which status codes get error schemas:
+
+```yaml
+ErrorHandling:
+  OpenApi:
+    DefaultStatusCodes:
+      - 400
+      - 401
+      - 404
+      - 500
+```
+
+> **See also:** [OpenAPI Integration](../features/openapi.md) | [Swashbuckle Integration](../features/swashbuckle.md)
+
+### Rate Limiting
+
+Configure rate limit error responses (.NET 7+):
+
+```yaml
+ErrorHandling:
+  RateLimiting:
+    ErrorCode: RATE_LIMIT_EXCEEDED
+    DefaultMessage: "Too many requests. Please try again later."
+    IncludeRetryAfterInBody: true
+    UseModernHeaderFormat: false
+```
+
+Wire the writer into ASP.NET Core's rate limiter:
+
+```csharp
+builder.Services.AddRateLimiter(options =>
+{
+    options.OnRejected = async (context, token) =>
+    {
+        var writer = context.HttpContext.RequestServices.GetRequiredService<IRateLimitResponseWriter>();
+        await writer.WriteRateLimitResponseAsync(context.HttpContext, context.Lease, token);
+    };
+});
+```
+
+> **See also:** [Rate Limiting](../features/rate-limiting.md)
+
+### Telemetry
+
+ErrorLens automatically emits OpenTelemetry-compatible traces when handling exceptions. No configuration is required in ErrorLens itself — just subscribe to the activity source in your OpenTelemetry setup:
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource("ErrorLens.ErrorHandling"));
+```
+
+> **See also:** [Telemetry](../features/telemetry.md)

@@ -29,50 +29,37 @@ public class ProblemDetailFactory : IProblemDetailFactory
             Instance = null // Can be set by customizers or middleware
         };
 
-        // Add field errors as extensions
+        // Add field errors as extensions (copy list to prevent shared mutable references)
         if (apiError.FieldErrors?.Count > 0)
         {
-            problemDetail.Extensions["fieldErrors"] = apiError.FieldErrors;
+            problemDetail.Extensions["fieldErrors"] = apiError.FieldErrors.ToList();
         }
 
-        // Add global errors as extensions
+        // Add global errors as extensions (copy list to prevent shared mutable references)
         if (apiError.GlobalErrors?.Count > 0)
         {
-            problemDetail.Extensions["globalErrors"] = apiError.GlobalErrors;
+            problemDetail.Extensions["globalErrors"] = apiError.GlobalErrors.ToList();
         }
 
-        // Add parameter errors as extensions
+        // Add parameter errors as extensions (copy list to prevent shared mutable references)
         if (apiError.ParameterErrors?.Count > 0)
         {
-            problemDetail.Extensions["parameterErrors"] = apiError.ParameterErrors;
+            problemDetail.Extensions["parameterErrors"] = apiError.ParameterErrors.ToList();
         }
 
-        // Add custom properties as extensions
+        // Add custom properties as extensions (skip keys already set by the library)
         if (apiError.Properties?.Count > 0)
         {
             foreach (var prop in apiError.Properties)
             {
-                problemDetail.Extensions[prop.Key] = prop.Value;
+                problemDetail.Extensions.TryAdd(prop.Key, prop.Value);
             }
         }
 
         // Add error code as extension for API compatibility
-        problemDetail.Extensions["code"] = apiError.Code;
+        problemDetail.Extensions.TryAdd("code", apiError.Code);
 
         return problemDetail;
-    }
-
-    /// <inheritdoc />
-    public ProblemDetailResponse CreateFromException(Exception exception, HttpStatusCode statusCode)
-    {
-        return new ProblemDetailResponse
-        {
-            Type = "about:blank",
-            Title = GetTitleFromStatusCode(statusCode),
-            Status = (int)statusCode,
-            Detail = exception.Message,
-            Instance = null
-        };
     }
 
     private string BuildTypeUri(string errorCode)
@@ -83,7 +70,10 @@ public class ProblemDetailFactory : IProblemDetailFactory
         }
 
         var baseUri = _options.ProblemDetailTypePrefix.TrimEnd('/');
-        return $"{baseUri}/{errorCode.ToLowerInvariant().Replace('_', '-')}";
+        var formattedCode = _options.ProblemDetailConvertToKebabCase
+            ? errorCode.ToLowerInvariant().Replace('_', '-')
+            : errorCode;
+        return $"{baseUri}/{formattedCode}";
     }
 
     private static string GetTitle(ApiErrorResponse apiError)

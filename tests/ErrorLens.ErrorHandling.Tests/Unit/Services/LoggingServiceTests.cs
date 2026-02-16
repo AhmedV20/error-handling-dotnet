@@ -45,7 +45,12 @@ public class LoggingServiceTests
 
         _service.LogException(new Exception("test"), response);
 
-        _logger.ReceivedCalls().Should().NotBeEmpty();
+        _logger.ReceivedCalls().Should().ContainSingle();
+        var call = _logger.ReceivedCalls().First();
+        // ILogger.Log<TState>(LogLevel, EventId, TState, Exception?, Func<TState,Exception?,string>)
+        var args = call.GetArguments();
+        args[0].Should().Be(LogLevel.Warning); // 400 → Warning by default
+        args[3].Should().BeNull(); // no exception object for MessageOnly
     }
 
     [Fact]
@@ -53,10 +58,16 @@ public class LoggingServiceTests
     {
         _options.ExceptionLogging = ExceptionLogging.WithStacktrace;
         var response = new ApiErrorResponse(HttpStatusCode.InternalServerError, "ERROR", "Test");
+        var exception = new Exception("test");
 
-        _service.LogException(new Exception("test"), response);
+        _service.LogException(exception, response);
 
-        _logger.ReceivedCalls().Should().NotBeEmpty();
+        _logger.ReceivedCalls().Should().ContainSingle();
+        var call = _logger.ReceivedCalls().First();
+        // ILogger.Log<TState>(LogLevel, EventId, TState, Exception?, Func<TState,Exception?,string>)
+        var args = call.GetArguments();
+        args[0].Should().Be(LogLevel.Error); // 500 → Error by default
+        args[3].Should().BeSameAs(exception); // exception object included
     }
 
     [Fact]
@@ -67,8 +78,9 @@ public class LoggingServiceTests
 
         _service.LogException(new Exception("test"), response);
 
-        // Verify log was called (exact level check is complex with NSubstitute)
-        _logger.ReceivedCalls().Should().NotBeEmpty();
+        var call = _logger.ReceivedCalls().First();
+        var args = call.GetArguments();
+        args[0].Should().Be(LogLevel.Error);
     }
 
     [Fact]
@@ -80,7 +92,9 @@ public class LoggingServiceTests
 
         _service.LogException(new Exception("test"), response);
 
-        _logger.ReceivedCalls().Should().NotBeEmpty();
+        var call = _logger.ReceivedCalls().First();
+        var args = call.GetArguments();
+        args[0].Should().Be(LogLevel.Debug);
     }
 
     [Fact]
@@ -89,10 +103,14 @@ public class LoggingServiceTests
         _options.ExceptionLogging = ExceptionLogging.MessageOnly;
         _options.FullStacktraceHttpStatuses.Add("5xx");
         var response = new ApiErrorResponse(HttpStatusCode.InternalServerError, "ERROR", "Test");
+        var exception = new Exception("test");
 
-        _service.LogException(new Exception("test"), response);
+        _service.LogException(exception, response);
 
-        _logger.ReceivedCalls().Should().NotBeEmpty();
+        var call = _logger.ReceivedCalls().First();
+        // ILogger.Log<TState>(LogLevel, EventId, TState, Exception?, Func<TState,Exception?,string>)
+        var args = call.GetArguments();
+        args[3].Should().BeSameAs(exception); // exception included due to FullStacktraceHttpStatuses
     }
 
     [Fact]

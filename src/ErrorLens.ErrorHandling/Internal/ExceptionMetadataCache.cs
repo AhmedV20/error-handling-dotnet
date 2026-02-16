@@ -72,13 +72,7 @@ internal sealed class PropertyMetadata
     public PropertyMetadata(PropertyInfo property, ResponseErrorPropertyAttribute attribute)
     {
         Property = property;
-        Name = attribute.Name ?? ToCamelCase(property.Name);
+        Name = attribute.Name ?? StringUtils.ToCamelCase(property.Name);
         IncludeIfNull = attribute.IncludeIfNull;
-    }
-
-    private static string ToCamelCase(string name)
-    {
-        if (string.IsNullOrEmpty(name)) return name;
-        return char.ToLowerInvariant(name[0]) + name[1..];
     }
 }

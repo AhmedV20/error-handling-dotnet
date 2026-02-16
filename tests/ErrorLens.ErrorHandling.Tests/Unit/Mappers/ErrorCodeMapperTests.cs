@@ -92,4 +92,34 @@ public class ErrorCodeMapperTests
 
         code.Should().Be("REQUIRED_NOT_NULL");
     }
+
+    // --- Acronym regex tests (T048) ---
+
+    [Fact]
+    public void GetErrorCode_AcronymHTTP_HandledCorrectly()
+    {
+        var code = _mapper.GetErrorCode(new HttpConnectionException());
+
+        code.Should().Be("HTTP_CONNECTION");
+    }
+
+    [Fact]
+    public void GetErrorCode_AcronymIO_HandledCorrectly()
+    {
+        var code = _mapper.GetErrorCode(new IOErrorException());
+
+        code.Should().Be("IO_ERROR");
+    }
+
+    [Fact]
+    public void GetErrorCode_TrailingDigits_PreservedCorrectly()
+    {
+        var code = _mapper.GetErrorCode(new Error404Exception());
+
+        code.Should().Be("ERROR404");
+    }
+
+    private class HttpConnectionException : Exception { }
+    private class IOErrorException : Exception { }
+    private class Error404Exception : Exception { }
 }

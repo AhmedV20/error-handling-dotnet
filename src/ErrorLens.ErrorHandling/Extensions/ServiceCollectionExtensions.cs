@@ -1,8 +1,10 @@
 using ErrorLens.ErrorHandling.Configuration;
 using ErrorLens.ErrorHandling.Handlers;
 using ErrorLens.ErrorHandling.Integration;
+using ErrorLens.ErrorHandling.Localization;
 using ErrorLens.ErrorHandling.Mappers;
 using ErrorLens.ErrorHandling.ProblemDetails;
+using ErrorLens.ErrorHandling.RateLimiting;
 using ErrorLens.ErrorHandling.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -66,6 +68,10 @@ public static class ServiceCollectionExtensions
 
     private static IServiceCollection RegisterCoreServices(IServiceCollection services)
     {
+        // Register options validation
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IValidateOptions<ErrorHandlingOptions>, ErrorHandlingOptionsValidator>());
+
         // Register mappers
         services.TryAddSingleton<IErrorCodeMapper, ErrorCodeMapper>();
         services.TryAddSingleton<IErrorMessageMapper, ErrorMessageMapper>();
@@ -74,13 +80,19 @@ public static class ServiceCollectionExtensions
         // Register logging service
         services.TryAddSingleton<ILoggingService, LoggingService>();
 
+        // Register localization (no-op by default — replaced when user calls AddErrorHandlingLocalization)
+        services.TryAddSingleton<IErrorMessageLocalizer, NoOpErrorMessageLocalizer>();
+
         // Register fallback handler
         services.TryAddSingleton<IFallbackApiExceptionHandler, DefaultFallbackHandler>();
 
-        // Register built-in exception handlers
-        services.AddSingleton<IApiExceptionHandler, ModelStateValidationExceptionHandler>();
-        services.AddSingleton<IApiExceptionHandler, ValidationExceptionHandler>();
-        services.AddSingleton<IApiExceptionHandler, BadRequestExceptionHandler>();
+        // Register built-in exception handlers (idempotent via TryAddEnumerable)
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiExceptionHandler, ModelStateValidationExceptionHandler>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiExceptionHandler, ValidationExceptionHandler>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiExceptionHandler, JsonExceptionHandler>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiExceptionHandler, TypeMismatchExceptionHandler>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiExceptionHandler, BadRequestExceptionHandler>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiExceptionHandler, AggregateExceptionHandler>());
 
         // Conditionally intercept [ApiController] automatic model validation
         // Only when OverrideModelStateValidation is true
@@ -102,8 +114,16 @@ public static class ServiceCollectionExtensions
         // Register Problem Details factory
         services.TryAddSingleton<IProblemDetailFactory, ProblemDetailFactory>();
 
+        // Register shared response writer (caches JsonSerializerOptions)
+        services.TryAddSingleton<ErrorResponseWriter>();
+
         // Register middleware
         services.TryAddSingleton<ErrorHandlingMiddleware>();
+
+#if NET7_0_OR_GREATER
+        // Register rate limit response writer for .NET 7+
+        services.TryAddSingleton<IRateLimitResponseWriter, DefaultRateLimitResponseWriter>();
+#endif
 
 #if NET8_0_OR_GREATER
         // Register IExceptionHandler for .NET 8+
@@ -114,15 +134,15 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Adds a custom exception handler.
+    /// Adds a custom exception handler for the ErrorLens error handling pipeline.
     /// </summary>
     /// <typeparam name="THandler">The handler type.</typeparam>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddExceptionHandler<THandler>(this IServiceCollection services)
+    public static IServiceCollection AddApiExceptionHandler<THandler>(this IServiceCollection services)
         where THandler : class, IApiExceptionHandler
     {
-        services.AddSingleton<IApiExceptionHandler, THandler>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiExceptionHandler, THandler>());
         return services;
     }
 
@@ -135,7 +155,25 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddErrorResponseCustomizer<TCustomizer>(this IServiceCollection services)
         where TCustomizer : class, IApiErrorResponseCustomizer
     {
-        services.AddSingleton<IApiErrorResponseCustomizer, TCustomizer>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiErrorResponseCustomizer, TCustomizer>());
+        return services;
+    }
+
+    /// <summary>
+    /// Opts into localization for error messages using <see cref="Microsoft.Extensions.Localization.IStringLocalizer{TResource}"/>.
+    /// Replaces the default <see cref="NoOpErrorMessageLocalizer"/> with <see cref="StringLocalizerErrorMessageLocalizer{TResource}"/>.
+    /// </summary>
+    /// <typeparam name="TResource">The resource type for <see cref="Microsoft.Extensions.Localization.IStringLocalizer{T}"/> resolution.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddErrorHandlingLocalization<TResource>(this IServiceCollection services)
+        where TResource : class
+    {
+        services.AddLocalization();
+
+        // Replace the default NoOp registration with the StringLocalizer bridge
+        services.Replace(ServiceDescriptor.Singleton<IErrorMessageLocalizer, StringLocalizerErrorMessageLocalizer<TResource>>());
+
         return services;
     }
 }

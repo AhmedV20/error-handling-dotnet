@@ -77,4 +77,38 @@ public class ApiFieldErrorTests
 
         doc.RootElement.TryGetProperty("path", out _).Should().BeFalse();
     }
+
+    // --- Null guard tests (T029) ---
+
+    [Fact]
+    public void Constructor_WithNullCode_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiFieldError(null!, "email", "Email is required");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("code");
+    }
+
+    [Fact]
+    public void Constructor_WithNullProperty_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiFieldError("REQUIRED", null!, "Email is required");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("property");
+    }
+
+    [Fact]
+    public void Constructor_Full_WithNullCode_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiFieldError(null!, "email", "Email is required", "bad@", "email");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("code");
+    }
+
+    [Fact]
+    public void Constructor_Full_WithNullProperty_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiFieldError("REQUIRED", null!, "Email is required", "bad@", "email");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("property");
+    }
 }

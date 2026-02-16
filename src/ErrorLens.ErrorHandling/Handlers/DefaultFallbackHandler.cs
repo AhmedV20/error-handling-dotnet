@@ -39,6 +39,12 @@ public class DefaultFallbackHandler : IFallbackApiExceptionHandler
         var message = _errorMessageMapper.GetErrorMessage(exception);
         var status = metadata.StatusCode ?? _httpStatusMapper.GetHttpStatus(exception);
 
+        // For 5xx errors, use safe generic message to prevent information disclosure
+        if ((int)status >= 500)
+        {
+            message = "An unexpected error occurred";
+        }
+
         var response = new ApiErrorResponse(status, code, message);
 
         // Add properties marked with [ResponseErrorProperty]

@@ -14,23 +14,13 @@ public class ApiErrorResponseConverter : JsonConverter<ApiErrorResponse>
 
     public ApiErrorResponseConverter(JsonFieldNamesOptions fieldNames)
     {
+        ArgumentNullException.ThrowIfNull(fieldNames);
         _fieldNames = fieldNames;
     }
 
     public override ApiErrorResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        // Deserialization uses default behavior — only Write is customized
-        using var doc = JsonDocument.ParseValue(ref reader);
-        var root = doc.RootElement;
-
-        var code = root.TryGetProperty(_fieldNames.Code, out var codeProp)
-            ? codeProp.GetString() ?? ""
-            : "";
-        var message = root.TryGetProperty(_fieldNames.Message, out var msgProp)
-            ? msgProp.GetString()
-            : null;
-
-        return new ApiErrorResponse(code, message);
+        throw new NotSupportedException("Deserialization of ApiErrorResponse is not supported. This converter is write-only.");
     }
 
     public override void Write(Utf8JsonWriter writer, ApiErrorResponse value, JsonSerializerOptions options)
@@ -56,7 +46,7 @@ public class ApiErrorResponseConverter : JsonConverter<ApiErrorResponse>
         if (value.FieldErrors is { Count: > 0 })
         {
             writer.WritePropertyName(_fieldNames.FieldErrors);
-            WriteFieldErrors(writer, value.FieldErrors);
+            WriteFieldErrors(writer, value.FieldErrors, options);
         }
 
         // Global errors (omit if null)
@@ -70,23 +60,32 @@ public class ApiErrorResponseConverter : JsonConverter<ApiErrorResponse>
         if (value.ParameterErrors is { Count: > 0 })
         {
             writer.WritePropertyName(_fieldNames.ParameterErrors);
-            WriteParameterErrors(writer, value.ParameterErrors);
+            WriteParameterErrors(writer, value.ParameterErrors, options);
         }
 
-        // Extension data / custom properties
+        // Extension data / custom properties (filter keys that collide with built-in fields)
         if (value.Properties is { Count: > 0 })
         {
+            var builtInNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                _fieldNames.Code, _fieldNames.Message, _fieldNames.Status,
+                _fieldNames.FieldErrors, _fieldNames.GlobalErrors, _fieldNames.ParameterErrors
+            };
+
             foreach (var prop in value.Properties)
             {
-                writer.WritePropertyName(prop.Key);
-                JsonSerializer.Serialize(writer, prop.Value, options);
+                if (!builtInNames.Contains(prop.Key))
+                {
+                    writer.WritePropertyName(prop.Key);
+                    JsonSerializer.Serialize(writer, prop.Value, options);
+                }
             }
         }
 
         writer.WriteEndObject();
     }
 
-    private void WriteFieldErrors(Utf8JsonWriter writer, List<ApiFieldError> fieldErrors)
+    private void WriteFieldErrors(Utf8JsonWriter writer, List<ApiFieldError> fieldErrors, JsonSerializerOptions options)
     {
         writer.WriteStartArray();
         foreach (var error in fieldErrors)
@@ -99,7 +98,7 @@ public class ApiErrorResponseConverter : JsonConverter<ApiErrorResponse>
             if (error.RejectedValue != null)
             {
                 writer.WritePropertyName(_fieldNames.RejectedValue);
-                JsonSerializer.Serialize(writer, error.RejectedValue);
+                JsonSerializer.Serialize(writer, error.RejectedValue, options);
             }
 
             if (error.Path != null)
@@ -125,7 +124,7 @@ public class ApiErrorResponseConverter : JsonConverter<ApiErrorResponse>
         writer.WriteEndArray();
     }
 
-    private void WriteParameterErrors(Utf8JsonWriter writer, List<ApiParameterError> parameterErrors)
+    private void WriteParameterErrors(Utf8JsonWriter writer, List<ApiParameterError> parameterErrors, JsonSerializerOptions options)
     {
         writer.WriteStartArray();
         foreach (var error in parameterErrors)
@@ -138,7 +137,7 @@ public class ApiErrorResponseConverter : JsonConverter<ApiErrorResponse>
             if (error.RejectedValue != null)
             {
                 writer.WritePropertyName(_fieldNames.RejectedValue);
-                JsonSerializer.Serialize(writer, error.RejectedValue);
+                JsonSerializer.Serialize(writer, error.RejectedValue, options);
             }
 
             writer.WriteEndObject();

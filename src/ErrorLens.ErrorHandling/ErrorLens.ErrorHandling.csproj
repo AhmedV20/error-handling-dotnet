@@ -11,7 +11,7 @@
 
     <!-- Package metadata -->
     <PackageId>ErrorLens.ErrorHandling</PackageId>
-    <Version>1.1.1</Version>
+    <Version>1.3.0</Version>
     <Authors>AhmedV20</Authors>
     <Company>ErrorLens</Company>
     <Product>ErrorLens.ErrorHandling</Product>
@@ -23,7 +23,17 @@
     <PackageProjectUrl>https://ahmedv20.github.io/error-handling-dotnet/current/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/AhmedV20/error-handling-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>v1.1.1:
+    <PackageReleaseNotes>v1.3.0:
+- OpenTelemetry distributed tracing via System.Diagnostics.Activity
+- Localization support with IErrorMessageLocalizer and IStringLocalizer bridge
+- New package: ErrorLens.ErrorHandling.OpenApi (.NET 9+ OpenAPI integration)
+- New package: ErrorLens.ErrorHandling.Swashbuckle (Swagger integration for .NET 6-8)
+- Rate limiting integration with IRateLimitResponseWriter
+- AggregateException handler
+- Options validation at startup
+- Idempotent DI registration for custom handlers and customizers
+
+v1.1.1:
 - Fix: Register ILoggingService in DI container (logging was not working in v1.1.0)
 
 v1.1.0:
@@ -45,6 +55,12 @@ Full changelog: https://github.com/AhmedV20/error-handling-dotnet/blob/main/CHAN
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="ErrorLens.ErrorHandling.Tests" />
+    <InternalsVisibleTo Include="ErrorLens.ErrorHandling.Swashbuckle" />
+    <InternalsVisibleTo Include="ErrorLens.ErrorHandling.OpenApi" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <None Include="..\..\icon.png" Pack="true" PackagePath="\" Condition="Exists('..\..\icon.png')" />
   </ItemGroup>
@@ -56,7 +72,10 @@ Full changelog: https://github.com/AhmedV20/error-handling-dotnet/blob/main/CHAN
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.OpenApi" Version="1.2.3" />
     <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
+    <PackageReference Include="System.Threading.RateLimiting" Version="8.0.0" Condition="'$(TargetFramework)' != 'net6.0'" />
   </ItemGroup>
 
 </Project>

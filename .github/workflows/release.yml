@@ -88,7 +88,10 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Pack with release version
-        run: dotnet pack src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj --configuration Release --output ./artifacts /p:Version=${{ github.event.release.tag_name }}
+        run: |
+          dotnet pack src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj --configuration Release --output ./artifacts /p:Version=${{ github.event.release.tag_name }}
+          dotnet pack src/ErrorLens.ErrorHandling.OpenApi/ErrorLens.ErrorHandling.OpenApi.csproj --configuration Release --output ./artifacts /p:Version=${{ github.event.release.tag_name }}
+          dotnet pack src/ErrorLens.ErrorHandling.Swashbuckle/ErrorLens.ErrorHandling.Swashbuckle.csproj --configuration Release --output ./artifacts /p:Version=${{ github.event.release.tag_name }}
 
       - name: Display package info
         run: |
@@ -104,8 +107,10 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## 🚀 Release Published" >> $GITHUB_STEP_SUMMARY
+          echo "## Release Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **NuGet:** https://www.nuget.org/packages/ErrorLens.ErrorHandling/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ErrorLens.ErrorHandling:** https://www.nuget.org/packages/ErrorLens.ErrorHandling/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ErrorLens.ErrorHandling.OpenApi:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ErrorLens.ErrorHandling.Swashbuckle:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **GitHub Packages:** Published to ${{ github.repository_owner }} registry" >> $GITHUB_STEP_SUMMARY

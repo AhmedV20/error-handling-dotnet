@@ -101,4 +101,27 @@ public class HttpStatusMapperTests
 
         status.Should().Be(HttpStatusCode.NotImplemented);
     }
+
+    // --- OperationCanceledException → 499 test (T049) ---
+
+    [Fact]
+    public void GetHttpStatus_OperationCanceledException_Returns499()
+    {
+        var exception = new OperationCanceledException("cancelled");
+
+        var status = _mapper.GetHttpStatus(exception);
+
+        status.Should().Be((HttpStatusCode)499);
+    }
+
+    [Fact]
+    public void GetHttpStatus_TaskCanceledException_Returns499()
+    {
+        var exception = new TaskCanceledException("cancelled");
+
+        var status = _mapper.GetHttpStatus(exception);
+
+        // TaskCanceledException extends OperationCanceledException
+        status.Should().Be((HttpStatusCode)499);
+    }
 }

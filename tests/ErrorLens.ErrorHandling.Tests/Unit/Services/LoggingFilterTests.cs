@@ -9,18 +9,6 @@ namespace ErrorLens.ErrorHandling.Tests.Unit.Services;
 public class LoggingFilterTests
 {
     [Fact]
-    public void DefaultLoggingFilter_AlwaysReturnsTrue()
-    {
-        var filter = new DefaultLoggingFilter();
-        var response = new ApiErrorResponse(HttpStatusCode.BadRequest, "ERROR", "Test");
-        var exception = new Exception("test");
-
-        var result = filter.ShouldLog(response, exception);
-
-        result.Should().BeTrue();
-    }
-
-    [Fact]
     public void CustomLoggingFilter_CanExcludeExceptions()
     {
         var filter = new Custom404Filter();

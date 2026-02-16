@@ -21,6 +21,7 @@ public class ApiGlobalError
 
     public ApiGlobalError(string code, string message)
     {
+        ArgumentNullException.ThrowIfNull(code);
         Code = code;
         Message = message;
     }

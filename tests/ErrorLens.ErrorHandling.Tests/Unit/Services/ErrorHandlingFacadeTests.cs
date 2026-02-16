@@ -168,4 +168,34 @@ public class ErrorHandlingFacadeTests
 
         response.Code.Should().Be("HIGH_PRIORITY");
     }
+
+    // --- Safety-net test (T038) ---
+
+    [Fact]
+    public void HandleException_HandlerThrows_ReturnsSafe500Response()
+    {
+        var brokenHandler = Substitute.For<IApiExceptionHandler>();
+        brokenHandler.CanHandle(Arg.Any<Exception>()).Returns(true);
+        brokenHandler.Handle(Arg.Any<Exception>()).Returns(_ => throw new InvalidOperationException("Handler exploded"));
+        brokenHandler.Order.Returns(100);
+
+        var optionsWrapper = Substitute.For<IOptions<ErrorHandlingOptions>>();
+        optionsWrapper.Value.Returns(_options);
+
+        var facade = new ErrorHandlingFacade(
+            new[] { brokenHandler },
+            _fallbackHandler,
+            Enumerable.Empty<IApiErrorResponseCustomizer>(),
+            optionsWrapper,
+            _logger);
+
+        var response = facade.HandleException(new Exception("original error"));
+
+        response.Code.Should().Be("INTERNAL_SERVER_ERROR");
+        response.Message.Should().Be("An unexpected error occurred");
+        response.HttpStatusCode.Should().Be(HttpStatusCode.InternalServerError);
+
+        // Both exceptions should be logged
+        _logger.ReceivedCalls().Should().HaveCountGreaterOrEqualTo(2);
+    }
 }

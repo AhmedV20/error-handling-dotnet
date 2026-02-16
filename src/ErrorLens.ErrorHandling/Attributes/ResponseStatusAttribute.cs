@@ -28,6 +28,8 @@ public class ResponseStatusAttribute : Attribute
     /// <param name="statusCode">The HTTP status code as integer.</param>
     public ResponseStatusAttribute(int statusCode)
     {
+        if (statusCode < 100 || statusCode > 599)
+            throw new ArgumentOutOfRangeException(nameof(statusCode), statusCode, "HTTP status code must be between 100 and 599.");
         StatusCode = (HttpStatusCode)statusCode;
     }
 }

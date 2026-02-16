@@ -15,6 +15,7 @@ public static class DefaultErrorCodes
     public const string NotFound = "NOT_FOUND";
     public const string MethodNotAllowed = "METHOD_NOT_ALLOWED";
     public const string BadRequest = "BAD_REQUEST";
+    public const string ClientClosed = "CLIENT_CLOSED";
 
     // Validation-specific codes
     public const string RequiredNotNull = "REQUIRED_NOT_NULL";
@@ -29,4 +30,7 @@ public static class DefaultErrorCodes
     public const string InvalidLength = "INVALID_LENGTH";
     public const string InvalidMin = "VALUE_TOO_LOW";
     public const string InvalidMax = "VALUE_TOO_HIGH";
+
+    // Rate limiting
+    public const string RateLimitExceeded = "RATE_LIMIT_EXCEEDED";
 }

@@ -83,7 +83,10 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Pack
-        run: dotnet pack src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj --configuration Release --output ./artifacts
+        run: |
+          dotnet pack src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj --configuration Release --output ./artifacts
+          dotnet pack src/ErrorLens.ErrorHandling.OpenApi/ErrorLens.ErrorHandling.OpenApi.csproj --configuration Release --output ./artifacts
+          dotnet pack src/ErrorLens.ErrorHandling.Swashbuckle/ErrorLens.ErrorHandling.Swashbuckle.csproj --configuration Release --output ./artifacts
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

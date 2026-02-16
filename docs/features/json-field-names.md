@@ -18,7 +18,7 @@ ErrorHandling:
     Property: field
     RejectedValue: value
     Path: jsonPath
-    Parameter: paramName
+    Parameter: param
 ```
 
 ### JSON
@@ -63,7 +63,7 @@ builder.Services.AddErrorHandling(options =>
 
 | Option | Default | Used In | Description |
 |--------|---------|---------|-------------|
-| `Property` | `property` | Field errors | Property name |
+| `Property` | `property` | Field errors | The property name that failed validation (e.g., "email", "userId") |
 | `RejectedValue` | `rejectedValue` | Field/parameter errors | Rejected value |
 | `Path` | `path` | Field errors | Property path |
 | `Parameter` | `parameter` | Parameter errors | Parameter name |

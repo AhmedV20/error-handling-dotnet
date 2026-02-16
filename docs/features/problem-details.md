@@ -46,7 +46,7 @@ When enabled, responses use `application/problem+json` content type:
 | `title` | Required | Short human-readable summary (from HTTP status) |
 | `status` | Required | HTTP status code |
 | `detail` | Optional | Human-readable explanation (exception message) |
-| `instance` | Optional | URI reference for the specific occurrence (request path) |
+| `instance` | Optional | URI reference for the specific occurrence (populated from request path) |
 | `code` | Extension | Original error code from ErrorLens |
 
 ## Type URI Generation
@@ -56,6 +56,8 @@ The `type` field is generated from the error code:
 1. Start with `ProblemDetailTypePrefix` (default: `https://example.com/errors/`)
 2. Convert error code to kebab-case (if `ProblemDetailConvertToKebabCase` is true)
 3. Append to prefix
+
+**Fallback behavior**: If `ProblemDetailTypePrefix` is `null` or empty, the `type` field defaults to `"about:blank"` (as specified by RFC 9457 for problems without a specific type URI).
 
 | Error Code | Type URI |
 |-----------|----------|

@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'docs/**'
+      - 'docs/site/**'
       - 'src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
@@ -22,15 +22,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          ruby-version: '3.2'
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: docs/site/package-lock.json
 
-      - name: Install Asciidoctor
-        run: |
-          gem install asciidoctor
-          gem install asciidoctor-rouge
+      - name: Install dependencies
+        working-directory: docs/site
+        run: npm ci
 
       - name: Extract version from csproj
         id: version
@@ -39,38 +40,20 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Detected version: ${VERSION}"
 
-      - name: Generate HTML documentation
-        run: |
-          mkdir -p build/generated-docs
-          asciidoctor \
-            -b html5 \
-            -a project-version=${{ steps.version.outputs.version }} \
-            -a source-highlighter=highlight.js \
-            -a icons=font \
-            -a toc=left \
-            -a toclevels=4 \
-            -a sectanchors \
-            -a sectnums \
-            -D build/generated-docs \
-            docs/index.adoc
-
-      - name: Copy additional assets
-        run: |
-          # Copy YAML template
-          if [ -f docs/errorhandling-template.yml ]; then
-            cp docs/errorhandling-template.yml build/generated-docs/
-          fi
+      - name: Build VitePress site
+        working-directory: docs/site
+        run: npm run build
 
       - name: Deploy to GitHub Pages (current)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/generated-docs
+          publish_dir: ./docs/site/.vitepress/dist
           destination_dir: current
 
       - name: Deploy to GitHub Pages (versioned)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/generated-docs
+          publish_dir: ./docs/site/.vitepress/dist
           destination_dir: ${{ steps.version.outputs.version }}

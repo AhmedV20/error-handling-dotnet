@@ -38,4 +38,14 @@ public class ApiGlobalErrorTests
 
         doc.RootElement.EnumerateObject().Count().Should().Be(2);
     }
+
+    // --- Null guard tests (T030) ---
+
+    [Fact]
+    public void Constructor_WithNullCode_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiGlobalError(null!, "Message");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("code");
+    }
 }
