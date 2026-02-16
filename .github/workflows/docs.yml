@@ -40,9 +40,9 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Detected version: ${VERSION}"
 
-      - name: Build VitePress site
+      - name: Build VitePress site (current)
         working-directory: docs/site
-        run: npm run build
+        run: npm run build -- --base /error-handling-dotnet/current/
 
       - name: Deploy to GitHub Pages (current)
         uses: peaceiris/actions-gh-pages@v3
@@ -50,6 +50,10 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/site/.vitepress/dist
           destination_dir: current
+
+      - name: Build VitePress site (versioned)
+        working-directory: docs/site
+        run: npm run build -- --base /error-handling-dotnet/${{ steps.version.outputs.version }}/
 
       - name: Deploy to GitHub Pages (versioned)
         uses: peaceiris/actions-gh-pages@v3

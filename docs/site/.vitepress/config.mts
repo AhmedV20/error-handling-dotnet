@@ -3,14 +3,14 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'ErrorLens.ErrorHandling',
   description: 'Consistent, structured error responses for ASP.NET Core REST APIs',
-  base: '/error-handling-dotnet/',
+  base: '/error-handling-dotnet/current/',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/png', href: '/error-handling-dotnet/icon.png' }]
+    ['link', { rel: 'icon', type: 'image/png', href: '/error-handling-dotnet/current/icon.png' }]
   ],
 
   themeConfig: {
-    logo: '/icon.png',
+    logo: '/error-handling-dotnet/current/icon.png',
 
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
