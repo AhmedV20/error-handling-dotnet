@@ -23,7 +23,22 @@ Response:
 }
 ```
 
-Without the attribute, the code would be auto-generated as `USER_NOT_FOUND` (from `AllCaps` strategy). Use the attribute when you want explicit control or when the auto-generated code doesn't match your requirements.
+Without the attribute, the code would be auto-generated using the configured `DefaultErrorCodeStrategy`:
+
+- **`AllCaps`** (default): `UserNotFoundException` → `USER_NOT_FOUND`
+- **`FullQualifiedName`**: `UserNotFoundException` → `MyApp.Exceptions.UserNotFoundException`
+
+Configure the strategy via `ErrorHandlingOptions.DefaultErrorCodeStrategy` or in `appsettings.json`:
+
+```json
+{
+  "ErrorHandling": {
+    "DefaultErrorCodeStrategy": "AllCaps"
+  }
+}
+```
+
+Use the attribute when you want explicit control or when the auto-generated code doesn't match your requirements.
 
 ## ResponseStatus
 

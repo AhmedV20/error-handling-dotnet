@@ -10,14 +10,11 @@ namespace ErrorLens.ErrorHandling.Mappers;
 public class HttpStatusMapper : IHttpStatusMapper
 {
     private readonly ErrorHandlingOptions _options;
-    private readonly IHttpStatusFromExceptionMapper? _exceptionMapper;
 
     public HttpStatusMapper(
-        IOptions<ErrorHandlingOptions> options,
-        IHttpStatusFromExceptionMapper? exceptionMapper = null)
+        IOptions<ErrorHandlingOptions> options)
     {
         _options = options.Value;
-        _exceptionMapper = exceptionMapper;
     }
 
     /// <inheritdoc />
@@ -29,12 +26,6 @@ public class HttpStatusMapper : IHttpStatusMapper
     /// <inheritdoc />
     public HttpStatusCode GetHttpStatus(Exception exception, HttpStatusCode defaultStatus)
     {
-        // First, try to extract status from exception instance (attributes, properties)
-        if (_exceptionMapper?.TryGetHttpStatus(exception, out var extractedStatus) == true)
-        {
-            return extractedStatus;
-        }
-
         var exceptionType = exception.GetType();
         var typeName = exceptionType.FullName ?? exceptionType.Name;
 
@@ -69,7 +60,7 @@ public class HttpStatusMapper : IHttpStatusMapper
             UnauthorizedAccessException => HttpStatusCode.Unauthorized,
             NotImplementedException => HttpStatusCode.NotImplemented,
             TimeoutException => HttpStatusCode.RequestTimeout,
-            OperationCanceledException => HttpStatusCode.BadRequest,
+            OperationCanceledException => (HttpStatusCode)499,
             KeyNotFoundException => HttpStatusCode.NotFound,
             FileNotFoundException => HttpStatusCode.NotFound,
             DirectoryNotFoundException => HttpStatusCode.NotFound,

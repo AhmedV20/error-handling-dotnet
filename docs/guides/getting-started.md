@@ -88,7 +88,7 @@ By default, the exception class name is converted to `ALL_CAPS` format:
 | `InvalidOperationException` | 400 Bad Request |
 | `ArgumentException` / `ArgumentNullException` | 400 Bad Request |
 | `FormatException` | 400 Bad Request |
-| `OperationCanceledException` | 400 Bad Request |
+| `OperationCanceledException` | 499 Client Closed Request |
 | `UnauthorizedAccessException` | 401 Unauthorized |
 | `KeyNotFoundException` / `FileNotFoundException` | 404 Not Found |
 | `DirectoryNotFoundException` | 404 Not Found |

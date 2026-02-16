@@ -10,17 +10,18 @@ public static class ConfigurationBuilderExtensions
 {
     /// <summary>
     /// Adds a YAML configuration file for error handling settings.
+    /// Note: Configuration changes require an application restart to take effect.
     /// </summary>
     /// <param name="builder">The configuration builder.</param>
     /// <param name="path">Path to the YAML file. Default: "errorhandling.yml"</param>
     /// <param name="optional">Whether the file is optional. Default: true</param>
-    /// <param name="reloadOnChange">Whether to reload on file changes. Default: true</param>
+    /// <param name="reloadOnChange">Whether to reload on file changes. Default: false (restart required)</param>
     /// <returns>The configuration builder for chaining.</returns>
     public static IConfigurationBuilder AddYamlErrorHandling(
         this IConfigurationBuilder builder,
         string path = "errorhandling.yml",
         bool optional = true,
-        bool reloadOnChange = true)
+        bool reloadOnChange = false)
     {
         return builder.AddYamlFile(path, optional, reloadOnChange);
     }

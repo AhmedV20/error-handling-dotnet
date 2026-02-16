@@ -63,4 +63,38 @@ public class ApiParameterErrorTests
 
         doc.RootElement.GetProperty("rejectedValue").GetInt32().Should().Be(-1);
     }
+
+    // --- Null guard tests (T030) ---
+
+    [Fact]
+    public void Constructor_WithNullCode_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiParameterError(null!, "id", "Id is required");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("code");
+    }
+
+    [Fact]
+    public void Constructor_WithNullParameter_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiParameterError("REQUIRED", null!, "Id is required");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("parameter");
+    }
+
+    [Fact]
+    public void Constructor_Full_WithNullCode_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiParameterError(null!, "id", "Id is required", "abc");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("code");
+    }
+
+    [Fact]
+    public void Constructor_Full_WithNullParameter_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiParameterError("REQUIRED", null!, "Id is required", "abc");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("parameter");
+    }
 }

@@ -15,13 +15,16 @@ services.AddErrorHandling(options => { ... });
 services.AddErrorHandling(configuration);
 
 // Register custom exception handler
-services.AddExceptionHandler<THandler>();
+services.AddApiExceptionHandler<THandler>();
 
 // Register response customizer
 services.AddErrorResponseCustomizer<TCustomizer>();
+
+// Enable error message localization using IStringLocalizer<TResource>
+services.AddErrorHandlingLocalization<TResource>();
 ```
 
-### ApplicationBuilderExtensions
+### Application Builder Extensions
 
 ```csharp
 // Add error handling middleware
@@ -59,6 +62,8 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `FullStacktraceHttpStatuses` | `HashSet<string>` | `{}` |
 | `FullStacktraceClasses` | `HashSet<string>` | `{}` |
 | `JsonFieldNames` | `JsonFieldNamesOptions` | (defaults) |
+| `RateLimiting` | `RateLimitingOptions` | (defaults) |
+| `OpenApi` | `OpenApiOptions` | (defaults) |
 
 > **See also:** [Configuration Guide](../guides/configuration.md)
 
@@ -78,6 +83,8 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `Parameter` | `string` | `parameter` |
 
 > **See also:** [JSON Field Names](../features/json-field-names.md)
+
+**Startup Validation**: All `JsonFieldNames` properties are validated at application startup via `ErrorHandlingOptionsValidator`. Null or empty values are rejected with clear error messages, and duplicate field names are detected. This fails-fast behavior prevents misconfiguration from causing runtime errors.
 
 ### ErrorCodeStrategy
 
@@ -251,7 +258,6 @@ public interface IHttpStatusMapper
 public interface IProblemDetailFactory
 {
     ProblemDetailResponse CreateFromApiError(ApiErrorResponse apiError);
-    ProblemDetailResponse CreateFromException(Exception exception, HttpStatusCode statusCode);
 }
 ```
 
@@ -260,7 +266,7 @@ public interface IProblemDetailFactory
 ### ResponseErrorCodeAttribute
 
 ```csharp
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public class ResponseErrorCodeAttribute : Attribute
 {
     public string Code { get; }
@@ -271,7 +277,7 @@ public class ResponseErrorCodeAttribute : Attribute
 ### ResponseStatusAttribute
 
 ```csharp
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public class ResponseStatusAttribute : Attribute
 {
     public HttpStatusCode StatusCode { get; }
@@ -283,7 +289,7 @@ public class ResponseStatusAttribute : Attribute
 ### ResponseErrorPropertyAttribute
 
 ```csharp
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Method, Inherited = false)]
+[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
 public class ResponseErrorPropertyAttribute : Attribute
 {
     public string? Name { get; set; }
@@ -294,4 +300,79 @@ public class ResponseErrorPropertyAttribute : Attribute
 ```
 
 > **See also:** [Attributes Guide](../features/attributes.md)
+
+### IErrorMessageLocalizer
+
+```csharp
+public interface IErrorMessageLocalizer
+{
+    string? Localize(string errorCode, string? defaultMessage);
+    string? LocalizeFieldError(string errorCode, string fieldName, string? defaultMessage);
+}
+```
+
+> **See also:** [Localization](../features/localization.md)
+
+### IRateLimitResponseWriter (.NET 7+)
+
+```csharp
+public interface IRateLimitResponseWriter
+{
+    Task WriteRateLimitResponseAsync(
+        HttpContext context,
+        RateLimitLease lease,
+        CancellationToken cancellationToken = default);
+}
+```
+
+> **See also:** [Rate Limiting](../features/rate-limiting.md)
+
+## Integration Package Extensions
+
+### OpenApiServiceCollectionExtensions (ErrorLens.ErrorHandling.OpenApi)
+
+```csharp
+// Add ErrorLens error schemas to .NET 9+ OpenAPI documentation
+services.AddErrorHandlingOpenApi();
+services.AddErrorHandlingOpenApi(options => { options.DefaultStatusCodes = new HashSet<int> { 400, 401, 500 }; });
+```
+
+### SwaggerServiceCollectionExtensions (ErrorLens.ErrorHandling.Swashbuckle)
+
+```csharp
+// Add ErrorLens error schemas to Swashbuckle Swagger documentation
+services.AddErrorHandlingSwashbuckle();
+services.AddErrorHandlingSwashbuckle(options => { options.DefaultStatusCodes = new HashSet<int> { 400, 401, 500 }; });
+```
+
+## Configuration (New in v1.3.0)
+
+### OpenApiOptions
+
+| Property | Type | Default |
+|----------|------|---------|
+| `DefaultStatusCodes` | `HashSet<int>` | `{400, 404, 500}` |
+
+### RateLimitingOptions
+
+| Property | Type | Default |
+|----------|------|---------|
+| `ErrorCode` | `string` | `RATE_LIMIT_EXCEEDED` |
+| `DefaultMessage` | `string` | `Too many requests. Please try again later.` |
+| `IncludeRetryAfterInBody` | `bool` | `true` |
+| `UseModernHeaderFormat` | `bool` | `false` |
+
+## Telemetry
+
+### ErrorHandlingActivitySource
+
+```csharp
+public static class ErrorHandlingActivitySource
+{
+    public const string ActivitySourceName = "ErrorLens.ErrorHandling";
+    public static ActivitySource Source { get; }
+}
+```
+
+> **See also:** [Telemetry](../features/telemetry.md)
 ```

@@ -298,61 +298,162 @@ public class ApiErrorResponseConverterTests
         paramErrors[0].TryGetProperty("rejectedValue", out _).Should().BeFalse();
     }
 
-    // --- Read (deserialization) ---
+    // --- Null guard tests (T032) ---
 
     [Fact]
-    public void Read_DefaultNames_DeserializesCorrectly()
+    public void Constructor_WithNullFieldNames_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiErrorResponseConverter(null!);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("fieldNames");
+    }
+
+    // --- Read (deserialization) — write-only converter throws NotSupportedException ---
+
+    [Fact]
+    public void Read_DefaultNames_ThrowsNotSupportedException()
     {
         var json = """{"code":"USER_NOT_FOUND","message":"User was not found"}""";
         var options = CreateOptions();
 
-        var result = JsonSerializer.Deserialize<ApiErrorResponse>(json, options);
+        var act = () => JsonSerializer.Deserialize<ApiErrorResponse>(json, options);
 
-        result.Should().NotBeNull();
-        result!.Code.Should().Be("USER_NOT_FOUND");
-        result.Message.Should().Be("User was not found");
+        act.Should().Throw<NotSupportedException>();
     }
 
     [Fact]
-    public void Read_CustomNames_DeserializesCorrectly()
+    public void Read_CustomNames_ThrowsNotSupportedException()
     {
         var fieldNames = new JsonFieldNamesOptions { Code = "type", Message = "detail" };
         var json = """{"type":"USER_NOT_FOUND","detail":"User was not found"}""";
         var options = CreateOptions(fieldNames);
 
-        var result = JsonSerializer.Deserialize<ApiErrorResponse>(json, options);
+        var act = () => JsonSerializer.Deserialize<ApiErrorResponse>(json, options);
 
-        result.Should().NotBeNull();
-        result!.Code.Should().Be("USER_NOT_FOUND");
-        result.Message.Should().Be("User was not found");
+        act.Should().Throw<NotSupportedException>();
     }
 
     [Fact]
-    public void Read_MissingFields_ReturnsDefaults()
+    public void Read_MissingFields_ThrowsNotSupportedException()
     {
         var json = """{}""";
         var options = CreateOptions();
 
-        var result = JsonSerializer.Deserialize<ApiErrorResponse>(json, options);
+        var act = () => JsonSerializer.Deserialize<ApiErrorResponse>(json, options);
 
-        result.Should().NotBeNull();
-        result!.Code.Should().Be("");
-        result.Message.Should().BeNull();
+        act.Should().Throw<NotSupportedException>();
     }
 
-    // --- Round-trip ---
+    // --- Duplicate key filter tests (T054) ---
 
     [Fact]
-    public void RoundTrip_DefaultNames_PreservesData()
+    public void Write_PropertyKeyMatchesBuiltInFieldName_IsFiltered()
+    {
+        var response = new ApiErrorResponse("ERROR", "An error");
+        response.AddProperty("code", "DUPLICATE_CODE");
+        response.AddProperty("message", "duplicate message");
+        response.AddProperty("status", 999);
+
+        var options = CreateOptions();
+        var json = JsonSerializer.Serialize(response, options);
+        var doc = JsonDocument.Parse(json);
+
+        // Built-in fields should have their real values, not the property overrides
+        doc.RootElement.GetProperty("code").GetString().Should().Be("ERROR");
+        doc.RootElement.GetProperty("message").GetString().Should().Be("An error");
+
+        // The duplicates should NOT appear as extra properties
+        var properties = doc.RootElement.EnumerateObject().ToList();
+        properties.Count(p => p.Name == "code").Should().Be(1);
+        properties.Count(p => p.Name == "message").Should().Be(1);
+    }
+
+    [Fact]
+    public void Write_PropertyKeyMatchesCustomFieldName_IsFiltered()
+    {
+        var fieldNames = new JsonFieldNamesOptions { Code = "type", Message = "detail" };
+        var response = new ApiErrorResponse("ERROR", "An error");
+        response.AddProperty("type", "should-be-filtered");
+        response.AddProperty("traceId", "kept");
+
+        var options = CreateOptions(fieldNames);
+        var json = JsonSerializer.Serialize(response, options);
+        var doc = JsonDocument.Parse(json);
+
+        doc.RootElement.GetProperty("type").GetString().Should().Be("ERROR");
+        doc.RootElement.GetProperty("traceId").GetString().Should().Be("kept");
+
+        var properties = doc.RootElement.EnumerateObject().ToList();
+        properties.Count(p => p.Name == "type").Should().Be(1);
+    }
+
+    [Fact]
+    public void Write_NonCollidingProperty_IsPreserved()
+    {
+        var response = new ApiErrorResponse("ERROR", "An error");
+        response.AddProperty("traceId", "abc-123");
+        response.AddProperty("requestId", "req-456");
+
+        var options = CreateOptions();
+        var json = JsonSerializer.Serialize(response, options);
+        var doc = JsonDocument.Parse(json);
+
+        doc.RootElement.GetProperty("traceId").GetString().Should().Be("abc-123");
+        doc.RootElement.GetProperty("requestId").GetString().Should().Be("req-456");
+    }
+
+    // --- RejectedValue options pass-through tests (T055) ---
+
+    [Fact]
+    public void Write_ComplexRejectedValue_SerializedWithCamelCasePolicy()
+    {
+        var response = new ApiErrorResponse("VALIDATION_FAILED");
+        response.AddFieldError(new ApiFieldError(
+            "INVALID", "data", "Invalid data",
+            new { FirstName = "John", LastName = "Doe" }));
+
+        var options = CreateOptions();
+        var json = JsonSerializer.Serialize(response, options);
+        var doc = JsonDocument.Parse(json);
+
+        var fieldErrors = doc.RootElement.GetProperty("fieldErrors");
+        var rejectedValue = fieldErrors[0].GetProperty("rejectedValue");
+
+        // camelCase naming policy should be applied to the complex object
+        rejectedValue.GetProperty("firstName").GetString().Should().Be("John");
+        rejectedValue.GetProperty("lastName").GetString().Should().Be("Doe");
+    }
+
+    [Fact]
+    public void Write_ComplexRejectedValueInParameterError_SerializedWithCamelCasePolicy()
+    {
+        var response = new ApiErrorResponse("VALIDATION_FAILED");
+        response.AddParameterError(new ApiParameterError(
+            "INVALID", "filter", "Invalid filter",
+            new { SortOrder = "desc", PageSize = 100 }));
+
+        var options = CreateOptions();
+        var json = JsonSerializer.Serialize(response, options);
+        var doc = JsonDocument.Parse(json);
+
+        var paramErrors = doc.RootElement.GetProperty("parameterErrors");
+        var rejectedValue = paramErrors[0].GetProperty("rejectedValue");
+
+        rejectedValue.GetProperty("sortOrder").GetString().Should().Be("desc");
+        rejectedValue.GetProperty("pageSize").GetInt32().Should().Be(100);
+    }
+
+    // --- Round-trip (no longer supported — Read throws) ---
+
+    [Fact]
+    public void RoundTrip_DefaultNames_ReadThrowsNotSupportedException()
     {
         var original = new ApiErrorResponse("TEST_ERROR", "Test message");
         var options = CreateOptions();
 
         var json = JsonSerializer.Serialize(original, options);
-        var deserialized = JsonSerializer.Deserialize<ApiErrorResponse>(json, options);
+        var act = () => JsonSerializer.Deserialize<ApiErrorResponse>(json, options);
 
-        deserialized.Should().NotBeNull();
-        deserialized!.Code.Should().Be(original.Code);
-        deserialized.Message.Should().Be(original.Message);
+        act.Should().Throw<NotSupportedException>();
     }
 }

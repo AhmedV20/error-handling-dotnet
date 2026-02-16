@@ -1,4 +1,6 @@
 using System.Net;
+using ErrorLens.ErrorHandling.OpenApi;
+using ErrorLens.ErrorHandling.RateLimiting;
 using Microsoft.Extensions.Logging;
 
 namespace ErrorLens.ErrorHandling.Configuration;
@@ -105,4 +107,14 @@ public class ErrorHandlingOptions
     /// Custom JSON field names for error responses.
     /// </summary>
     public JsonFieldNamesOptions JsonFieldNames { get; set; } = new();
+
+    /// <summary>
+    /// Configuration options for rate limiting error responses.
+    /// </summary>
+    public RateLimitingOptions RateLimiting { get; set; } = new();
+
+    /// <summary>
+    /// Configuration options for OpenAPI/Swagger error response schema generation.
+    /// </summary>
+    public OpenApiOptions OpenApi { get; set; } = new();
 }

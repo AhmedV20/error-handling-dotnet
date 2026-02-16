@@ -3,11 +3,16 @@
     <Project Path="samples/FullApiSample/FullApiSample.csproj" />
     <Project Path="samples/MinimalApiSample/MinimalApiSample.csproj" />
     <Project Path="samples/ShowcaseSample/ShowcaseSample.csproj" />
+    <Project Path="samples/IntegrationSample/IntegrationSample.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj" />
+    <Project Path="src/ErrorLens.ErrorHandling.Swashbuckle/ErrorLens.ErrorHandling.Swashbuckle.csproj" />
+    <Project Path="src/ErrorLens.ErrorHandling.OpenApi/ErrorLens.ErrorHandling.OpenApi.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ErrorLens.ErrorHandling.Tests/ErrorLens.ErrorHandling.Tests.csproj" />
+    <Project Path="tests/ErrorLens.ErrorHandling.Swashbuckle.Tests/ErrorLens.ErrorHandling.Swashbuckle.Tests.csproj" />
+    <Project Path="tests/ErrorLens.ErrorHandling.OpenApi.Tests/ErrorLens.ErrorHandling.OpenApi.Tests.csproj" />
   </Folder>
 </Solution>

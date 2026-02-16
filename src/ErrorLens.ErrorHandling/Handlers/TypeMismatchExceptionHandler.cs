@@ -21,9 +21,12 @@ public class TypeMismatchExceptionHandler : AbstractApiExceptionHandler
     /// <inheritdoc />
     public override ApiErrorResponse Handle(Exception exception)
     {
+        if (exception is not (FormatException or InvalidCastException))
+            throw new InvalidOperationException($"Cannot handle exception of type {exception.GetType()}. Call CanHandle first.");
+
         return new ApiErrorResponse(
             HttpStatusCode.BadRequest,
             DefaultErrorCodes.TypeMismatch,
-            exception.Message);
+            "A type conversion error occurred");
     }
 }

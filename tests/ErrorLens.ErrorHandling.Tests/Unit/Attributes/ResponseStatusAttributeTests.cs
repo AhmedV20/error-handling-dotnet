@@ -34,6 +34,34 @@ public class ResponseStatusAttributeTests
         attr!.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    // --- Range validation tests (T033) ---
+
+    [Theory]
+    [InlineData(100)]
+    [InlineData(200)]
+    [InlineData(404)]
+    [InlineData(500)]
+    [InlineData(599)]
+    public void Constructor_WithValidIntStatusCode_DoesNotThrow(int statusCode)
+    {
+        var attr = new ResponseStatusAttribute(statusCode);
+
+        attr.StatusCode.Should().Be((HttpStatusCode)statusCode);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(99)]
+    [InlineData(600)]
+    [InlineData(99999)]
+    public void Constructor_WithInvalidIntStatusCode_ThrowsArgumentOutOfRangeException(int statusCode)
+    {
+        var act = () => new ResponseStatusAttribute(statusCode);
+
+        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("statusCode");
+    }
+
     [ResponseStatus(HttpStatusCode.NotFound)]
     private class TestExceptionWithStatus : Exception { }
 }

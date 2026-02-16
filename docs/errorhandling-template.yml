@@ -7,7 +7,7 @@ ErrorHandling:
   Enabled: true
 
   # Include HTTP status code in JSON response body (default: false)
-  HttpStatusInJsonResponse: true
+  HttpStatusInJsonResponse: false
 
   # Error code generation strategy: AllCaps | FullQualifiedName (default: AllCaps)
   # AllCaps: UserNotFoundException → USER_NOT_FOUND
@@ -15,7 +15,7 @@ ErrorHandling:
   DefaultErrorCodeStrategy: AllCaps
 
   # Search exception base class hierarchy for config matches (default: false)
-  SearchSuperClassHierarchy: true
+  SearchSuperClassHierarchy: false
 
   # Include property path in field errors (default: true)
   AddPathToError: true
@@ -26,7 +26,7 @@ ErrorHandling:
   OverrideModelStateValidation: false
 
   # Exception logging verbosity: None | MessageOnly | WithStacktrace (default: MessageOnly)
-  ExceptionLogging: WithStacktrace
+  ExceptionLogging: MessageOnly
 
   # --- RFC 9457 Problem Details ---
 
@@ -105,3 +105,29 @@ ErrorHandling:
   FullStacktraceClasses: []
     # - MyApp.Exceptions.CriticalException
     # - System.NullReferenceException
+
+  # --- OpenAPI / Swagger Schema Generation ---
+  # Configure which HTTP status codes get error response schemas in your API documentation.
+
+  OpenApi:
+    # HTTP status codes to generate error response schemas for (default: [400, 404, 500])
+    DefaultStatusCodes:
+      - 400
+      - 404
+      - 500
+
+  # --- Rate Limiting Integration (.NET 7+) ---
+  # Configure structured 429 error responses for rate-limited requests.
+
+  RateLimiting:
+    # Error code for rate limit responses (default: "RATE_LIMIT_EXCEEDED")
+    ErrorCode: RATE_LIMIT_EXCEEDED
+
+    # Default message for rate limit responses
+    DefaultMessage: "Too many requests. Please try again later."
+
+    # Include retryAfter property in JSON response body (default: true)
+    IncludeRetryAfterInBody: true
+
+    # Use combined RateLimit header format (IETF draft) instead of separate headers (default: false)
+    UseModernHeaderFormat: false

@@ -9,7 +9,7 @@ namespace ErrorLens.ErrorHandling.Mappers;
 /// </summary>
 public class ErrorCodeMapper : IErrorCodeMapper
 {
-    private static readonly Regex PascalToSnakeCaseRegex = new("([A-Z])", RegexOptions.Compiled);
+    private static readonly Regex PascalToSnakeCaseRegex = new("(?<=[a-z0-9])([A-Z])|(?<=[A-Z])([A-Z][a-z])", RegexOptions.Compiled);
     private readonly ErrorHandlingOptions _options;
 
     public ErrorCodeMapper(IOptions<ErrorHandlingOptions> options)
@@ -89,7 +89,7 @@ public class ErrorCodeMapper : IErrorCodeMapper
         }
 
         // Convert PascalCase to SCREAMING_SNAKE_CASE
-        var result = PascalToSnakeCaseRegex.Replace(name, "_$1");
+        var result = PascalToSnakeCaseRegex.Replace(name, "_$1$2");
         return result.ToUpperInvariant().TrimStart('_');
     }
 }

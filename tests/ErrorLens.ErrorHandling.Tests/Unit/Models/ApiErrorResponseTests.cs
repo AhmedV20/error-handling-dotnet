@@ -145,4 +145,39 @@ public class ApiErrorResponseTests
         fieldErrors.GetArrayLength().Should().Be(1);
         fieldErrors[0].GetProperty("code").GetString().Should().Be("REQUIRED");
     }
+
+    // --- Null guard tests (T028) ---
+
+    [Fact]
+    public void Constructor_WithNullCode_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiErrorResponse(null!);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("code");
+    }
+
+    [Fact]
+    public void Constructor_WithNullCodeAndMessage_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiErrorResponse(null!, "some message");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("code");
+    }
+
+    [Fact]
+    public void Constructor_WithNullCodeAndStatusCode_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiErrorResponse(HttpStatusCode.NotFound, null!, "some message");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("code");
+    }
+
+    [Fact]
+    public void Constructor_WithNullMessage_DoesNotThrow()
+    {
+        var response = new ApiErrorResponse("ERROR", null);
+
+        response.Code.Should().Be("ERROR");
+        response.Message.Should().BeNull();
+    }
 }

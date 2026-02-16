@@ -63,6 +63,7 @@ public class ApiErrorResponse
 
     public ApiErrorResponse(string code)
     {
+        ArgumentNullException.ThrowIfNull(code);
         Code = code;
     }
 

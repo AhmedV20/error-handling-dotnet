@@ -1,4 +1,5 @@
 using ErrorLens.ErrorHandling.Extensions;
+using ErrorLens.ErrorHandling.Swashbuckle;
 using ShowcaseSample.Customizers;
 using ShowcaseSample.Handlers;
 
@@ -14,7 +15,7 @@ builder.Services.AddControllers();
 builder.Services.AddErrorHandling(builder.Configuration);
 
 // Register custom infrastructure exception handler
-builder.Services.AddExceptionHandler<InfrastructureExceptionHandler>();
+builder.Services.AddApiExceptionHandler<InfrastructureExceptionHandler>();
 
 // Register response customizer (adds traceId, timestamp, path)
 builder.Services.AddHttpContextAccessor();
@@ -22,6 +23,9 @@ builder.Services.AddErrorResponseCustomizer<RequestMetadataCustomizer>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add ErrorLens error schemas to Swagger documentation
+builder.Services.AddErrorHandlingSwashbuckle();
 
 var app = builder.Build();
 

@@ -1,4 +1,3 @@
-using System.Net;
 using ErrorLens.ErrorHandling.Models;
 
 namespace ErrorLens.ErrorHandling.ProblemDetails;
@@ -15,11 +14,4 @@ public interface IProblemDetailFactory
     /// <returns>A Problem Details response.</returns>
     ProblemDetailResponse CreateFromApiError(ApiErrorResponse apiError);
 
-    /// <summary>
-    /// Creates a Problem Details response directly from an exception.
-    /// </summary>
-    /// <param name="exception">The exception that occurred.</param>
-    /// <param name="statusCode">The HTTP status code to use.</param>
-    /// <returns>A Problem Details response.</returns>
-    ProblemDetailResponse CreateFromException(Exception exception, HttpStatusCode statusCode);
 }

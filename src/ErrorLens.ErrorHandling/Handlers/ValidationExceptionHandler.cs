@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using ErrorLens.ErrorHandling.Configuration;
+using ErrorLens.ErrorHandling.Internal;
 using ErrorLens.ErrorHandling.Mappers;
 using ErrorLens.ErrorHandling.Models;
 using Microsoft.Extensions.Options;
@@ -38,7 +39,8 @@ public class ValidationExceptionHandler : AbstractApiExceptionHandler
     /// <inheritdoc />
     public override ApiErrorResponse Handle(Exception exception)
     {
-        var validationException = (ValidationException)exception;
+        if (exception is not ValidationException validationException)
+            throw new InvalidOperationException($"Cannot handle exception of type {exception.GetType()}. Call CanHandle first.");
 
         var response = new ApiErrorResponse(
             HttpStatusCode.BadRequest,
@@ -62,10 +64,10 @@ public class ValidationExceptionHandler : AbstractApiExceptionHandler
 
                     var fieldError = new ApiFieldError(
                         code,
-                        ToCamelCase(memberName),
+                        StringUtils.ToCamelCase(memberName),
                         message,
                         validationException.Value,
-                        _options.AddPathToError ? ToCamelCase(memberName) : null);
+                        _options.AddPathToError ? StringUtils.ToCamelCase(memberName) : null);
 
                     response.AddFieldError(fieldError);
                 }
@@ -114,15 +116,5 @@ public class ValidationExceptionHandler : AbstractApiExceptionHandler
             "CreditCardAttribute" => DefaultErrorCodes.InvalidCreditCard,
             _ => DefaultErrorCodes.ValidationFailed
         };
-    }
-
-    private static string ToCamelCase(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-        {
-            return name;
-        }
-
-        return char.ToLowerInvariant(name[0]) + name[1..];
     }
 }

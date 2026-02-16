@@ -1,5 +1,6 @@
 using System.Net;
 using ErrorLens.ErrorHandling.Configuration;
+using ErrorLens.ErrorHandling.Internal;
 using ErrorLens.ErrorHandling.Mappers;
 using ErrorLens.ErrorHandling.Models;
 using Microsoft.Extensions.Options;
@@ -39,7 +40,9 @@ public class ModelStateValidationExceptionHandler : AbstractApiExceptionHandler
     /// <inheritdoc />
     public override ApiErrorResponse Handle(Exception exception)
     {
-        var modelStateException = (ModelStateValidationException)exception;
+        if (exception is not ModelStateValidationException modelStateException)
+            throw new InvalidOperationException($"Cannot handle exception of type {exception.GetType()}. Call CanHandle first.");
+
         var modelState = modelStateException.ModelState;
 
         var response = new ApiErrorResponse(
@@ -69,7 +72,7 @@ public class ModelStateValidationExceptionHandler : AbstractApiExceptionHandler
                 var code = _errorCodeMapper.GetErrorCode(fieldKey, defaultCode);
                 var resolvedMessage = _errorMessageMapper.GetErrorMessage(fieldKey, defaultCode, message);
 
-                var camelField = ToCamelCase(fieldName);
+                var camelField = StringUtils.ToCamelCase(fieldName);
 
                 if (string.IsNullOrEmpty(fieldName) || fieldName == "$")
                 {
@@ -123,7 +126,7 @@ public class ModelStateValidationExceptionHandler : AbstractApiExceptionHandler
             return "Url";
         if (msg.Contains("credit card"))
             return "CreditCard";
-        if (msg.Contains("json") || msg.Contains("invalid") && msg.Contains("literal"))
+        if (msg.Contains("json") || (msg.Contains("invalid") && msg.Contains("literal")))
             return "Json";
 
         return "Validation";
@@ -143,21 +146,5 @@ public class ModelStateValidationExceptionHandler : AbstractApiExceptionHandler
             "Json" => "JSON_PARSE_ERROR",
             _ => DefaultErrorCodes.ValidationFailed
         };
-    }
-
-    private static string ToCamelCase(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return name;
-
-        // Handle dotted paths like "Address.ZipCode"
-        var parts = name.Split('.');
-        for (var i = 0; i < parts.Length; i++)
-        {
-            if (parts[i].Length > 0)
-                parts[i] = char.ToLowerInvariant(parts[i][0]) + parts[i][1..];
-        }
-
-        return string.Join(".", parts);
     }
 }

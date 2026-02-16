@@ -1,9 +1,9 @@
 namespace ErrorLens.ErrorHandling.Attributes;
 
 /// <summary>
-/// Marks a property or method to be included in the error response.
+/// Marks a property to be included in the error response.
 /// </summary>
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
 public class ResponseErrorPropertyAttribute : Attribute
 {
     /// <summary>

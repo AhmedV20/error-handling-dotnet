@@ -69,7 +69,7 @@ public class ProblemDetailFactoryTests
     public void CreateFromApiError_IncludesFieldErrorsAsExtension()
     {
         var apiError = new ApiErrorResponse(HttpStatusCode.BadRequest, "VALIDATION_ERROR", "Validation failed");
-        apiError.AddFieldError(new ApiFieldError("email", "EMAIL_INVALID", "Invalid email", "bad-email"));
+        apiError.AddFieldError(new ApiFieldError("EMAIL_INVALID", "email", "Invalid email", "bad-email"));
 
         var result = _factory.CreateFromApiError(apiError);
 
@@ -103,19 +103,6 @@ public class ProblemDetailFactoryTests
     }
 
     [Fact]
-    public void CreateFromException_CreatesBasicProblemDetail()
-    {
-        var exception = new InvalidOperationException("Something went wrong");
-
-        var result = _factory.CreateFromException(exception, HttpStatusCode.InternalServerError);
-
-        result.Type.Should().Be("about:blank");
-        result.Title.Should().Be("Internal Server Error");
-        result.Status.Should().Be(500);
-        result.Detail.Should().Be("Something went wrong");
-    }
-
-    [Fact]
     public void CreateFromApiError_IncludesCustomProperties()
     {
         var apiError = new ApiErrorResponse(HttpStatusCode.BadRequest, "ERROR", "Error");
@@ -127,5 +114,50 @@ public class ProblemDetailFactoryTests
         result.Extensions.Should().ContainKey("requestId");
         result.Extensions["requestId"].Should().Be("req-123");
         result.Extensions.Should().ContainKey("timestamp");
+    }
+
+    // --- Kebab-case toggle tests (T036) ---
+
+    [Fact]
+    public void CreateFromApiError_KebabCaseEnabled_ConvertsErrorCodeToKebabCase()
+    {
+        _options.ProblemDetailConvertToKebabCase = true;
+        var apiError = new ApiErrorResponse(HttpStatusCode.BadRequest, "USER_NOT_FOUND", "User not found");
+
+        var result = _factory.CreateFromApiError(apiError);
+
+        result.Type.Should().Be("https://example.com/errors/user-not-found");
+    }
+
+    [Fact]
+    public void CreateFromApiError_KebabCaseDisabled_PreservesOriginalErrorCode()
+    {
+        var options = new ErrorHandlingOptions
+        {
+            ProblemDetailTypePrefix = "https://example.com/errors/",
+            ProblemDetailConvertToKebabCase = false
+        };
+        var optionsWrapper = Substitute.For<IOptions<ErrorHandlingOptions>>();
+        optionsWrapper.Value.Returns(options);
+        var factory = new ProblemDetailFactory(optionsWrapper);
+
+        var apiError = new ApiErrorResponse(HttpStatusCode.BadRequest, "USER_NOT_FOUND", "User not found");
+
+        var result = factory.CreateFromApiError(apiError);
+
+        result.Type.Should().Be("https://example.com/errors/USER_NOT_FOUND");
+    }
+
+    [Fact]
+    public void CreateFromApiError_ExtensionKeysDoNotOverwriteLibraryKeys()
+    {
+        var apiError = new ApiErrorResponse(HttpStatusCode.BadRequest, "ERROR", "Error");
+        apiError.AddFieldError(new ApiFieldError("REQUIRED", "email", "Email required"));
+        apiError.AddProperty("fieldErrors", "should-not-overwrite");
+
+        var result = _factory.CreateFromApiError(apiError);
+
+        // fieldErrors should be the list, not the string
+        result.Extensions["fieldErrors"].Should().BeAssignableTo<IList<ApiFieldError>>();
     }
 }

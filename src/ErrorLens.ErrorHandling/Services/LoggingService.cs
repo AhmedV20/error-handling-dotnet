@@ -10,7 +10,7 @@ namespace ErrorLens.ErrorHandling.Services;
 /// <summary>
 /// Service for logging exception handling events.
 /// </summary>
-public partial class LoggingService : ILoggingService
+public class LoggingService : ILoggingService
 {
     private readonly ILogger<LoggingService> _logger;
     private readonly ErrorHandlingOptions _options;

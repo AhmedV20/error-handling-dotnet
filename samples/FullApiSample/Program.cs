@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddErrorHandling(builder.Configuration);
 
 // Register custom exception handler
-builder.Services.AddExceptionHandler<BusinessExceptionHandler>();
+builder.Services.AddApiExceptionHandler<BusinessExceptionHandler>();
 
 // Register response customizer
 builder.Services.AddErrorResponseCustomizer<TraceIdCustomizer>();

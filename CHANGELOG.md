@@ -7,12 +7,173 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned
+## [1.3.0] - 2026-02-16
 
-- OpenTelemetry integration for distributed tracing
-- Swagger/OpenAPI schema generation for error responses
-- Localization support for error messages
-- Rate limiting integration
+### Breaking Changes
+
+- **`AddExceptionHandler<T>()` renamed to `AddApiExceptionHandler<T>()`**
+  - Method renamed to avoid collision with ASP.NET Core 8+ built-in `AddExceptionHandler<T>()`
+  - **Migration**: Update any custom handler registrations from `AddExceptionHandler<MyHandler>()` to `AddApiExceptionHandler<MyHandler>()`
+
+### Added
+
+- **OpenTelemetry Distributed Tracing**
+  - `ErrorHandlingActivitySource` with shared `ActivitySource` ("ErrorLens.ErrorHandling")
+  - Automatic `Activity` spans in `ErrorHandlingFacade.HandleException()` with OTel semantic conventions
+  - Tags: `error.code`, `error.type`, `http.response.status_code`
+  - Exception event with `exception.type`, `exception.message`, `exception.stacktrace`
+  - Zero new dependencies — uses `System.Diagnostics.Activity` from runtime
+  - Zero overhead when no `ActivityListener` is subscribed
+
+- **Error Message Localization**
+  - `IErrorMessageLocalizer` abstraction with `Localize()` and `LocalizeFieldError()` methods
+  - `NoOpErrorMessageLocalizer` default (pass-through, registered via `TryAddSingleton`)
+  - `StringLocalizerErrorMessageLocalizer<TResource>` bridge to `IStringLocalizer<T>`
+  - Opt-in via `AddErrorHandlingLocalization<TResource>()`
+  - Localizes top-level message, field errors, global errors, and parameter errors
+  - New dependency: `Microsoft.Extensions.Localization.Abstractions 8.0.0`
+
+- **New Package: ErrorLens.ErrorHandling.OpenApi** (.NET 9+)
+  - `ErrorResponseOperationTransformer` implementing `IOpenApiOperationTransformer`
+  - Auto-adds error response schemas (400, 404, 500) to all OpenAPI operations
+  - Respects existing `[ProducesResponseType]` attributes
+  - Reflects `UseProblemDetailFormat` and custom `JsonFieldNamesOptions` in generated schemas
+  - Setup: `services.AddErrorHandlingOpenApi()`
+
+- **New Package: ErrorLens.ErrorHandling.Swashbuckle** (.NET 6-8)
+  - `ErrorResponseOperationFilter` implementing `IOperationFilter`
+  - Same auto-schema behavior as OpenApi package for Swashbuckle/Swagger
+  - Setup: `services.AddErrorHandlingSwashbuckle()`
+
+- **Rate Limiting Integration** (.NET 7+)
+  - `IRateLimitResponseWriter` interface for structured 429 responses
+  - `DefaultRateLimitResponseWriter` with `Retry-After` and `RateLimit` headers
+  - `RateLimitingOptions` for configuring error code, message, and header format
+  - Optional `retryAfter` property in response body
+  - Supports localized rate limit messages
+
+- **`ErrorResponseWriter`**
+  - Centralized response writing extracted into shared service
+  - Caches `JsonSerializerOptions` for performance
+
+- **`ErrorHandlingOptionsValidator`**
+  - Validates `JsonFieldNamesOptions` at startup (null, empty, duplicate checks)
+
+- **AggregateExceptionHandler** (Order 50)
+  - Built-in handler for `AggregateException` types
+  - Unwraps single-inner-exception aggregates and re-dispatches to appropriate specific handler
+  - Multi-exception aggregates delegate to fallback handler
+  - Automatically registered with default configuration
+
+- **5xx Safe Message Behavior**
+  - All 5xx-class errors (500-599) now return generic safe message: "An unexpected error occurred"
+  - Prevents information disclosure of internal system details (database connection strings, file paths, stack traces)
+  - 4xx errors preserve original user-facing messages
+
+- **TypeMismatchExceptionHandler Generic Message**
+  - Handler now returns generic "A type conversion error occurred" message
+  - Prevents exposure of internal type conversion details
+
+- **BadRequestStatusCode Usage**
+  - Handler now uses actual `StatusCode` property from `BadHttpRequestException`
+  - Correctly returns 400, 408, 413, etc. based on framework's status code
+
+- **Message Sanitization**
+  - `BadRequestExceptionHandler` sanitizes Kestrel-internal error messages
+  - Replaces framework-specific details with safe "Bad request" message
+
+- **OperationCanceledException → 499**
+  - `OperationCanceledException` and `TaskCanceledException` now map to HTTP 499 (Client Closed Request)
+  - Follows nginx convention for client-disconnected requests
+
+- **reloadOnChange Default Changed**
+  - YAML configuration `reloadOnChange` now defaults to `false`
+  - Documented that application restart is required for config changes
+
+- **ResponseErrorPropertyAttribute Cleanup**
+  - Removed `AttributeTargets.Method` from `AttributeUsage`
+  - Now targets `AttributeTargets.Property` only (as documented)
+
+### Changed
+
+- `AddApiExceptionHandler<T>()` now uses `TryAddEnumerable` for idempotent registration (prevents duplicates on double-call)
+- `AddErrorResponseCustomizer<T>()` now uses `TryAddEnumerable` for idempotent registration
+- Integration packages use `IOptions<T>` pattern instead of `BuildServiceProvider()` anti-pattern
+- All package versions aligned to 1.3.0
+
+### Removed
+
+- `IHttpStatusFromExceptionMapper` interface (orphaned, never implemented or registered)
+- `DefaultLoggingFilter` class (replaced by `ILoggingFilter` enumerable pattern)
+
+### Fixed
+
+- **Operator Precedence Bug**
+  - `ModelStateValidationExceptionHandler.InferValidationType` fixed with explicit parentheses
+  - Messages containing "json" no longer misclassified when combined with other keywords
+
+- **Safe Pattern Matching**
+  - All handler `Handle()` methods now use safe pattern matching (`is not`)
+  - Prevents `InvalidCastException` when handlers called without prior `CanHandle()` check
+
+- **Unified ToCamelCase**
+  - `StringUtils.ToCamelCase` now shared across `ModelStateValidationExceptionHandler`, `ValidationExceptionHandler`, and `ExceptionMetadataCache`
+  - Ensures consistent dotted-path handling (e.g., `Address.ZipCode` → `address.zipCode`)
+
+- **ErrorCodeMapper Acronym Regex**
+  - Fixed regex to correctly handle consecutive uppercase letters (acronyms)
+  - `HTTPConnection` → `HTTP_CONNECTION` (not `H_T_T_P_CONNECTION`)
+  - `IOError` → `IO_ERROR` (not `I_O_ERROR`)
+
+- **Null Safety**
+  - Added `ArgumentNullException.ThrowIfNull` guards to all model constructors
+  - Added `ArgumentOutOfRangeException` for `ResponseStatusAttribute` (valid HTTP range: 100-599)
+
+- **Serialization Fixes**
+  - `ApiErrorResponseConverter` filters duplicate JSON keys (extension properties matching built-in field names)
+  - `RejectedValue` serialization now passes parent `JsonSerializerOptions` for consistent naming policy
+  - `ApiErrorResponseConverter.Read` throws `NotSupportedException` (write-only contract)
+
+- **ProblemDetailFactory Fixes**
+  - `ProblemDetailConvertToKebabCase` option now respected (false skips kebab-case conversion)
+  - Extension keys can no longer overwrite library-set keys (`type`, `title`, `status`, etc.)
+  - List contents copied instead of sharing mutable references
+
+- **Pipeline Resilience**
+  - `ErrorResponseWriter` checks `Response.HasStarted` before writing (graceful skip if response already started)
+  - `ErrorHandlingMiddleware` passes `context.RequestAborted` as `CancellationToken` to response writer
+  - `ErrorHandlingFacade` uses `ExceptionDispatchInfo.Capture(exception).Throw()` to preserve stack trace when disabled
+  - `ErrorHandlingFacade` materializes `_customizers` with `.ToList()` to prevent lazy enumerable issues
+  - Safety-net in facade logs both handler exception AND original exception when handler throws
+
+- **DI Improvements**
+  - Built-in handler registrations use `TryAddEnumerable` for idempotency
+  - Multiple `AddErrorHandling()` calls no longer create duplicate handler registrations
+
+### Test Coverage
+
+- **New Tests**: 165 new tests added (total: 350 tests, up from 185)
+  - Null safety tests for all model constructors
+  - Range validation tests for `ResponseStatusAttribute`
+  - Startup validation tests for `JsonFieldNamesOptions`
+  - Handler tests: `AggregateExceptionHandler`, `TypeMismatchExceptionHandler`, `BadRequestExceptionHandler`
+  - Mapper tests: acronym regex, `OperationCanceledException` → 499
+  - Integration tests: middleware, exception handler, DI registration
+  - Security tests: 10+ information disclosure scenarios
+  - Serialization tests: duplicate key filtering, `RejectedValue` options, `Read` throws
+
+- **Fixed Tests**
+  - `ErrorResponseWriterTests`: Replaced false-positive caching and cancellation tests with real assertions
+  - `ProblemDetailFactoryTests`: Fixed swapped `ApiFieldError` constructor args
+  - `LoggingServiceTests`: Replaced weak `.ReceivedCalls()` assertions with specific log level verification
+  - `ErrorHandlingFacadeTests`: Added safety-net test (handler throws → both exceptions logged)
+
+- **Coverage**: 93.1% line coverage (exceeds 90% requirement)
+
+### CI/CD
+
+- CI and Release workflows updated to pack and publish all 3 NuGet packages
+- Release summary includes links for all 3 packages
 
 ## [1.1.1] - 2026-02-12
 

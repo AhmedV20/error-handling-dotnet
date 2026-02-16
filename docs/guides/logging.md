@@ -96,8 +96,25 @@ Without any logging configuration:
 
 Implement `ILoggingFilter` to suppress logging for specific exceptions:
 
+### The ILoggingFilter Interface
+
+The `ILoggingFilter` interface is in the `ErrorLens.ErrorHandling.Services` namespace:
+
+```csharp
+namespace ErrorLens.ErrorHandling.Services
+{
+    public interface ILoggingFilter
+    {
+        bool ShouldLog(ApiErrorResponse response, Exception exception);
+    }
+}
+```
+
+### Example Implementation
+
 ```csharp
 using ErrorLens.ErrorHandling.Models;
+using ErrorLens.ErrorHandling.Services;
 
 public class IgnoreNotFoundFilter : ILoggingFilter
 {
@@ -108,3 +125,13 @@ public class IgnoreNotFoundFilter : ILoggingFilter
     }
 }
 ```
+
+### Registration
+
+Register your filter in `Program.cs`:
+
+```csharp
+builder.Services.AddSingleton<ILoggingFilter, IgnoreNotFoundFilter>();
+```
+
+You can register multiple filters — all filters must return `true` for the exception to be logged.

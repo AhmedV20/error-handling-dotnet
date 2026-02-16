@@ -124,6 +124,12 @@ specs/
 # Generated documentation output
 build/
 generated-docs/
+coverage-report/
+
+# VitePress / Node.js
+node_modules/
+docs/site/.vitepress/cache/
+docs/site/.vitepress/dist/
 
 # Plan files
 *.plan.md

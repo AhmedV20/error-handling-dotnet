@@ -63,6 +63,20 @@ dotnet add package ErrorLens.ErrorHandling
 NOTE: This library is intended to be used with an https://learn.microsoft.com/en-us/aspnet/core[ASP.NET Core] project.
 It will not work outside of an ASP.NET Core application.
 
+==== Optional integration packages
+
+[source,bash,indent=0]
+.OpenAPI schema generation (.NET 9+)
+----
+dotnet add package ErrorLens.ErrorHandling.OpenApi
+----
+
+[source,bash,indent=0]
+.Swashbuckle/Swagger schema generation (.NET 6-8)
+----
+dotnet add package ErrorLens.ErrorHandling.Swashbuckle
+----
+
 === Usage
 
 ==== Minimal setup
@@ -140,7 +154,7 @@ The library maps common .NET exception types to appropriate HTTP status codes ou
 |408 Request Timeout
 
 |`OperationCanceledException`
-|400 Bad Request
+|499 Client Closed Request
 
 |`DirectoryNotFoundException`
 |404 Not Found
@@ -1000,6 +1014,50 @@ All configurable field names:
 |Parameter error objects
 |===
 
+=== Security
+
+The library includes several security-focused features to prevent information disclosure and protect your API.
+
+==== 5xx safe message behavior
+
+All 5xx-class errors (500-599) automatically return a generic safe message instead of the raw exception message:
+
+[source,json]
+----
+{
+  "code": "INTERNAL_ERROR",
+  "message": "An unexpected error occurred"
+}
+----
+
+This prevents internal details (database connection strings, file paths, stack traces) from leaking to API consumers.The original exception is still logged with full details on the server side.
+
+NOTE: 4xx errors (400-499) preserve their original messages since these are typically user-facing and safe to expose.
+
+==== Message sanitization
+
+The `BadRequestExceptionHandler` automatically sanitizes Kestrel-internal error messages, replacing framework-specific details with user-safe equivalents:
+
+[source,json]
+----
+{
+  "code": "BAD_REQUEST",
+  "message": "Bad request"
+}
+----
+
+This prevents internal framework implementation details from being exposed.
+
+==== Startup validation
+
+The `JsonFieldNames` configuration is validated at application startup:
+
+* **Null or empty values** are rejected with clear error messages
+* **Duplicate field names** are detected and reported
+* **All properties must be unique** to prevent JSON serialization conflicts
+
+This fails-fast behavior prevents misconfiguration from causing runtime errors.
+
 === Logging
 
 The library will log a single line to the configured logging output for each Exception that is handled.
@@ -1302,6 +1360,174 @@ Custom properties added via `[ResponseErrorProperty]` and `IApiErrorResponseCust
 }
 ----
 
+== Integration Features (v1.3.0)
+
+=== OpenTelemetry Distributed Tracing
+
+ErrorLens automatically creates `Activity` spans via `System.Diagnostics.Activity` when handling exceptions.
+No new NuGet dependencies are required — the library uses runtime-provided APIs.
+When no `ActivityListener` is subscribed, overhead is zero.
+
+==== Setup
+
+Subscribe to the ErrorLens activity source in your OpenTelemetry configuration:
+
+[source,csharp]
+----
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource("ErrorLens.ErrorHandling")
+        .AddConsoleExporter());
+----
+
+==== Span details
+
+Each handled exception creates an activity named `ErrorLens.HandleException` with:
+
+[cols="1,2"]
+|===
+|Tag |Value
+
+|`error.code`
+|The error code (e.g., `USER_NOT_FOUND`)
+
+|`error.type`
+|The exception type full name
+
+|`http.response.status_code`
+|The HTTP status code (e.g., `404`)
+|===
+
+An exception event is also added with OTel semantic conventions (`exception.type`, `exception.message`, `exception.stacktrace`).
+
+=== Error Message Localization
+
+The library provides opt-in localization for error messages via `IErrorMessageLocalizer`.
+
+==== Default behavior
+
+By default, `NoOpErrorMessageLocalizer` is registered — it passes through all messages unchanged.
+
+==== Enabling localization
+
+Opt into localization using `IStringLocalizer<TResource>`:
+
+[source,csharp]
+----
+builder.Services.AddErrorHandlingLocalization<SharedResource>();
+----
+
+This replaces the default no-op localizer with `StringLocalizerErrorMessageLocalizer<TResource>`, which uses error codes as resource keys for message lookup.
+When a translation exists in the `.resx` file, it replaces the default message.
+When no translation is found, the original message is preserved.
+
+Localization applies to:
+
+* Top-level error message
+* Field error messages
+* Global error messages
+* Parameter error messages
+
+NOTE: The library uses `CultureInfo.CurrentUICulture`, which is set by ASP.NET Core's `RequestLocalizationMiddleware`.
+
+=== OpenAPI Schema Generation (.NET 9+)
+
+The `ErrorLens.ErrorHandling.OpenApi` package automatically adds error response schemas to your .NET 9+ OpenAPI documentation.
+
+==== Setup
+
+[source,csharp]
+----
+dotnet add package ErrorLens.ErrorHandling.OpenApi
+----
+
+[source,csharp]
+----
+builder.Services.AddErrorHandlingOpenApi();
+----
+
+==== Custom status codes
+
+[source,csharp]
+----
+builder.Services.AddErrorHandlingOpenApi(opts =>
+{
+    opts.DefaultStatusCodes = new HashSet<int> { 400, 401, 422, 500 };
+});
+----
+
+The generated schemas respect `UseProblemDetailFormat` and custom `JsonFieldNamesOptions`.
+Existing `[ProducesResponseType]` attributes are preserved — the library only adds missing status codes.
+
+=== Swashbuckle / Swagger Integration (.NET 6-8)
+
+The `ErrorLens.ErrorHandling.Swashbuckle` package provides the same functionality for projects using Swashbuckle.
+
+==== Setup
+
+[source,csharp]
+----
+dotnet add package ErrorLens.ErrorHandling.Swashbuckle
+----
+
+[source,csharp]
+----
+builder.Services.AddErrorHandlingSwashbuckle();
+----
+
+NOTE: For .NET 9+ projects, use `ErrorLens.ErrorHandling.OpenApi` instead.
+
+=== Rate Limiting Integration (.NET 7+)
+
+The library provides `IRateLimitResponseWriter` for writing structured 429 responses from ASP.NET Core's rate limiter.
+
+==== Setup
+
+[source,csharp]
+----
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("api", limiter =>
+    {
+        limiter.PermitLimit = 10;
+        limiter.Window = TimeSpan.FromMinutes(1);
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        var writer = context.HttpContext.RequestServices
+            .GetRequiredService<IRateLimitResponseWriter>();
+        await writer.WriteRateLimitResponseAsync(
+            context.HttpContext, context.Lease, token);
+    };
+});
+----
+
+==== Configuration
+
+[source,yaml]
+----
+ErrorHandling:
+  RateLimiting:
+    ErrorCode: RATE_LIMIT_EXCEEDED
+    DefaultMessage: "Too many requests. Please try again later."
+    IncludeRetryAfterInBody: true
+    UseModernHeaderFormat: false
+----
+
+==== Response example
+
+[source,json]
+----
+{
+  "code": "RATE_LIMIT_EXCEEDED",
+  "message": "Too many requests. Please try again later.",
+  "retryAfter": 30
+}
+----
+
+The response includes a `Retry-After` HTTP header with the retry delay in seconds.
+
 == Custom exception handler
 
 If the <<Configuration,extensive customization options>> are not enough, you can write your own `IApiExceptionHandler` implementation.
@@ -1377,7 +1603,7 @@ Register it:
 
 [source,csharp]
 ----
-builder.Services.AddExceptionHandler<InfrastructureExceptionHandler>();
+builder.Services.AddApiExceptionHandler<InfrastructureExceptionHandler>();
 ----
 
 ==== Handler ordering
@@ -1388,6 +1614,11 @@ The first handler whose `CanHandle()` returns `true` processes the exception.
 [cols="1,2,2,1"]
 |===
 |Order |Handler |Purpose |Default?
+
+|50
+|`AggregateExceptionHandler`
+|`AggregateException` single-inner unwrapping and re-dispatching
+|Yes
 
 |90
 |`ModelStateValidationExceptionHandler`
@@ -1402,12 +1633,12 @@ The first handler whose `CanHandle()` returns `true` processes the exception.
 |120
 |`JsonExceptionHandler`
 |`JsonException`
-|No (opt-in)
+|Yes
 
 |130
 |`TypeMismatchExceptionHandler`
 |`FormatException`, `InvalidCastException`
-|No (opt-in)
+|Yes
 
 |150
 |`BadRequestExceptionHandler`
@@ -1536,6 +1767,26 @@ The `DefaultFallbackHandler` always runs last as the catch-all.
 |JsonFieldNames.Parameter
 |The field name for parameter names in parameter errors.
 |`parameter`
+
+|RateLimiting.ErrorCode
+|Error code for rate limit responses.
+|`RATE_LIMIT_EXCEEDED`
+
+|RateLimiting.DefaultMessage
+|Default message for rate limit responses.
+|`Too many requests. Please try again later.`
+
+|RateLimiting.IncludeRetryAfterInBody
+|Include retryAfter property in JSON response body.
+|`true`
+
+|RateLimiting.UseModernHeaderFormat
+|Use combined RateLimit header format (IETF draft).
+|`false`
+
+|OpenApi.DefaultStatusCodes
+|HTTP status codes to generate error response schemas for.
+|`{400, 404, 500}`
 |===
 
 == Samples
@@ -1554,6 +1805,9 @@ The repository includes three sample projects:
 
 |`ShowcaseSample`
 |Comprehensive sample demonstrating all features: YAML configuration, custom JSON field names, exception attributes, custom handlers, response customizers, and RFC 9457 Problem Details.
+
+|`IntegrationSample`
+|New v1.3.0 features: OpenTelemetry tracing, localization, OpenAPI schemas, rate limiting.
 |===
 
 == Support

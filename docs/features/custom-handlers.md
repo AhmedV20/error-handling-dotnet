@@ -61,7 +61,8 @@ public class InfrastructureExceptionHandler : IApiExceptionHandler
 
 ```csharp
 // ErrorLens extension method - registers custom exception handler
-builder.Services.AddExceptionHandler<InfrastructureExceptionHandler>();
+// The generic parameter THandler specifies your handler type
+builder.Services.AddApiExceptionHandler<InfrastructureExceptionHandler>();
 ```
 
 ## Using AbstractApiExceptionHandler
@@ -89,16 +90,19 @@ public class PaymentExceptionHandler : AbstractApiExceptionHandler
 }
 ```
 
+**Note**: The `AbstractApiExceptionHandler` base class has a default `Order` value of `1000`. Override this property to control when your handler runs in the chain.
+
 ## Handler Ordering
 
 Handlers are executed in order of their `Order` property (lowest first). The first handler whose `CanHandle()` returns `true` processes the exception.
 
 | Order | Handler | Purpose | Default? |
 |-------|---------|---------|----------|
+| 50 | AggregateExceptionHandler | AggregateException unwrapping (single-inner) and re-dispatching | Yes |
 | 90 | ModelStateValidationExceptionHandler | `[ApiController]` model validation (requires `OverrideModelStateValidation: true`) | Yes (with config) |
 | 100 | ValidationExceptionHandler | Built-in validation | Yes |
-| 120 | JsonExceptionHandler | JSON parsing errors | No (opt-in) |
-| 130 | TypeMismatchExceptionHandler | Type conversion errors | No (opt-in) |
+| 120 | JsonExceptionHandler | JSON parsing errors | Yes |
+| 130 | TypeMismatchExceptionHandler | Type conversion errors (returns generic message) | Yes |
 | 150 | BadRequestExceptionHandler | Bad HTTP requests | Yes |
 | 200+ | Your custom handlers | Domain/infrastructure specific | Manual |
 | int.MaxValue | DefaultFallbackHandler | Catch-all fallback | Yes |
@@ -109,16 +113,14 @@ The `DefaultFallbackHandler` always runs last as the catch-all.
 
 | Handler | Handles | Priority |
 |---------|---------|----------|
+| `AggregateExceptionHandler` | `AggregateException` (single-inner unwrapping and re-dispatching) | 50 |
 | `ModelStateValidationExceptionHandler` | `ModelStateValidationException` (from `[ApiController]`) | 90 (requires `OverrideModelStateValidation: true`) |
 | `ValidationExceptionHandler` | `ValidationException` | 100 |
+| `JsonExceptionHandler` | `JsonException` | 120 |
+| `TypeMismatchExceptionHandler` | `FormatException`, `InvalidCastException` | 130 |
 | `BadRequestExceptionHandler` | `BadHttpRequestException` | 150 |
-| `TypeMismatchExceptionHandler` | `FormatException`, `InvalidCastException` | Available (not registered by default) |
-| `JsonExceptionHandler` | `JsonException` | Available (not registered by default) |
 | `DefaultFallbackHandler` | All unhandled exceptions | Fallback |
 
-**Note:** `ModelStateValidationExceptionHandler`, `ValidationExceptionHandler`, and `BadRequestExceptionHandler` are registered by default. `JsonExceptionHandler` and `TypeMismatchExceptionHandler` must be registered manually if needed:
+**Note:** All built-in handlers (`AggregateExceptionHandler`, `ModelStateValidationExceptionHandler`, `ValidationExceptionHandler`, `JsonExceptionHandler`, `TypeMismatchExceptionHandler`, and `BadRequestExceptionHandler`) are registered by default.
 
-```csharp
-builder.Services.AddExceptionHandler<JsonExceptionHandler>();
-builder.Services.AddExceptionHandler<TypeMismatchExceptionHandler>();
-```
+The `ModelStateValidationExceptionHandler` only processes exceptions when `OverrideModelStateValidation` is set to `true` in configuration. When `false` (default), ASP.NET Core's built-in model validation response is used instead.

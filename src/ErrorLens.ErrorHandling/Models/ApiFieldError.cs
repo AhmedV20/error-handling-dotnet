@@ -41,6 +41,8 @@ public class ApiFieldError
 
     public ApiFieldError(string code, string property, string message)
     {
+        ArgumentNullException.ThrowIfNull(code);
+        ArgumentNullException.ThrowIfNull(property);
         Code = code;
         Property = property;
         Message = message;

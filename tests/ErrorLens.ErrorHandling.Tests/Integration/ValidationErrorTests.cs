@@ -118,7 +118,7 @@ public class ValidationErrorTests
 
         var response = _facade.HandleException(exception);
 
-        response.FieldErrors![0].Path.Should().Be("address.ZipCode");
+        response.FieldErrors![0].Path.Should().Be("address.zipCode");
     }
 
     [Fact]
