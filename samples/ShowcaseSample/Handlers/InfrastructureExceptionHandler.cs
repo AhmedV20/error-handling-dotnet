@@ -7,6 +7,12 @@ namespace ShowcaseSample.Handlers;
 /// <summary>
 /// Custom exception handler for infrastructure exceptions.
 /// Demonstrates implementing IApiExceptionHandler for specialized handling.
+///
+/// NOTE: This handler is an ALTERNATIVE to YAML config-driven mappings.
+/// The same exception types are also mapped in errorhandling.yml via HttpStatuses/Codes/Messages.
+/// In a real project, you would typically use ONE approach — either a handler OR config mappings.
+/// Both are shown here for educational purposes to demonstrate the two approaches side by side.
+/// When both exist, the handler takes priority because it runs first in the pipeline.
 /// </summary>
 public class InfrastructureExceptionHandler : IApiExceptionHandler
 {

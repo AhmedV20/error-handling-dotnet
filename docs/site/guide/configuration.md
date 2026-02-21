@@ -36,7 +36,7 @@ ErrorHandling:
   ExceptionLogging: WithStacktrace
 ```
 
-A full YAML template is available at [Configuration Template](/reference/template).
+A full YAML template is available at [Configuration Template](/documentation#configuration-template).
 
 ## All Options
 
@@ -47,6 +47,7 @@ A full YAML template is available at [Configuration Template](/reference/templat
 | `DefaultErrorCodeStrategy` | `enum` | `AllCaps` | `AllCaps` or `FullQualifiedName` |
 | `SearchSuperClassHierarchy` | `bool` | `false` | Search base classes for config matches |
 | `AddPathToError` | `bool` | `true` | Include property path in field errors |
+| `IncludeRejectedValues` | `bool` | `true` | Include rejected values in validation errors. Set to `false` to prevent sensitive input (e.g., passwords) from being echoed in responses. |
 | `OverrideModelStateValidation` | `bool` | `false` | Intercept `[ApiController]` validation to use ErrorLens `fieldErrors` format |
 | `UseProblemDetailFormat` | `bool` | `false` | Enable RFC 9457 Problem Details format |
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` | Type URI prefix for Problem Details |
@@ -256,10 +257,11 @@ All 5xx-class errors automatically return a generic safe message:
 
 Settings are resolved in this order (highest priority first):
 
-1. **Inline options** — `Action<ErrorHandlingOptions>` in `AddErrorHandling()`
-2. **Configuration binding** — `appsettings.json` or `errorhandling.yml`
-3. **Exception attributes** — `[ResponseErrorCode]`, `[ResponseStatus]`
-4. **Default conventions** — class name to `ALL_CAPS`, built-in HTTP status mappings
+1. **Custom exception handlers** — `IApiExceptionHandler` implementations run first in the pipeline
+2. **Inline options** — `Action<ErrorHandlingOptions>` in `AddErrorHandling()`
+3. **Configuration binding** — `appsettings.json` or `errorhandling.yml`
+4. **Exception attributes** — `[ResponseErrorCode]`, `[ResponseStatus]`
+5. **Default conventions** — class name to `ALL_CAPS`, built-in HTTP status mappings
 
 ## Integration Configuration
 

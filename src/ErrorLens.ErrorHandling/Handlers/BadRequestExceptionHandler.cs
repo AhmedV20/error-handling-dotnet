@@ -38,16 +38,18 @@ public class BadRequestExceptionHandler : AbstractApiExceptionHandler
 
     private static string SanitizeMessage(string message)
     {
-        // Replace Kestrel-internal messages that may contain type names,
-        // framework-specific text, or internal details
-        if (message.Contains("Microsoft.") ||
-            message.Contains("System.") ||
-            message.Contains("failed to read", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("unexpected end", StringComparison.OrdinalIgnoreCase))
+        // Allowlist approach: only pass through known-safe, user-facing messages.
+        // Everything else is replaced with a generic message to prevent
+        // leaking internal framework details from Kestrel or model binding.
+        var msg = message.ToLowerInvariant();
+
+        if (msg.Contains("content type") ||
+            msg.Contains("required") ||
+            msg.Contains("missing") && !msg.Contains("microsoft.") && !msg.Contains("system."))
         {
-            return "Bad request";
+            return message;
         }
 
-        return message;
+        return "Bad request";
     }
 }

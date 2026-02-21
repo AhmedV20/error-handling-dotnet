@@ -136,6 +136,7 @@ public class InvalidOrderStateException : Exception
 Configuration-based mappings take precedence over attributes. This allows you to override attribute-defined values in specific environments without changing code.
 
 Priority order:
-1. Configuration (`Codes`, `HttpStatuses` in appsettings/YAML)
-2. Attributes (`[ResponseErrorCode]`, `[ResponseStatus]`)
-3. Default conventions (class name → ALL_CAPS)
+1. Custom exception handlers (`IApiExceptionHandler` implementations)
+2. Inline options / Configuration (`Codes`, `HttpStatuses` in appsettings/YAML)
+3. Attributes (`[ResponseErrorCode]`, `[ResponseStatus]`)
+4. Default conventions (class name → ALL_CAPS)

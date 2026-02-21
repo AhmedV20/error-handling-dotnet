@@ -123,8 +123,9 @@ public class InvalidOrderStateException : Exception
 
 ## Priority vs Configuration
 
-Configuration-based mappings take precedence over attributes:
+Settings are resolved in this order (highest priority first):
 
-1. Configuration (`Codes`, `HttpStatuses` in appsettings/YAML)
-2. Attributes (`[ResponseErrorCode]`, `[ResponseStatus]`)
-3. Default conventions (class name to ALL_CAPS)
+1. **Custom exception handlers** — `IApiExceptionHandler` implementations run first in the pipeline
+2. **Inline options / Configuration** — `Codes`, `HttpStatuses` in `AddErrorHandling()`, `appsettings.json`, or `errorhandling.yml`
+3. **Exception attributes** — `[ResponseErrorCode]`, `[ResponseStatus]`
+4. **Default conventions** — class name to `ALL_CAPS`, built-in HTTP status mappings

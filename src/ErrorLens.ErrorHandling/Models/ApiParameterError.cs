@@ -36,6 +36,7 @@ public class ApiParameterError
     {
         ArgumentNullException.ThrowIfNull(code);
         ArgumentNullException.ThrowIfNull(parameter);
+        ArgumentNullException.ThrowIfNull(message);
         Code = code;
         Parameter = parameter;
         Message = message;

@@ -50,6 +50,7 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `DefaultErrorCodeStrategy` | `ErrorCodeStrategy` | `AllCaps` |
 | `SearchSuperClassHierarchy` | `bool` | `false` |
 | `AddPathToError` | `bool` | `true` |
+| `IncludeRejectedValues` | `bool` | `true` |
 | `OverrideModelStateValidation` | `bool` | `false` |
 | `UseProblemDetailFormat` | `bool` | `false` |
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` |
@@ -375,4 +376,3 @@ public static class ErrorHandlingActivitySource
 ```
 
 > **See also:** [Telemetry](../features/telemetry.md)
-```

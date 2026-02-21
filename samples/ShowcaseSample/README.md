@@ -7,7 +7,7 @@ A comprehensive demonstration of all ErrorLens.ErrorHandling features using YAML
 This sample showcases the full capabilities of ErrorLens.ErrorHandling:
 - YAML configuration with `errorhandling.yml`
 - Custom JSON field names (`code` → `type`, `message` → `detail`)
-- Five feature-specific controllers
+- Six feature-specific controllers
 - Custom exception handler and response customizer
 - Swagger UI for testing
 
@@ -36,21 +36,23 @@ The API will be available at:
 ShowcaseSample/
 ├── Controllers/
 │   ├── BasicErrorsController.cs      # Zero-config exception handling
-│   ├── ValidationController.cs       # DataAnnotations validation
+│   ├── ValidationController.cs       # DataAnnotations + IValidatableObject
 │   ├── AttributesController.cs       # Attribute-based customization
 │   ├── ConfigDrivenController.cs     # YAML configuration mappings
-│   └── ProblemDetailsController.cs  # RFC 9457 Problem Details
+│   ├── ProblemDetailsController.cs   # RFC 9457 Problem Details
+│   └── FeaturesController.cs         # FullQualifiedName strategy demo
 ├── Customizers/
-│   └── RequestMetadataCustomizer.cs # Adds traceId, timestamp, path
+│   └── RequestMetadataCustomizer.cs  # Adds traceId, timestamp, path
 ├── Exceptions/
-│   ├── AuthExceptions.cs            # Authorization exceptions
-│   ├── DomainExceptions.cs          # Business domain exceptions
-│   └── InfrastructureExceptions.cs  # Infrastructure exceptions
+│   ├── AuthExceptions.cs             # Authorization exceptions
+│   ├── DomainExceptions.cs           # Business domain exceptions
+│   ├── InfrastructureExceptions.cs   # Infrastructure exceptions (config-driven)
+│   └── CustomExceptions.cs           # Exceptions for strategy demo
 ├── Handlers/
-│   └── InfrastructureExceptionHandler.cs # Custom handler for infra exceptions
+│   └── InfrastructureExceptionHandler.cs # Custom handler (alternative to config)
 ├── Models/
-│   └── RequestModels.cs             # Validation request models
-├── errorhandling.yml                # YAML configuration
+│   └── RequestModels.cs              # Validation request models
+├── errorhandling.yml                 # YAML configuration
 └── Program.cs                        # Startup configuration
 ```
 
@@ -66,6 +68,7 @@ ErrorHandling:
   SearchSuperClassHierarchy: true
   ExceptionLogging: WithStacktrace
   OverrideModelStateValidation: true
+  IncludeRejectedValues: true
 
   # Customize JSON field names
   JsonFieldNames:
@@ -101,6 +104,11 @@ ErrorHandling:
     4xx: Warning
     5xx: Error
     404: Debug
+
+  # RFC 9457 Problem Details (toggle to switch response format)
+  UseProblemDetailFormat: false
+  ProblemDetailTypePrefix: https://api.example.com/errors/
+  ProblemDetailConvertToKebabCase: true
 ```
 
 ## Feature Matrix
@@ -111,7 +119,8 @@ ErrorHandling:
 | **Validation** | DataAnnotations, `fieldErrors` format, OverrideModelStateValidation |
 | **Attributes** | `[ResponseErrorCode]`, `[ResponseStatus]`, `[ResponseErrorProperty]` |
 | **ConfigDriven** | YAML-based HTTP status/code/message mappings |
-| **ProblemDetails** | RFC 9457 Problem Details format |
+| **ProblemDetails** | RFC 9457 Problem Details format (set `UseProblemDetailFormat: true` in YAML to enable) |
+| **Features** | FullQualifiedName error code strategy, additional feature demos |
 
 ## API Endpoints
 
@@ -125,16 +134,17 @@ Zero-configuration exception handling.
 | `GET /api/basicerrors/invalid-operation` | Invalid operation | 400 INVALID_OPERATION |
 | `GET /api/basicerrors/argument-null` | Argument null | 400 ARGUMENT_NULL |
 | `GET /api/basicerrors/key-not-found` | Key not found | 404 KEY_NOT_FOUND |
-| `GET /api/basicerrors/timeout` | Timeout | 500 TIMEOUT |
+| `GET /api/basicerrors/timeout` | Timeout | 408 TIMEOUT |
 
 ### Validation Controller
 
-DataAnnotations validation with structured `fieldErrors`.
+DataAnnotations validation with structured `fieldErrors` and `globalErrors`.
 
 | Endpoint | Description | Request |
 |----------|-------------|---------|
-| `POST /api/validation/users` | Create user validation | `{ "name": "...", "email": "..." }` |
-| `POST /api/validation/transfer` | Transfer validation | `{ "amount": 100 }` |
+| `POST /api/validation/users` | Field-level validation | `{ "name": "...", "email": "..." }` |
+| `POST /api/validation/transfer` | Range validation | `{ "amount": -5 }` |
+| `POST /api/validation/change-password` | Cross-field validation (`globalErrors`) | `{ "currentPassword": "...", "newPassword": "...", "confirmPassword": "..." }` |
 
 ### Attributes Controller
 
@@ -153,18 +163,32 @@ YAML configuration-driven mappings.
 
 | Endpoint | Exception | Mapped Status | Mapped Code |
 |----------|-----------|----------------|--------------|
-| `GET /api/configdriven/database-timeout` | DatabaseTimeoutException | 503 | DATABASE_TIMEOUT |
-| `GET /api/configdriven/service-unavailable` | ServiceUnavailableException | 503 | SERVICE_UNAVAILABLE |
+| `GET /api/configdriven/db-timeout` | DatabaseTimeoutException | 503 | DATABASE_TIMEOUT |
+| `GET /api/configdriven/service-down` | ServiceUnavailableException | 503 | SERVICE_UNAVAILABLE |
 | `GET /api/configdriven/rate-limit` | RateLimitExceededException | 429 | RATE_LIMIT_EXCEEDED |
 
 ### Problem Details Controller
 
-RFC 9457 Problem Details format.
+RFC 9457 Problem Details format. **To enable:** set `UseProblemDetailFormat: true` in `errorhandling.yml`.
 
 | Endpoint | Description | Format |
 |----------|-------------|--------|
-| `GET /api/problemdetails/basic` | Problem Details response | RFC 9457 |
-| `GET /api/problemdetails/with-extension` | With custom properties | RFC 9457 + extensions |
+| `GET /api/problemdetails/not-found` | Problem Details response | RFC 9457 |
+| `GET /api/problemdetails/server-error` | Server error in PD format | RFC 9457 |
+| `GET /api/problemdetails/forbidden` | Forbidden with extensions | RFC 9457 + extensions |
+
+> **Note:** Problem Details is disabled by default. When disabled, these endpoints return the standard ErrorLens format with custom field names (`type`/`detail`). Toggle `UseProblemDetailFormat` in `errorhandling.yml` to switch.
+
+### Features Controller
+
+Error code strategy demos. Works with both `AllCaps` (default) and `FullQualifiedName` strategies.
+
+| Endpoint | Description | AllCaps Code | FullQualifiedName Code |
+|----------|-------------|--------------|------------------------|
+| `GET /api/features/inventory-error` | Inventory shortage | `INSUFFICIENT_INVENTORY` | `ShowcaseSample.Exceptions.InsufficientInventoryException` |
+| `GET /api/features/payment-declined` | Payment failure | `PAYMENT_DECLINED` | `ShowcaseSample.Exceptions.PaymentDeclinedException` |
+
+> To switch strategy, change `DefaultErrorCodeStrategy` in `errorhandling.yml` from `AllCaps` to `FullQualifiedName`.
 
 ## Example Requests
 
@@ -179,7 +203,10 @@ curl http://localhost:5000/api/basicerrors/key-not-found
 {
   "type": "KEY_NOT_FOUND",
   "detail": "The requested resource was not found",
-  "status": 404
+  "status": 404,
+  "traceId": "00-4b75c9e7...",
+  "timestamp": "2026-02-12T10:30:45.123Z",
+  "path": "/api/basicerrors/key-not-found"
 }
 ```
 
@@ -194,21 +221,29 @@ curl -X POST http://localhost:5000/api/validation/users \
 **Response:**
 ```json
 {
-  "type": "VALIDATION_ERROR",
-  "detail": "One or more validation errors occurred",
+  "type": "VALIDATION_FAILED",
+  "detail": "Validation failed",
   "status": 400,
   "fieldErrors": [
     {
       "property": "email",
-      "message": "EMAIL_FORMAT_INVALID",
+      "message": "Invalid email format",
       "code": "EMAIL_FORMAT_INVALID"
     },
     {
       "property": "name",
-      "message": "Name must be at least 2 characters",
-      "code": "TOO_SHORT"
+      "message": "Name must be between 2 and 100 characters",
+      "code": "INVALID_LENGTH"
+    },
+    {
+      "property": "password",
+      "message": "Password is required",
+      "code": "REQUIRED"
     }
-  ]
+  ],
+  "traceId": "00-4b75c9e7...",
+  "timestamp": "2026-02-12T10:30:45.123Z",
+  "path": "/api/validation/users"
 }
 ```
 
@@ -222,44 +257,75 @@ curl http://localhost:5000/api/attributes/user/12345
 ```json
 {
   "type": "USER_NOT_FOUND",
-  "detail": "User 12345 does not exist",
+  "detail": "User with ID '12345' was not found",
   "status": 404,
-  "userId": "12345"
+  "userId": "12345",
+  "traceId": "00-4b75c9e7...",
+  "timestamp": "2026-02-12T10:30:45.123Z",
+  "path": "/api/attributes/user/12345"
 }
 ```
 
 ### Config-Driven Error
 
 ```bash
-curl http://localhost:5000/api/configdriven/database-timeout
+curl http://localhost:5000/api/configdriven/db-timeout
 ```
 
 **Response:**
 ```json
 {
   "type": "DATABASE_TIMEOUT",
-  "detail": "A database operation timed out. Please try again.",
+  "detail": "Database operation 'GetUserById' timed out",
   "status": 503,
   "traceId": "00-4b75c9e7...",
   "timestamp": "2026-02-12T10:30:45.123Z",
-  "path": "/api/configdriven/database-timeout"
+  "path": "/api/configdriven/db-timeout"
 }
 ```
 
-### Problem Details Format
+### Global Errors (Cross-Field Validation)
 
 ```bash
-curl http://localhost:5000/api/problemdetails/basic
+curl -X POST http://localhost:5000/api/validation/change-password \
+  -H "Content-Type: application/json" \
+  -d '{"currentPassword":"pass123","newPassword":"different","confirmPassword":"mismatch"}'
 ```
 
 **Response:**
 ```json
 {
-  "type": "https://ahmedv20.github.io/error-handling-dotnet/errors/business-rule-violation",
-  "title": "Business Rule Violation",
-  "detail": "The request violates a business rule",
+  "type": "VALIDATION_FAILED",
+  "detail": "Validation failed",
   "status": 400,
-  "instance": "/api/problemdetails/basic"
+  "globalErrors": [
+    {
+      "code": "VALIDATION_ERROR",
+      "message": "New password and confirmation password must match."
+    }
+  ],
+  "traceId": "00-4b75c9e7...",
+  "timestamp": "2026-02-12T10:30:45.123Z",
+  "path": "/api/validation/change-password"
+}
+```
+
+> `globalErrors` are produced when `IValidatableObject.Validate()` returns `ValidationResult` with `null` member names. This indicates cross-field validation failures that don't apply to a single property.
+
+### Problem Details Format
+
+```bash
+curl http://localhost:5000/api/problemdetails/not-found
+```
+
+**Response:**
+```json
+{
+  "type": "https://api.example.com/errors/user-not-found",
+  "title": "User Not Found",
+  "detail": "User with ID 'user-456' was not found",
+  "status": 404,
+  "instance": "/api/problemdetails/not-found"
 }
 ```
 
@@ -270,19 +336,37 @@ curl http://localhost:5000/api/problemdetails/basic
 Custom handler for infrastructure exceptions:
 
 ```csharp
-public class InfrastructureExceptionHandler : AbstractApiExceptionHandler
+public class InfrastructureExceptionHandler : IApiExceptionHandler
 {
-    public override int Order => 50;
+    public int Order => 100;
 
-    public override bool CanHandle(Exception exception)
+    public bool CanHandle(Exception exception)
         => exception is DatabaseTimeoutException
             or ServiceUnavailableException
             or RateLimitExceededException;
 
-    public override ApiErrorResponse Handle(Exception exception)
+    public ApiErrorResponse Handle(Exception exception)
     {
-        // Maps to configured HTTP status, code, and message from YAML
-        return base.Handle(exception);
+        return exception switch
+        {
+            DatabaseTimeoutException dbEx => new ApiErrorResponse(
+                HttpStatusCode.ServiceUnavailable, "DATABASE_TIMEOUT", dbEx.Message),
+
+            ServiceUnavailableException svcEx => new ApiErrorResponse(
+                HttpStatusCode.ServiceUnavailable, "SERVICE_UNAVAILABLE", svcEx.Message),
+
+            RateLimitExceededException rateEx => CreateRateLimitResponse(rateEx),
+
+            _ => new ApiErrorResponse("INFRASTRUCTURE_ERROR", exception.Message)
+        };
+    }
+
+    private static ApiErrorResponse CreateRateLimitResponse(RateLimitExceededException ex)
+    {
+        var response = new ApiErrorResponse(
+            HttpStatusCode.TooManyRequests, "RATE_LIMIT_EXCEEDED", ex.Message);
+        response.AddProperty("retryAfterSeconds", ex.RetryAfterSeconds);
+        return response;
     }
 }
 ```
@@ -294,16 +378,21 @@ Adds request metadata to all error responses:
 ```csharp
 public class RequestMetadataCustomizer : IApiErrorResponseCustomizer
 {
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public RequestMetadataCustomizer(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     public void Customize(ApiErrorResponse response)
     {
-        response.AddProperty("traceId", Activity.Current?.Id ?? Guid.NewGuid().ToString());
-        response.AddProperty("timestamp", DateTime.UtcNow.ToString("o"));
+        var context = _httpContextAccessor.HttpContext;
+        if (context == null) return;
 
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext != null)
-        {
-            response.AddProperty("path", httpContext.Request.Path);
-        }
+        response.AddProperty("traceId", context.TraceIdentifier);
+        response.AddProperty("timestamp", DateTime.UtcNow.ToString("o"));
+        response.AddProperty("path", context.Request.Path.Value);
     }
 }
 ```

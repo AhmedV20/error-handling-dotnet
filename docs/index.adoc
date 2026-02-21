@@ -13,7 +13,7 @@ ErrorLens
 :source-highlighter: highlight.js
 :icons: font
 
-This documentation is for version {project-version}.
+This documentation is for version 1.3.1.
 
 == Goal
 
@@ -57,7 +57,7 @@ dotnet add package ErrorLens.ErrorHandling
 [source,xml,indent=0,role="secondary"]
 .PackageReference
 ----
-<PackageReference Include="ErrorLens.ErrorHandling" Version="LATEST_VERSION_HERE" />
+<PackageReference Include="ErrorLens.ErrorHandling" Version="1.3.1" />
 ----
 
 NOTE: This library is intended to be used with an https://learn.microsoft.com/en-us/aspnet/core[ASP.NET Core] project.
@@ -896,7 +896,7 @@ An example resulting response:
 }
 ----
 
-You can register multiple customizer beans in your application.
+You can register multiple customizer implementations in your application.
 
 === Custom JSON response field names
 
@@ -1030,7 +1030,7 @@ All 5xx-class errors (500-599) automatically return a generic safe message inste
 }
 ----
 
-This prevents internal details (database connection strings, file paths, stack traces) from leaking to API consumers.The original exception is still logged with full details on the server side.
+This prevents internal details (database connection strings, file paths, stack traces) from leaking to API consumers. The original exception is still logged with full details on the server side.
 
 NOTE: 4xx errors (400-499) preserve their original messages since these are typically user-facing and safe to expose.
 
@@ -1167,6 +1167,7 @@ ErrorHandling:
   HttpStatusInJsonResponse: true
   DefaultErrorCodeStrategy: AllCaps
   SearchSuperClassHierarchy: true
+  IncludeRejectedValues: true
   ExceptionLogging: WithStacktrace
 
   JsonFieldNames:
@@ -1684,6 +1685,10 @@ The `DefaultFallbackHandler` always runs last as the catch-all.
 |Allows to remove the `path` property in field error responses when set to `false`.
 |`true`
 
+|IncludeRejectedValues
+|When set to `true`, rejected values are included in validation field/parameter errors. Set to `false` to prevent sensitive input (e.g., passwords) from being echoed in responses.
+|`true`
+
 |OverrideModelStateValidation
 |When set to `true`, the library intercepts `[ApiController]` automatic model validation and returns ErrorLens structured `fieldErrors` format instead of ASP.NET Core's default `ProblemDetails` response.
 |`false`
@@ -1791,7 +1796,7 @@ The `DefaultFallbackHandler` always runs last as the catch-all.
 
 == Samples
 
-The repository includes three sample projects:
+The repository includes four sample projects:
 
 [cols="1,3"]
 |===

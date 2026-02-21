@@ -83,6 +83,55 @@ public class ErrorHandlingFacade
 
             // Log the exception
             _loggingService?.LogException(exception, response);
+
+            // Localize error messages (no-op when NoOpErrorMessageLocalizer is registered)
+            if (_localizer != null)
+            {
+                response.Message = _localizer.Localize(response.Code, response.Message);
+
+                if (response.FieldErrors != null)
+                {
+                    foreach (var fieldError in response.FieldErrors)
+                    {
+                        fieldError.Message = _localizer.LocalizeFieldError(fieldError.Code, fieldError.Property, fieldError.Message)!;
+                    }
+                }
+
+                if (response.GlobalErrors != null)
+                {
+                    foreach (var globalError in response.GlobalErrors)
+                    {
+                        globalError.Message = _localizer.Localize(globalError.Code, globalError.Message)!;
+                    }
+                }
+
+                if (response.ParameterErrors != null)
+                {
+                    foreach (var parameterError in response.ParameterErrors)
+                    {
+                        parameterError.Message = _localizer.Localize(parameterError.Code, parameterError.Message)!;
+                    }
+                }
+            }
+
+            // Enrich activity with telemetry data (zero overhead when no collector configured)
+            if (activity?.IsAllDataRequested == true)
+            {
+                activity.SetTag("error.code", response.Code);
+                activity.SetTag("error.type", exception.GetType().FullName);
+                activity.SetTag("http.response.status_code", (int)response.HttpStatusCode);
+
+                // Add exception event with OTel semantic conventions
+                var exceptionTags = new ActivityTagsCollection
+                {
+                    { "exception.type", exception.GetType().FullName },
+                    { "exception.message", exception.Message },
+                    { "exception.stacktrace", exception.StackTrace ?? exception.ToString() }
+                };
+                activity.AddEvent(new ActivityEvent("exception", tags: exceptionTags));
+
+                activity.SetStatus(ActivityStatusCode.Error, exception.Message);
+            }
         }
         catch (Exception handlerException)
         {
@@ -94,55 +143,6 @@ public class ErrorHandlingFacade
                 System.Net.HttpStatusCode.InternalServerError,
                 "INTERNAL_SERVER_ERROR",
                 "An unexpected error occurred");
-        }
-
-        // Localize error messages (no-op when NoOpErrorMessageLocalizer is registered)
-        if (_localizer != null)
-        {
-            response.Message = _localizer.Localize(response.Code, response.Message);
-
-            if (response.FieldErrors != null)
-            {
-                foreach (var fieldError in response.FieldErrors)
-                {
-                    fieldError.Message = _localizer.LocalizeFieldError(fieldError.Code, fieldError.Property, fieldError.Message)!;
-                }
-            }
-
-            if (response.GlobalErrors != null)
-            {
-                foreach (var globalError in response.GlobalErrors)
-                {
-                    globalError.Message = _localizer.Localize(globalError.Code, globalError.Message)!;
-                }
-            }
-
-            if (response.ParameterErrors != null)
-            {
-                foreach (var parameterError in response.ParameterErrors)
-                {
-                    parameterError.Message = _localizer.Localize(parameterError.Code, parameterError.Message)!;
-                }
-            }
-        }
-
-        // Enrich activity with telemetry data (zero overhead when no collector configured)
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag("error.code", response.Code);
-            activity.SetTag("error.type", exception.GetType().FullName);
-            activity.SetTag("http.response.status_code", (int)response.HttpStatusCode);
-
-            // Add exception event with OTel semantic conventions
-            var exceptionTags = new ActivityTagsCollection
-            {
-                { "exception.type", exception.GetType().FullName },
-                { "exception.message", exception.Message },
-                { "exception.stacktrace", exception.StackTrace ?? exception.ToString() }
-            };
-            activity.AddEvent(new ActivityEvent("exception", tags: exceptionTags));
-
-            activity.SetStatus(ActivityStatusCode.Error, exception.Message);
         }
 
         return response;

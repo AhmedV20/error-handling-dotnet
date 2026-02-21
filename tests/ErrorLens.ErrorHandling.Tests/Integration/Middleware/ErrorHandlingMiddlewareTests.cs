@@ -122,4 +122,22 @@ public class ErrorHandlingMiddlewareTests
         body.Should().NotContain("secret");
         body.Should().Contain("An unexpected error occurred");
     }
+
+    [Fact]
+    public async Task InvokeAsync_OperationCanceledException_WhenRequestAborted_Propagates()
+    {
+        var (middleware, provider) = CreateMiddleware();
+        using var _ = provider;
+
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var context = new DefaultHttpContext();
+        context.RequestAborted = cts.Token;
+        RequestDelegate next = _ => throw new OperationCanceledException(cts.Token);
+
+        var act = () => middleware.InvokeAsync(context, next);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
 }

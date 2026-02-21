@@ -1,8 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Threading.RateLimiting;
 using ErrorLens.ErrorHandling.Extensions;
 using ErrorLens.ErrorHandling.OpenApi;
 using ErrorLens.ErrorHandling.RateLimiting;
+using IntegrationSample;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Localization;
 using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +16,29 @@ builder.Services.AddErrorHandling(options =>
 {
     options.HttpStatusInJsonResponse = true;
     options.OverrideModelStateValidation = true;
+    options.IncludeRejectedValues = true;
+
+    // Configure rate limiting responses
+    options.RateLimiting = new()
+    {
+        ErrorCode = "RATE_LIMIT_EXCEEDED",
+        DefaultMessage = "Too many requests. Please try again later.",
+        IncludeRetryAfterInBody = true,
+        UseModernHeaderFormat = true  // Use IETF draft RateLimit-* headers
+    };
+});
+
+// --- Localization ---
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.AddErrorHandlingLocalization<ErrorMessages>();
+
+// Configure request localization
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[] { "en", "fr", "es" };
+    options.SetDefaultCulture(supportedCultures[0]);
+    options.AddSupportedUICultures(supportedCultures);
+    options.FallBackToParentUICultures = true;
 });
 
 // --- OpenTelemetry Tracing ---
@@ -45,28 +72,32 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-// Middleware pipeline
+// Middleware pipeline order matters:
+// 1. RequestLocalization — sets culture before error messages are generated
+// 2. ErrorHandling — catches exceptions and returns structured responses
+// 3. RateLimiter — returns 429 via IRateLimitResponseWriter
+app.UseRequestLocalization();
 app.UseErrorHandling();
 app.UseRateLimiter();
 app.MapOpenApi();
 
 // --- Demo Endpoints ---
 
-// Basic error
+// Basic error — demonstrates default error handling
 app.MapGet("/error", () =>
 {
     throw new InvalidOperationException("This is a demo error");
 })
 .WithTags("Errors");
 
-// Not found
+// Not found — demonstrates built-in 404 mapping for KeyNotFoundException
 app.MapGet("/not-found", () =>
 {
     throw new KeyNotFoundException("Resource not found");
 })
 .WithTags("Errors");
 
-// AggregateException (single inner → unwrapped)
+// AggregateException (single inner → automatically unwrapped to the inner exception)
 app.MapGet("/aggregate", () =>
 {
     throw new AggregateException(
@@ -74,7 +105,7 @@ app.MapGet("/aggregate", () =>
 })
 .WithTags("Errors");
 
-// AggregateException (multi → fallback)
+// AggregateException (multiple inners → handled by fallback as AGGREGATE)
 app.MapGet("/aggregate-multi", () =>
 {
     throw new AggregateException(
@@ -83,24 +114,59 @@ app.MapGet("/aggregate-multi", () =>
 })
 .WithTags("Errors");
 
-// Rate-limited endpoint
+// Rate-limited endpoint — exceeding 5 requests/min returns structured 429 response
 app.MapGet("/limited", () => Results.Ok(new { message = "You got through!" }))
     .RequireRateLimiting("api")
     .WithTags("Rate Limiting");
 
-// Health check
+// Localized error — send Accept-Language header to get translated error messages
+// Examples: Accept-Language: fr → French, Accept-Language: es → Spanish
+// Error codes are used as resource keys in .resx files under Resources/
+app.MapGet("/localized-error", () =>
+{
+    throw new InvalidOperationException("This is a demo error");
+})
+.WithTags("Localization");
+
+// Validation endpoint — demonstrates OverrideModelStateValidation with Minimal APIs
+// POST with invalid JSON to see structured fieldErrors
+app.MapPost("/validate", (ContactRequest request) =>
+    Results.Ok(new { message = "Contact created", name = request.Name }))
+.WithTags("Validation");
+
+// Health check — lists all features demonstrated by this sample
 app.MapGet("/", () => Results.Ok(new
 {
     service = "IntegrationSample",
-    version = "1.3.0",
+    version = "1.3.1",
     features = new[]
     {
         "OpenTelemetry Tracing",
         "OpenAPI Schema Generation",
         "Rate Limiting",
-        "AggregateException Handling"
+        "AggregateException Handling",
+        "Error Message Localization",
+        "Validation (OverrideModelStateValidation)"
     }
 }))
 .WithTags("Info");
 
 app.Run();
+
+/// <summary>
+/// Simple validation model for the /validate endpoint.
+/// Demonstrates that OverrideModelStateValidation works with Minimal APIs.
+/// </summary>
+public class ContactRequest
+{
+    [Required(ErrorMessage = "Name is required")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 100 characters")]
+    public string Name { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
+    public string Email { get; set; } = string.Empty;
+
+    [Range(1, 5, ErrorMessage = "Priority must be between 1 and 5")]
+    public int Priority { get; set; }
+}

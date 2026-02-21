@@ -85,7 +85,7 @@ public class ModelStateValidationExceptionHandler : AbstractApiExceptionHandler
                         code,
                         camelField,
                         resolvedMessage,
-                        errors.RawValue,
+                        _options.IncludeRejectedValues ? errors.RawValue : null,
                         _options.AddPathToError ? camelField : null);
 
                     response.AddFieldError(fieldError);

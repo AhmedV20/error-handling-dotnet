@@ -37,6 +37,11 @@ public class ErrorHandlingMiddleware : IMiddleware
         {
             await next(context);
         }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        {
+            // Client disconnected — let ASP.NET Core handle cancellation naturally
+            throw;
+        }
         catch (Exception exception)
         {
             await HandleExceptionAsync(context, exception);

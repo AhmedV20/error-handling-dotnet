@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-02-21
+
+### Added
+
+- `IncludeRejectedValues` option (default: `true`) — suppress rejected values in validation errors for sensitive data
+
+### Fixed
+
+- **Pipeline Resilience**: Localization and telemetry errors no longer crash the error handling pipeline (moved inside try/catch)
+- **OperationCanceledException**: Client-aborted requests now propagate naturally instead of returning 500 JSON
+- **Field-Specific Localization**: `LocalizeFieldError` tries composite key (`fieldName.errorCode`) before falling back to error code
+- **ProblemDetails Custom Field Names**: Extension keys now use configured `JsonFieldNames` instead of hardcoded values
+- **ProblemDetails Null Code**: `BuildTypeUri` returns `about:blank` for null error codes instead of throwing
+- **AggregateExceptionHandler**: Cached handler resolution with type-based self-filtering (performance)
+- **Rate Limiting Headers**: `RateLimit` header no longer includes invalid `limit=0`; `Retry-After` rounds up to minimum 1 second
+- **BadRequestExceptionHandler**: Switched to allowlist-based message sanitization
+- **Field Name Validation**: Case-insensitive duplicate detection for `JsonFieldNames`
+- **ErrorCodeMapper**: Empty string guard returns `UNKNOWN_ERROR` instead of empty code
+- **Null Guards**: Added `ArgumentNullException` guards for `message` parameter in `ApiFieldError`, `ApiGlobalError`, `ApiParameterError`
+- **Serialization**: Cached `HashSet<string>` for built-in field names (avoids per-write allocation)
+
+### Documentation
+
+- Updated all configuration examples with `IncludeRejectedValues` option
+- Updated sample YAML/JSON configs
+- Improved documentation site content
+
 ## [1.3.0] - 2026-02-16
 
 ### Breaking Changes

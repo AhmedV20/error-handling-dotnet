@@ -15,10 +15,20 @@ namespace ErrorLens.ErrorHandling.Handlers;
 public class AggregateExceptionHandler : AbstractApiExceptionHandler
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly Lazy<(IReadOnlyList<IApiExceptionHandler> handlers, IFallbackApiExceptionHandler fallback)> _resolved;
 
     public AggregateExceptionHandler(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
+        _resolved = new Lazy<(IReadOnlyList<IApiExceptionHandler>, IFallbackApiExceptionHandler)>(() =>
+        {
+            var handlers = _serviceProvider.GetServices<IApiExceptionHandler>()
+                .Where(h => h.GetType() != typeof(AggregateExceptionHandler))
+                .OrderBy(h => h.Order)
+                .ToList();
+            var fallback = _serviceProvider.GetRequiredService<IFallbackApiExceptionHandler>();
+            return (handlers, fallback);
+        });
     }
 
     /// <inheritdoc />
@@ -40,28 +50,22 @@ public class AggregateExceptionHandler : AbstractApiExceptionHandler
         var flattened = aggregateException.Flatten();
         var innerExceptions = flattened.InnerExceptions;
 
+        var (resolvedHandlers, resolvedFallback) = _resolved.Value;
+
         // Single inner exception: unwrap and re-dispatch to the handler chain
         if (innerExceptions.Count == 1)
         {
             var innerException = innerExceptions[0];
 
-            // Lazily resolve handlers to break the circular dependency
-            var handlers = _serviceProvider.GetServices<IApiExceptionHandler>();
-            var fallbackHandler = _serviceProvider.GetRequiredService<IFallbackApiExceptionHandler>();
-
-            // Find a specific handler for the inner exception (skip this handler to avoid recursion)
-            var handler = handlers
-                .Where(h => h != this)
-                .OrderBy(h => h.Order)
-                .FirstOrDefault(h => h.CanHandle(innerException));
+            // Find a specific handler for the inner exception (already filtered and sorted)
+            var handler = resolvedHandlers.FirstOrDefault(h => h.CanHandle(innerException));
 
             return handler != null
                 ? handler.Handle(innerException)
-                : fallbackHandler.Handle(innerException);
+                : resolvedFallback.Handle(innerException);
         }
 
         // Multi-exception or zero-exception: delegate to fallback
-        var fallback = _serviceProvider.GetRequiredService<IFallbackApiExceptionHandler>();
-        return fallback.Handle(aggregateException);
+        return resolvedFallback.Handle(aggregateException);
     }
 }

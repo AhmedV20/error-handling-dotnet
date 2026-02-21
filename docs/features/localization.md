@@ -9,8 +9,8 @@ The `IErrorMessageLocalizer` interface provides two methods:
 ```csharp
 public interface IErrorMessageLocalizer
 {
-    string Localize(string errorCode, string defaultMessage);
-    string LocalizeFieldError(string errorCode, string fieldName, string defaultMessage);
+    string? Localize(string errorCode, string? defaultMessage);
+    string? LocalizeFieldError(string errorCode, string fieldName, string? defaultMessage);
 }
 ```
 

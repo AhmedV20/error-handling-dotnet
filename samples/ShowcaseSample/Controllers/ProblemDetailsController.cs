@@ -5,7 +5,13 @@ namespace ShowcaseSample.Controllers;
 
 /// <summary>
 /// Demonstrates RFC 9457 Problem Details format.
-/// Enable UseProblemDetailFormat in errorhandling.yml to see application/problem+json responses.
+///
+/// To enable Problem Details output, set the following in errorhandling.yml:
+///   UseProblemDetailFormat: true
+///
+/// When enabled, all error responses switch from the standard ErrorLens format
+/// to RFC 9457 application/problem+json format with type, title, status, detail fields.
+/// When disabled (default), these endpoints return the standard ErrorLens format.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]

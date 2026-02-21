@@ -111,4 +111,20 @@ public class ApiFieldErrorTests
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("property");
     }
+
+    [Fact]
+    public void Constructor_WithNullMessage_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiFieldError("REQUIRED", "email", null!);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("message");
+    }
+
+    [Fact]
+    public void Constructor_Full_WithNullMessage_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiFieldError("REQUIRED", "email", null!, "bad@", "email");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("message");
+    }
 }

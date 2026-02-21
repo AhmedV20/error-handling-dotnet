@@ -8,6 +8,7 @@ ErrorHandling:
   SearchSuperClassHierarchy: true
   ExceptionLogging: WithStacktrace
   OverrideModelStateValidation: true
+  IncludeRejectedValues: true
 
   # Customize JSON field names (rename "code" → "type", "message" → "detail")
   JsonFieldNames:
@@ -43,3 +44,10 @@ ErrorHandling:
     4xx: Warning
     5xx: Error
     404: Debug
+
+  # RFC 9457 Problem Details format
+  # When enabled, responses use application/problem+json with type, title, status, detail fields
+  # Try the /api/problemdetails/* endpoints to see the difference
+  UseProblemDetailFormat: false
+  ProblemDetailTypePrefix: https://api.example.com/errors/
+  ProblemDetailConvertToKebabCase: true

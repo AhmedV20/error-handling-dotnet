@@ -32,6 +32,16 @@ public class StringLocalizerErrorMessageLocalizer<TResource> : IErrorMessageLoca
         if (string.IsNullOrEmpty(errorCode))
             return defaultMessage;
 
+        // Try field-specific key first (e.g., "email.REQUIRED_NOT_NULL")
+        if (!string.IsNullOrEmpty(fieldName))
+        {
+            var fieldSpecificKey = $"{fieldName}.{errorCode}";
+            var fieldLocalized = _localizer[fieldSpecificKey];
+            if (!fieldLocalized.ResourceNotFound)
+                return fieldLocalized.Value;
+        }
+
+        // Fall back to error code only
         var localized = _localizer[errorCode];
         return localized.ResourceNotFound ? defaultMessage : localized.Value;
     }

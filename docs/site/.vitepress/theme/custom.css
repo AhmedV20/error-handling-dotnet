@@ -1,9 +1,11 @@
 /* ================================================
    ErrorLens.ErrorHandling — VitePress Custom Theme
+   Modern, minimal, single-page optimized
    ================================================ */
 
-/* ---- Brand Colors ---- */
+/* ---- CSS Custom Properties ---- */
 :root {
+  /* Brand colors */
   --vp-c-brand-1: #5b6ee1;
   --vp-c-brand-2: #7c8af2;
   --vp-c-brand-3: #4a5bc7;
@@ -11,8 +13,12 @@
   --vp-c-tip-1: var(--vp-c-brand-1);
   --vp-c-tip-soft: var(--vp-c-brand-soft);
 
+  /* ErrorLens theme tokens */
   --el-glow: rgba(91, 110, 225, 0.12);
   --el-glow-hover: rgba(91, 110, 225, 0.22);
+  --el-hero-icon-size: 220px;
+  --el-hero-icon-radius: 32px;
+  --el-content-max-width: 1200px;
 
   /* Button overrides */
   --vp-button-brand-bg: var(--vp-c-brand-1);
@@ -42,6 +48,16 @@
 }
 
 /* ========================================
+   SMOOTH SCROLLING & ANCHOR NAVIGATION
+   Critical for single-page documentation
+   ======================================== */
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+/* ========================================
    HERO — Split Layout Design
    Content Left | Icon Right
 
@@ -62,19 +78,17 @@
    Mobile: stacked with image on top
    ======================================== */
 
-/* Container: horizontal split on desktop, vertical on mobile */
 .VPHero .container {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
-  max-width: 1200px !important;
+  max-width: var(--el-content-max-width) !important;
   margin: 0 auto !important;
   padding: 80px 48px 60px !important;
   gap: 80px !important;
 }
 
-/* Main content: LEFT side, vertical stack */
 .VPHero .main {
   order: 1 !important;
   flex: 1 !important;
@@ -87,7 +101,6 @@
   margin: 0 !important;
 }
 
-/* Image wrapper: RIGHT side */
 .VPHero .image {
   order: 2 !important;
   flex-shrink: 0 !important;
@@ -99,8 +112,8 @@
 }
 
 .VPHero .image-container {
-  width: 220px !important;
-  height: 220px !important;
+  width: var(--el-hero-icon-size) !important;
+  height: var(--el-hero-icon-size) !important;
   position: relative !important;
   display: flex !important;
   align-items: center !important;
@@ -113,17 +126,15 @@
   opacity: 0.6;
 }
 
-/* Icon image with simple hover effect */
 .VPHero .VPImage.image-src {
-  max-width: 220px !important;
-  max-height: 220px !important;
-  width: 220px !important;
-  height: 220px !important;
-  border-radius: 32px !important;
-  box-shadow: 0 16px 56px var(--el-glow-hover), 
+  max-width: var(--el-hero-icon-size) !important;
+  max-height: var(--el-hero-icon-size) !important;
+  width: var(--el-hero-icon-size) !important;
+  height: var(--el-hero-icon-size) !important;
+  border-radius: var(--el-hero-icon-radius) !important;
+  box-shadow: 0 16px 56px var(--el-glow-hover),
               0 0 0 1px rgba(91, 110, 225, 0.1);
-  transition: box-shadow 0.3s ease,
-              filter 0.3s ease;
+  transition: box-shadow 0.3s ease, filter 0.3s ease;
   display: block !important;
   flex-shrink: 0 !important;
 }
@@ -134,7 +145,6 @@
   filter: brightness(1.05);
 }
 
-/* Hero name: large gradient text, left-aligned */
 .VPHero .name {
   font-size: 3.2rem !important;
   font-weight: 800 !important;
@@ -149,7 +159,6 @@
   display: inline-block !important;
 }
 
-/* Hero text: subtitle, left-aligned */
 .VPHero .text {
   font-size: 1.75rem !important;
   font-weight: 600 !important;
@@ -160,7 +169,6 @@
   width: 100% !important;
 }
 
-/* Hero tagline: description, left-aligned */
 .VPHero .tagline {
   font-size: 1.1rem !important;
   color: var(--vp-c-text-2) !important;
@@ -172,7 +180,6 @@
   max-width: 540px !important;
 }
 
-/* Action buttons: left-aligned, horizontal row */
 .VPHero .actions {
   display: flex !important;
   justify-content: flex-start !important;
@@ -287,7 +294,7 @@
 }
 
 /* ========================================
-   QUICK START / CONTENT SECTION
+   QUICK START / HOME CONTENT SECTION
    ======================================== */
 
 .VPHome .vp-doc {
@@ -310,7 +317,6 @@
   padding-top: 0;
 }
 
-/* Tables in home content */
 .VPHome .vp-doc table {
   width: 100%;
   border-radius: 10px;
@@ -323,6 +329,46 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* ========================================
+   DOCUMENTATION PAGE — Single Page Styles
+   Section dividers and content spacing
+   for long-form single-page documentation
+   ======================================== */
+
+.vp-doc h2 {
+  scroll-margin-top: 80px;
+}
+
+.vp-doc h3 {
+  scroll-margin-top: 80px;
+}
+
+/* Section dividers for documentation page */
+.vp-doc h2:not(:first-child) {
+  border-top: 1px solid var(--vp-c-divider);
+  padding-top: 32px;
+  margin-top: 48px;
+}
+
+/* Better code block spacing for dense documentation */
+.vp-doc div[class*='language-'] + div[class*='language-'] {
+  margin-top: 12px;
+}
+
+/* Tables: improved readability */
+.vp-doc table {
+  font-size: 0.9rem;
+}
+
+.vp-doc table th {
+  white-space: nowrap;
+}
+
+/* Tip/warning/info blocks: consistent spacing */
+.vp-doc .custom-block {
+  margin: 20px 0;
 }
 
 /* ========================================
@@ -341,13 +387,19 @@
   letter-spacing: -0.01em;
 }
 
-/* Sidebar */
+/* Sidebar — grouped sections with uppercase headers */
 .VPSidebar .group .title {
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   color: var(--vp-c-text-3);
+}
+
+/* Sidebar — active link highlight */
+.VPSidebarItem .is-active > .item .link > .text {
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
 }
 
 /* Footer */
@@ -366,8 +418,9 @@
   }
 
   .VPHero .image-container {
-    width: 200px !important;
-    height: 200px !important;
+    --el-hero-icon-size: 200px;
+    width: var(--el-hero-icon-size) !important;
+    height: var(--el-hero-icon-size) !important;
   }
 
   .VPHero .VPImage.image-src {
@@ -404,12 +457,10 @@
     gap: 40px !important;
   }
 
-  /* Image moves to top on mobile */
   .VPHero .image {
     order: 1 !important;
   }
 
-  /* Content below image on mobile */
   .VPHero .main {
     order: 2 !important;
     align-items: center !important;
@@ -496,4 +547,28 @@
   .VPHero .action .VPButton {
     width: 100% !important;
   }
+}
+
+/* ========================================
+   MERMAID DIAGRAMS
+   Dark/light theme support for rendered diagrams
+   ======================================== */
+
+.mermaid {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Dark mode: invert Mermaid's light-themed output */
+.dark .mermaid {
+  filter: invert(0.88) hue-rotate(180deg);
+}
+
+.dark .mermaid svg {
+  background: transparent !important;
 }

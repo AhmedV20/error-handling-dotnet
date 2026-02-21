@@ -97,3 +97,43 @@ Handlers execute in order of their `Order` property (lowest first). The first ha
 | int.MaxValue | `DefaultFallbackHandler` | Catch-all fallback | Yes |
 
 The `DefaultFallbackHandler` always runs last as the catch-all.
+
+## Custom Fallback Handler
+
+Replace the built-in `DefaultFallbackHandler` by implementing `IFallbackApiExceptionHandler`. The fallback handler runs when **no** `IApiExceptionHandler` matches the exception.
+
+```csharp
+public class SafeFallbackHandler : IFallbackApiExceptionHandler
+{
+    private readonly ILogger<SafeFallbackHandler> _logger;
+
+    public SafeFallbackHandler(ILogger<SafeFallbackHandler> logger)
+    {
+        _logger = logger;
+    }
+
+    public ApiErrorResponse Handle(Exception exception)
+    {
+        _logger.LogError(exception, "Unhandled exception: {Type}", exception.GetType().Name);
+
+        var response = new ApiErrorResponse(
+            HttpStatusCode.InternalServerError,
+            "INTERNAL_SERVER_ERROR",
+            "An unexpected error occurred. Please contact support if this persists.");
+
+        // Add a support reference for incident tracking
+        response.AddProperty("supportReference", $"ERR-{DateTime.UtcNow:yyyyMMdd-HHmmss}");
+        return response;
+    }
+}
+```
+
+Register it as a singleton — this replaces the built-in `DefaultFallbackHandler`:
+
+```csharp
+builder.Services.AddSingleton<IFallbackApiExceptionHandler, SafeFallbackHandler>();
+```
+
+::: tip
+Use the fallback handler for global cross-cutting concerns like incident tracking, custom safe messages, or support reference IDs. For exception-type-specific handling, use `IApiExceptionHandler` instead.
+:::

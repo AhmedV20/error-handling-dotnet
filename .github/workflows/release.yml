@@ -5,7 +5,6 @@ on:
     types: [published]
 
 permissions:
-  packages: write
   contents: read
   id-token: write  # For OIDC token for NuGet trusted publishing (optional)
 
@@ -62,7 +61,7 @@ jobs:
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
 
-  # Publish to NuGet and GitHub Packages
+  # Publish to NuGet.org
   publish:
     needs: ci
     runs-on: ubuntu-latest
@@ -102,9 +101,6 @@ jobs:
       - name: Push to NuGet.org
         run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
-      - name: Push to GitHub Packages
-        run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
-
       - name: Summary
         run: |
           echo "## Release Published" >> $GITHUB_STEP_SUMMARY
@@ -113,4 +109,3 @@ jobs:
           echo "- **ErrorLens.ErrorHandling:** https://www.nuget.org/packages/ErrorLens.ErrorHandling/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **ErrorLens.ErrorHandling.OpenApi:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **ErrorLens.ErrorHandling.Swashbuckle:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **GitHub Packages:** Published to ${{ github.repository_owner }} registry" >> $GITHUB_STEP_SUMMARY

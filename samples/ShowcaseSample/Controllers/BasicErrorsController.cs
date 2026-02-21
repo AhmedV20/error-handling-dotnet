@@ -56,7 +56,7 @@ public class BasicErrorsController : ControllerBase
     }
 
     /// <summary>
-    /// GET /api/basicerrors/timeout → 500 TIMEOUT
+    /// GET /api/basicerrors/timeout → 408 TIMEOUT
     /// </summary>
     [HttpGet("timeout")]
     public IActionResult Timeout()
@@ -65,7 +65,7 @@ public class BasicErrorsController : ControllerBase
     }
 
     /// <summary>
-    /// GET /api/basicerrors/not-implemented → 500 NOT_IMPLEMENTED
+    /// GET /api/basicerrors/not-implemented → 501 NOT_IMPLEMENTED
     /// </summary>
     [HttpGet("not-implemented")]
     public IActionResult NotImplementedAction()

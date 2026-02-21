@@ -9,7 +9,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![.NET 6.0+](https://img.shields.io/badge/.NET-10.0%20|%209.0%20|%208.0%20|%207.0%20|%206.0-512BD4)
 
-Transform unhandled exceptions into clean, structured JSON responses with zero configuration required — just two lines of code and you're ready for production. As your needs evolve, take full control with declarative attributes on your exception classes, comprehensive YAML/JSON configuration files for global settings, custom error handlers for complex transformation logic, validation error mapping, multi-language localization support, OpenTelemetry tracing integration, and RFC 9457 Problem Details compliance — all while maintaining automatic sensitive data sanitization and comprehensive logging.
+Transform unhandled exceptions into clean, structured JSON responses with minimal setup — just two lines of code to get started.
+
+ErrorLens provides a production-ready error handling pipeline for ASP.NET Core APIs. Every exception is automatically converted into a consistent, structured JSON response with appropriate HTTP status codes, machine-readable error codes, and human-readable messages. The library handles the full lifecycle from exception to response: handler selection, response customization, secure 5xx safe messaging, configurable logging, and optional localization — with zero-config defaults that work out of the box and deep extensibility when you need it.
+
+> **Full documentation:** [https://ahmedv20.github.io/error-handling-dotnet/current/](https://ahmedv20.github.io/error-handling-dotnet/current/)
+
+---
 
 ## Features
 
@@ -19,45 +25,30 @@ Transform unhandled exceptions into clean, structured JSON responses with zero c
 - **Custom JSON Field Names** — Rename any response field (`code` → `type`, `message` → `detail`, etc.)
 - **YAML & JSON Configuration** — Configure error codes, messages, HTTP statuses via `appsettings.json` or `errorhandling.yml`
 - **Custom Exception Attributes** — `[ResponseErrorCode]`, `[ResponseStatus]`, `[ResponseErrorProperty]`
-- **Custom Exception Handlers** — Register `IApiExceptionHandler` implementations with priority ordering (aggregate unwrapping built-in)
+- **Custom Exception Handlers** — Register `IApiExceptionHandler` implementations with priority ordering
+- **AggregateException Unwrapping** — Automatically flattens and unwraps single-inner `AggregateException`
 - **Response Customization** — Add global properties (traceId, timestamp) via `IApiErrorResponseCustomizer`
+- **Replaceable Mappers** — Override `IErrorCodeMapper`, `IErrorMessageMapper`, or `IHttpStatusMapper`
 - **RFC 9457 Problem Details** — Opt-in `application/problem+json` compliant responses
 - **Configurable Logging** — Control log levels and stack trace verbosity per HTTP status code
 - **Startup Validation** — JSON field names validated at startup (non-null, non-empty, unique)
 - **Multi-Target Support** — .NET 6.0, 7.0, 8.0, 9.0, and 10.0
-- **OpenTelemetry Tracing** — Automatic `Activity` spans with error tags and OTel semantic conventions (zero dependencies)
-- **Error Message Localization** — `IErrorMessageLocalizer` with `IStringLocalizer` bridge for multi-language error messages
-- **OpenAPI Schema Generation** — Auto-add error response schemas to .NET 9+ OpenAPI docs (`ErrorLens.ErrorHandling.OpenApi`)
-- **Swashbuckle Integration** — Auto-add error response schemas to Swagger docs for .NET 6-8 (`ErrorLens.ErrorHandling.Swashbuckle`)
+- **.NET 8+ Native Integration** — Automatically registers `IExceptionHandler` on .NET 8+; falls back to middleware on .NET 6/7
+- **OpenTelemetry Tracing** — Automatic `Activity` spans with error tags and OTel semantic conventions
+- **Error Message Localization** — `IErrorMessageLocalizer` with `IStringLocalizer` bridge for multi-language support
+- **OpenAPI / Swagger Integration** — Auto-add error response schemas to API docs
 - **Rate Limiting** — Structured 429 responses with `Retry-After` headers via `IRateLimitResponseWriter` (.NET 7+)
+- **Built-in Error Code Constants** — `DefaultErrorCodes` class with 23 predefined codes for consistent frontend matching
 
+## Quick Start
 
-## 📦 Packages
-
-| Package | Description | Target Frameworks | Version |
-|---------|-------------|-------------------|---------|
-| **[ErrorLens.ErrorHandling](https://www.nuget.org/packages/ErrorLens.ErrorHandling)** | Core middleware for structured error responses | .NET 6, 7, 8, 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling) |
-| **[ErrorLens.ErrorHandling.OpenApi](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi)** | OpenAPI schema generation (.NET 9+) | .NET 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.OpenApi?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi) |
-| **[ErrorLens.ErrorHandling.Swashbuckle](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle)** | Swashbuckle integration (.NET 6-8) | .NET 6, 7, 8 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.Swashbuckle?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle) |
-
-
-## Installation
+### Installation
 
 ```bash
 dotnet add package ErrorLens.ErrorHandling
 ```
 
-### Optional Integration Packages
-
-```bash
-# OpenAPI schema generation for .NET 9+ (Microsoft.AspNetCore.OpenApi)
-dotnet add package ErrorLens.ErrorHandling.OpenApi
-
-# Swagger schema generation for .NET 6-8 (Swashbuckle)
-dotnet add package ErrorLens.ErrorHandling.Swashbuckle
-```
-
-## Quick Start
+### Minimal API (.NET 6+)
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -65,9 +56,41 @@ builder.Services.AddErrorHandling();
 
 var app = builder.Build();
 app.UseErrorHandling();
+
+app.MapGet("/", () => { throw new Exception("Something went wrong"); });
+app.Run();
+```
+
+### Controller-Based API
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllers();
+builder.Services.AddErrorHandling();
+
+var app = builder.Build();
+app.UseErrorHandling();
 app.MapControllers();
 app.Run();
 ```
+
+### With Configuration Options
+
+```csharp
+// Option 1: Inline options
+builder.Services.AddErrorHandling(options =>
+{
+    options.HttpStatusInJsonResponse = true;
+    options.OverrideModelStateValidation = true;
+    options.IncludeRejectedValues = true;
+    options.ExceptionLogging = ExceptionLogging.WithStacktrace;
+});
+
+// Option 2: Bind from appsettings.json / YAML
+builder.Services.AddErrorHandling(builder.Configuration);
+```
+
+> **Note (.NET 8+):** ErrorLens automatically registers `IExceptionHandler` on .NET 8+, so exceptions are handled natively by the ASP.NET Core exception handler pipeline. On .NET 6/7, `UseErrorHandling()` registers middleware instead. Both paths produce identical results.
 
 All unhandled exceptions now return structured JSON:
 
@@ -78,118 +101,116 @@ All unhandled exceptions now return structured JSON:
 }
 ```
 
+The error code is generated automatically from the exception class name using `ALL_CAPS` strategy — `InvalidOperationException` becomes `INVALID_OPERATION`, `UserNotFoundException` becomes `USER_NOT_FOUND`.
+
+## How It Works
+
+ErrorLens processes exceptions through a pipeline with clearly defined stages:
+
+```
+Exception thrown
+  → Handler Selection (sorted by Order, first CanHandle() match wins)
+    → Fallback Handler (if no handler matches)
+      → HTTP Status in JSON (if configured)
+        → Response Customizers (all IApiErrorResponseCustomizer run in order)
+          → Logging (ILoggingService with ILoggingFilter checks)
+            → Localization (IErrorMessageLocalizer replaces messages)
+              → OpenTelemetry (Activity enriched with error tags)
+                → JSON Response (or Problem Details if enabled)
+```
+
+Each stage is independently configurable and replaceable. If any handler or customizer throws, the pipeline catches the error, logs both exceptions, and returns a safe 500 response to prevent cascading failures.
+
+For a detailed architecture overview with Mermaid diagrams, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Packages
+
+| Package | Description | Target Frameworks | Version |
+|---------|-------------|-------------------|---------|
+| **[ErrorLens.ErrorHandling](https://www.nuget.org/packages/ErrorLens.ErrorHandling)** | Core middleware for structured error responses | .NET 6, 7, 8, 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling) |
+| **[ErrorLens.ErrorHandling.OpenApi](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi)** | OpenAPI schema generation (.NET 9+) | .NET 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.OpenApi?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi) |
+| **[ErrorLens.ErrorHandling.Swashbuckle](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle)** | Swashbuckle integration (.NET 6-8) | .NET 6, 7, 8 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.Swashbuckle?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle) |
+
+```bash
+# Optional integration packages
+dotnet add package ErrorLens.ErrorHandling.OpenApi        # .NET 9+
+dotnet add package ErrorLens.ErrorHandling.Swashbuckle    # .NET 6-8
+```
+
+## Default HTTP Status Mappings
+
+ErrorLens maps common .NET exception types to appropriate HTTP status codes out of the box:
+
+| Exception Type | HTTP Status |
+|---------------|-------------|
+| `ArgumentException` / `ArgumentNullException` | 400 Bad Request |
+| `InvalidOperationException` | 400 Bad Request |
+| `FormatException` | 400 Bad Request |
+| `UnauthorizedAccessException` | 401 Unauthorized |
+| `KeyNotFoundException` | 404 Not Found |
+| `FileNotFoundException` / `DirectoryNotFoundException` | 404 Not Found |
+| `TimeoutException` | 408 Request Timeout |
+| `OperationCanceledException` | 499 Client Closed Request |
+| `NotImplementedException` | 501 Not Implemented |
+| All others | 500 Internal Server Error |
+
+> **Note:** `TaskCanceledException` inherits from `OperationCanceledException`, so it also maps to 499 automatically.
+
+Override any mapping via [configuration](docs/site/guide/configuration.md) or [`[ResponseStatus]`](docs/site/features/attributes.md) attributes.
+
 ## Configuration
 
-### JSON (`appsettings.json`)
+ErrorLens supports both JSON (`appsettings.json`) and YAML (`errorhandling.yml`) configuration. Here is a minimal example:
 
 ```json
 {
   "ErrorHandling": {
-    "Enabled": true,
     "HttpStatusInJsonResponse": true,
-    "DefaultErrorCodeStrategy": "AllCaps",
-    "AddPathToError": true,
     "OverrideModelStateValidation": true,
-    "SearchSuperClassHierarchy": true,
+    "IncludeRejectedValues": true,
     "ExceptionLogging": "WithStacktrace",
-
-    "JsonFieldNames": {
-      "Code": "type",
-      "Message": "detail"
-    },
-
     "HttpStatuses": {
-      "MyApp.UserNotFoundException": 404,
-      "MyApp.DuplicateEmailException": 409
+      "MyApp.UserNotFoundException": 404
     },
-
     "Codes": {
-      "MyApp.UserNotFoundException": "USER_NOT_FOUND",
-      "email.Required": "EMAIL_REQUIRED"
-    },
-
-    "Messages": {
-      "MyApp.UserNotFoundException": "The requested user was not found"
-    },
-
-    "LogLevels": {
-      "4xx": "Warning",
-      "5xx": "Error",
-      "404": "Debug"
+      "MyApp.UserNotFoundException": "USER_NOT_FOUND"
     }
   }
 }
 ```
 
-### YAML (`errorhandling.yml`)
+For YAML configuration:
 
 ```yaml
 ErrorHandling:
-  Enabled: true
   HttpStatusInJsonResponse: true
-  DefaultErrorCodeStrategy: AllCaps
-  AddPathToError: true
   OverrideModelStateValidation: true
-  SearchSuperClassHierarchy: true
+  IncludeRejectedValues: true
   ExceptionLogging: WithStacktrace
-
-  JsonFieldNames:
-    Code: type
-    Message: detail
-
   HttpStatuses:
     MyApp.UserNotFoundException: 404
-    MyApp.DuplicateEmailException: 409
-
   Codes:
     MyApp.UserNotFoundException: USER_NOT_FOUND
-    email.Required: EMAIL_REQUIRED
-
-  Messages:
-    MyApp.UserNotFoundException: The requested user was not found
-
-  LogLevels:
-    4xx: Warning
-    5xx: Error
-    404: Debug
 ```
-
-To use YAML configuration:
 
 ```csharp
 builder.Configuration.AddYamlErrorHandling("errorhandling.yml");
 builder.Services.AddErrorHandling(builder.Configuration);
 ```
 
-A full YAML template with all options is available at [`docs/errorhandling-template.yml`](docs/errorhandling-template.yml).
+Settings are resolved in this order (highest priority first):
 
-## Custom JSON Field Names
+1. **Custom exception handlers** — `IApiExceptionHandler` implementations
+2. **Inline options** — `Action<ErrorHandlingOptions>` in `AddErrorHandling()`
+3. **Configuration binding** — `appsettings.json` or `errorhandling.yml`
+4. **Exception attributes** — `[ResponseErrorCode]`, `[ResponseStatus]`
+5. **Default conventions** — class name to `ALL_CAPS`, built-in HTTP status mappings
 
-Rename any JSON property in error responses to match your API conventions:
+For the full configuration reference (all options, JSON field names, rate limiting, OpenAPI), see the [Configuration Guide](docs/site/guide/configuration.md).
 
-```yaml
-ErrorHandling:
-  JsonFieldNames:
-    Code: type            # "code" → "type"
-    Message: detail       # "message" → "detail"
-    Status: statusCode    # "status" → "statusCode"
-    FieldErrors: fields   # "fieldErrors" → "fields"
-    Property: field       # "property" → "field"
-```
+## Exception Attributes
 
-Before:
-```json
-{ "code": "USER_NOT_FOUND", "message": "User not found" }
-```
-
-After:
-```json
-{ "type": "USER_NOT_FOUND", "detail": "User not found" }
-```
-
-## Custom Exception Attributes
-
-Decorate exception classes with attributes to control error responses:
+Decorate exception classes with attributes to control error responses declaratively:
 
 ```csharp
 [ResponseErrorCode("USER_NOT_FOUND")]
@@ -214,46 +235,27 @@ Response:
 }
 ```
 
-## Custom Exception Handlers
+| Attribute | Target | Description |
+|-----------|--------|-------------|
+| `[ResponseErrorCode("CODE")]` | Class | Sets a custom error code |
+| `[ResponseStatus(HttpStatusCode.NotFound)]` | Class | Sets the HTTP status code (accepts `HttpStatusCode` enum) |
+| `[ResponseStatus(404)]` | Class | Sets the HTTP status code (accepts `int`, must be 100-599) |
+| `[ResponseErrorProperty("name")]` | Property | Includes the property in the JSON response |
 
-Register custom handlers for specialized exception types:
-
-```csharp
-public class InfrastructureExceptionHandler : IApiExceptionHandler
-{
-    public int Order => 50; // Lower = higher priority (runs before built-in handlers at 100+)
-
-    public bool CanHandle(Exception ex) => ex is DatabaseTimeoutException;
-
-    public ApiErrorResponse Handle(Exception ex) =>
-        new(HttpStatusCode.ServiceUnavailable, "DATABASE_TIMEOUT", ex.Message);
-}
-
-// Register
-builder.Services.AddApiExceptionHandler<InfrastructureExceptionHandler>();
-```
-
-## Response Customization
-
-Add global properties to all error responses:
-
-```csharp
-public class TraceIdCustomizer : IApiErrorResponseCustomizer
-{
-    public void Customize(ApiErrorResponse response)
-    {
-        response.AddProperty("traceId", Activity.Current?.Id);
-        response.AddProperty("timestamp", DateTime.UtcNow.ToString("o"));
-    }
-}
-
-// Register
-builder.Services.AddErrorResponseCustomizer<TraceIdCustomizer>();
-```
+For more details, see [Exception Attributes](docs/site/features/attributes.md).
 
 ## Validation Errors
 
-Validation exceptions automatically include field-level details. Enable `OverrideModelStateValidation: true` to intercept `[ApiController]` automatic validation and use ErrorLens structured format:
+Enable `OverrideModelStateValidation` to get structured field-level validation errors:
+
+```csharp
+builder.Services.AddErrorHandling(options =>
+{
+    options.OverrideModelStateValidation = true;
+});
+```
+
+Response:
 
 ```json
 {
@@ -261,206 +263,95 @@ Validation exceptions automatically include field-level details. Enable `Overrid
   "message": "Validation failed",
   "fieldErrors": [
     {
-      "code": "REQUIRED_NOT_NULL",
+      "code": "INVALID_EMAIL",
       "property": "email",
-      "message": "Email is required",
-      "rejectedValue": null,
+      "message": "Invalid email format",
+      "rejectedValue": "bad",
       "path": "email"
     }
   ]
 }
 ```
 
-## RFC 9457 Problem Details
-
-Enable RFC 9457 compliant `application/problem+json` responses:
-
-```json
-{
-  "ErrorHandling": {
-    "UseProblemDetailFormat": true,
-    "ProblemDetailTypePrefix": "https://api.example.com/errors/",
-    "ProblemDetailConvertToKebabCase": true
-  }
-}
-```
-
-Response:
-
-```json
-{
-  "type": "https://api.example.com/errors/user-not-found",
-  "title": "Not Found",
-  "status": 404,
-  "detail": "User abc-123 not found",
-  "code": "USER_NOT_FOUND"
-}
-```
+Validation error codes and messages can be customized via configuration. See the [Configuration Guide](docs/site/guide/configuration.md) for details.
 
 ## Security
-
-The library includes several security-focused features to prevent information disclosure and protect your API:
-
-### 5xx Safe Message Behavior
 
 All 5xx-class errors (500-599) automatically return a generic safe message instead of the raw exception message:
 
 ```json
 {
-  "code": "INTERNAL_ERROR",
+  "code": "INTERNAL_SERVER_ERROR",
   "message": "An unexpected error occurred"
 }
 ```
 
-This prevents internal details (database connection strings, file paths, stack traces) from leaking to API consumers. The original exception is still logged with full details on the server side.
-
-**Note**: 4xx errors (400-499) preserve their original messages since these are typically user-facing and safe to expose.
-
-### Message Sanitization
-
-The `BadRequestExceptionHandler` automatically sanitizes Kestrel-internal error messages, replacing framework-specific details with user-safe equivalents:
-
-```json
-{
-  "code": "BAD_REQUEST",
-  "message": "Bad request"
-}
-```
-
-This prevents internal framework implementation details from being exposed.
-
-### Startup Validation
-
-The `JsonFieldNames` configuration is validated at application startup:
-
-- **Null or empty values** are rejected with clear error messages
-- **Duplicate field names** are detected and reported
-- **All properties must be unique** to prevent JSON serialization conflicts
-
-This fails-fast behavior prevents misconfiguration from causing runtime errors.
-
-## Logging
-
-Control logging verbosity per HTTP status code or exception type:
-
-```yaml
-ErrorHandling:
-  ExceptionLogging: WithStacktrace   # None | MessageOnly | WithStacktrace
-  LogLevels:
-    4xx: Warning
-    5xx: Error
-    404: Debug
-  FullStacktraceHttpStatuses:
-    - 5xx
-  FullStacktraceClasses:
-    - MyApp.CriticalException
-```
-
-## Error Code Strategies
-
-| Strategy | Example Input | Output |
-|----------|--------------|--------|
-| `AllCaps` (default) | `UserNotFoundException` | `USER_NOT_FOUND` |
-| `FullQualifiedName` | `UserNotFoundException` | `MyApp.Exceptions.UserNotFoundException` |
-
-## Default HTTP Status Mappings
-
-| Exception Type | HTTP Status |
-|---------------|-------------|
-| `ArgumentException` / `ArgumentNullException` | 400 Bad Request |
-| `InvalidOperationException` | 400 Bad Request |
-| `FormatException` | 400 Bad Request |
-| `OperationCanceledException` | 499 Client Closed Request |
-| `UnauthorizedAccessException` | 401 Unauthorized |
-| `KeyNotFoundException` | 404 Not Found |
-| `FileNotFoundException` | 404 Not Found |
-| `DirectoryNotFoundException` | 404 Not Found |
-| `TimeoutException` | 408 Request Timeout |
-| `NotImplementedException` | 501 Not Implemented |
-| All others | 500 Internal Server Error |
-
-## OpenTelemetry Tracing
-
-ErrorLens automatically creates `Activity` spans when handling exceptions — zero configuration needed. Just wire up your OpenTelemetry collector:
-
-```csharp
-builder.Services.AddOpenTelemetry()
-    .WithTracing(tracing => tracing
-        .AddSource("ErrorLens.ErrorHandling")  // Subscribe to ErrorLens activities
-        .AddConsoleExporter());
-```
-
-Each error-handling span includes tags: `error.code`, `error.type`, `http.response.status_code`, plus an exception event with OTel semantic conventions.
-
-## Error Message Localization
-
-Opt-in localization for error messages using ASP.NET Core's `IStringLocalizer`:
-
-```csharp
-builder.Services.AddErrorHandlingLocalization<SharedResource>();
-```
-
-Error codes are used as resource keys. When a translation exists, it replaces the default message. Falls back to the original message when no translation is found.
-
-## OpenAPI / Swagger Integration
-
-Automatically add error response schemas to your API documentation:
-
-```csharp
-// .NET 9+ (Microsoft.AspNetCore.OpenApi)
-builder.Services.AddErrorHandlingOpenApi();
-
-// .NET 6-8 (Swashbuckle)
-builder.Services.AddErrorHandlingSwashbuckle();
-```
-
-Auto-generates schemas for 400, 404, and 500 responses on all endpoints. Respects `[ProducesResponseType]` attributes and reflects your `JsonFieldNames` and `UseProblemDetailFormat` settings.
-
-## Rate Limiting
-
-Write structured 429 responses from ASP.NET Core's rate limiter:
-
-```csharp
-builder.Services.AddRateLimiter(options =>
-{
-    options.OnRejected = async (context, token) =>
-    {
-        var writer = context.HttpContext.RequestServices.GetRequiredService<IRateLimitResponseWriter>();
-        await writer.WriteRateLimitResponseAsync(context.HttpContext, context.Lease, token);
-    };
-});
-```
-
-Response includes `Retry-After` header and structured JSON body. Configurable via `ErrorHandling:RateLimiting` section.
+This prevents internal details (database connection strings, file paths, stack traces) from leaking to API consumers. The original exception is still logged with full details on the server side. The `BadRequestExceptionHandler` also sanitizes Kestrel-internal error messages automatically.
 
 ## Samples
 
-| Sample | Description |
-|--------|-------------|
-| [`MinimalApiSample`](samples/MinimalApiSample) | Zero-config minimal API setup |
-| [`FullApiSample`](samples/FullApiSample) | Controllers, custom handlers, response customizers |
-| [`ShowcaseSample`](samples/ShowcaseSample) | All features: YAML config, custom field names, attributes, custom handlers, Problem Details, Swashbuckle integration |
-| [`IntegrationSample`](samples/IntegrationSample) | New v1.3.0 features: OpenTelemetry tracing, localization, OpenAPI schemas, rate limiting |
+| Sample | Description | Key Features |
+|--------|-------------|--------------|
+| [`MinimalApiSample`](samples/MinimalApiSample) | Zero-config minimal API | Default error handling, automatic error codes |
+| [`FullApiSample`](samples/FullApiSample) | Controller-based API with extensibility | Custom handlers, response customizers, logging filters, Swagger |
+| [`ShowcaseSample`](samples/ShowcaseSample) | Full feature showcase with YAML | YAML config, JSON field names, attributes, Problem Details, Swashbuckle |
+| [`IntegrationSample`](samples/IntegrationSample) | Modern .NET ecosystem integration | OpenTelemetry, localization, OpenAPI, rate limiting |
 
 ## Documentation
 
-- [Getting Started](docs/guides/getting-started.md)
-- [Configuration](docs/guides/configuration.md)
-- [Validation Errors](docs/guides/validation-errors.md)
-- [Custom Handlers](docs/features/custom-handlers.md)
-- [Attributes](docs/features/attributes.md)
-- [Response Customization](docs/features/response-customization.md)
-- [Problem Details (RFC 9457)](docs/features/problem-details.md)
-- [JSON Field Names](docs/features/json-field-names.md)
-- [Logging](docs/guides/logging.md)
-- [API Reference](docs/reference/api-reference.md)
-- [YAML Template](docs/errorhandling-template.yml)
-- [Telemetry](docs/features/telemetry.md)
-- [Localization](docs/features/localization.md)
-- [OpenAPI Integration](docs/features/openapi.md)
-- [Swashbuckle Integration](docs/features/swashbuckle.md)
-- [Rate Limiting](docs/features/rate-limiting.md)
-- [Changelog](CHANGELOG.md)
+> **Documentation site:** [https://ahmedv20.github.io/error-handling-dotnet/current/](https://ahmedv20.github.io/error-handling-dotnet/current/)
+
+**Guides**
+- [Getting Started](docs/site/guide/getting-started.md) — Installation, setup, first error response
+- [Configuration](docs/site/guide/configuration.md) — JSON/YAML config, all options, priority order
+- [Logging](docs/site/guide/logging.md) — Log levels, stack traces, logging filters
+- [Troubleshooting](docs/site/guide/troubleshooting.md) — Common issues and solutions
+
+**Core Features**
+- [Exception Attributes](docs/site/features/attributes.md) — `[ResponseErrorCode]`, `[ResponseStatus]`, `[ResponseErrorProperty]`
+- [Custom Handlers](docs/site/features/custom-handlers.md) — `IApiExceptionHandler`, `IFallbackApiExceptionHandler`
+- [Response Customization](docs/site/features/response-customization.md) — `IApiErrorResponseCustomizer`
+- [JSON Field Names](docs/site/features/json-field-names.md) — Rename any response field
+- [Problem Details (RFC 9457)](docs/site/features/problem-details.md) — `application/problem+json` format
+
+**Integration Features**
+- [OpenTelemetry Tracing](docs/site/features/telemetry.md) — Automatic `Activity` spans
+- [Localization](docs/site/features/localization.md) — Multi-language error messages
+- [OpenAPI (.NET 9+)](docs/site/features/openapi.md) — Auto-generated error schemas
+- [Swashbuckle (.NET 6-8)](docs/site/features/swashbuckle.md) — Swagger error schemas
+- [Rate Limiting (.NET 7+)](docs/site/features/rate-limiting.md) — Structured 429 responses
+
+**Reference**
+- [Architecture](docs/ARCHITECTURE.md) — Full architecture guide with Mermaid diagrams
+- [API Reference](docs/site/reference/api.md) — All public types, interfaces, and extension methods
+- [Changelog](CHANGELOG.md) — Version history
+
+## Prerequisites
+
+- **.NET SDK** 6.0 or later (multi-targeting builds require .NET 10.0 SDK)
+- **ASP.NET Core** application (Minimal API or Controller-based)
+
+## Building from Source
+
+```bash
+git clone https://github.com/AhmedV20/error-handling-dotnet.git
+cd error-handling-dotnet
+dotnet restore
+dotnet build
+```
+
+### Running Tests
+
+```bash
+dotnet test
+```
+
+### Running Sample Projects
+
+```bash
+dotnet run --project samples/MinimalApiSample
+dotnet run --project samples/ShowcaseSample
+```
 
 ## 🤝 Contributing
 

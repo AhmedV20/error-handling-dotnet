@@ -90,6 +90,7 @@ public class ErrorCodeMapper : IErrorCodeMapper
 
         // Convert PascalCase to SCREAMING_SNAKE_CASE
         var result = PascalToSnakeCaseRegex.Replace(name, "_$1$2");
-        return result.ToUpperInvariant().TrimStart('_');
+        var code = result.ToUpperInvariant().TrimStart('_');
+        return string.IsNullOrEmpty(code) ? "UNKNOWN_ERROR" : code;
     }
 }
