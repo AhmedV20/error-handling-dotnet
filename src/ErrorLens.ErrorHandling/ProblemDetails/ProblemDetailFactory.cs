@@ -29,22 +29,24 @@ public class ProblemDetailFactory : IProblemDetailFactory
             Instance = null // Can be set by customizers or middleware
         };
 
+        var fieldNames = _options.JsonFieldNames;
+
         // Add field errors as extensions (copy list to prevent shared mutable references)
         if (apiError.FieldErrors?.Count > 0)
         {
-            problemDetail.Extensions["fieldErrors"] = apiError.FieldErrors.ToList();
+            problemDetail.Extensions[fieldNames.FieldErrors] = apiError.FieldErrors.ToList();
         }
 
         // Add global errors as extensions (copy list to prevent shared mutable references)
         if (apiError.GlobalErrors?.Count > 0)
         {
-            problemDetail.Extensions["globalErrors"] = apiError.GlobalErrors.ToList();
+            problemDetail.Extensions[fieldNames.GlobalErrors] = apiError.GlobalErrors.ToList();
         }
 
         // Add parameter errors as extensions (copy list to prevent shared mutable references)
         if (apiError.ParameterErrors?.Count > 0)
         {
-            problemDetail.Extensions["parameterErrors"] = apiError.ParameterErrors.ToList();
+            problemDetail.Extensions[fieldNames.ParameterErrors] = apiError.ParameterErrors.ToList();
         }
 
         // Add custom properties as extensions (skip keys already set by the library)
@@ -57,14 +59,14 @@ public class ProblemDetailFactory : IProblemDetailFactory
         }
 
         // Add error code as extension for API compatibility
-        problemDetail.Extensions.TryAdd("code", apiError.Code);
+        problemDetail.Extensions.TryAdd(fieldNames.Code, apiError.Code);
 
         return problemDetail;
     }
 
     private string BuildTypeUri(string errorCode)
     {
-        if (string.IsNullOrEmpty(_options.ProblemDetailTypePrefix))
+        if (string.IsNullOrEmpty(_options.ProblemDetailTypePrefix) || string.IsNullOrEmpty(errorCode))
         {
             return "about:blank";
         }

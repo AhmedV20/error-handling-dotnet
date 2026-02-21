@@ -48,6 +48,7 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `DefaultErrorCodeStrategy` | `ErrorCodeStrategy` | `AllCaps` |
 | `SearchSuperClassHierarchy` | `bool` | `false` |
 | `AddPathToError` | `bool` | `true` |
+| `IncludeRejectedValues` | `bool` | `true` |
 | `OverrideModelStateValidation` | `bool` | `false` |
 | `UseProblemDetailFormat` | `bool` | `false` |
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` |
@@ -113,6 +114,48 @@ All `JsonFieldNames` properties are validated at startup. Null/empty values and 
 | `None` | No exception logging |
 | `MessageOnly` | Log message only |
 | `WithStacktrace` | Log full exception with stack trace |
+
+### DefaultErrorCodes
+
+Static class containing all built-in error code constants:
+
+**General Errors:**
+
+| Constant | Value |
+|----------|-------|
+| `InternalServerError` | `INTERNAL_SERVER_ERROR` |
+| `ValidationFailed` | `VALIDATION_FAILED` |
+| `MessageNotReadable` | `MESSAGE_NOT_READABLE` |
+| `TypeMismatch` | `TYPE_MISMATCH` |
+| `AccessDenied` | `ACCESS_DENIED` |
+| `Unauthorized` | `UNAUTHORIZED` |
+| `NotFound` | `NOT_FOUND` |
+| `MethodNotAllowed` | `METHOD_NOT_ALLOWED` |
+| `BadRequest` | `BAD_REQUEST` |
+| `ClientClosed` | `CLIENT_CLOSED` |
+
+**Validation-Specific Codes:**
+
+| Constant | Value |
+|----------|-------|
+| `RequiredNotNull` | `REQUIRED_NOT_NULL` |
+| `RequiredNotBlank` | `REQUIRED_NOT_BLANK` |
+| `RequiredNotEmpty` | `REQUIRED_NOT_EMPTY` |
+| `InvalidSize` | `INVALID_SIZE` |
+| `InvalidEmail` | `INVALID_EMAIL` |
+| `InvalidPattern` | `REGEX_PATTERN_VALIDATION_FAILED` |
+| `ValueOutOfRange` | `VALUE_OUT_OF_RANGE` |
+| `InvalidUrl` | `INVALID_URL` |
+| `InvalidCreditCard` | `INVALID_CREDIT_CARD` |
+| `InvalidLength` | `INVALID_LENGTH` |
+| `InvalidMin` | `VALUE_TOO_LOW` |
+| `InvalidMax` | `VALUE_TOO_HIGH` |
+
+**Rate Limiting:**
+
+| Constant | Value |
+|----------|-------|
+| `RateLimitExceeded` | `RATE_LIMIT_EXCEEDED` |
 
 ## Models
 
@@ -215,6 +258,17 @@ public interface ILoggingFilter
     bool ShouldLog(ApiErrorResponse response, Exception exception);
 }
 ```
+
+### ILoggingService
+
+```csharp
+public interface ILoggingService
+{
+    void LogException(Exception exception, ApiErrorResponse response);
+}
+```
+
+Default implementation: `LoggingService` — logs exceptions using `ILogger` with configurable log levels per HTTP status range. Respects `ILoggingFilter` instances and `ExceptionLogging` option (`None`, `MessageOnly`, `WithStacktrace`).
 
 ### IErrorCodeMapper
 

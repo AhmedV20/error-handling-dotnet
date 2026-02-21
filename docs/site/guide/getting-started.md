@@ -7,7 +7,7 @@
 dotnet add package ErrorLens.ErrorHandling
 ```
 ```xml [PackageReference]
-<PackageReference Include="ErrorLens.ErrorHandling" Version="1.3.0" />
+<PackageReference Include="ErrorLens.ErrorHandling" Version="1.3.1" />
 ```
 :::
 

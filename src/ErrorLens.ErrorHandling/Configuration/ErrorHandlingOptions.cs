@@ -41,6 +41,12 @@ public class ErrorHandlingOptions
     public bool AddPathToError { get; set; } = true;
 
     /// <summary>
+    /// Include rejected values in validation field errors. Default: true.
+    /// Set to false to prevent sensitive user input (e.g., passwords) from being echoed in error responses.
+    /// </summary>
+    public bool IncludeRejectedValues { get; set; } = true;
+
+    /// <summary>
     /// Override [ApiController] automatic model validation to use ErrorLens structured fieldErrors format.
     /// When false (default), ASP.NET Core's built-in validation response is used.
     /// When true, validation errors are intercepted and returned as ErrorLens fieldErrors.

@@ -48,4 +48,12 @@ public class ApiGlobalErrorTests
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("code");
     }
+
+    [Fact]
+    public void Constructor_WithNullMessage_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiGlobalError("ERROR", null!);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("message");
+    }
 }

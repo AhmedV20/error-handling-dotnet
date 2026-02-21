@@ -31,4 +31,15 @@ public class ValidationController : ControllerBase
     {
         return Ok(new { message = "Transfer initiated", amount = request.Amount });
     }
+
+    /// <summary>
+    /// POST /api/validation/change-password — Demonstrates globalErrors (cross-field validation).
+    /// Global errors are returned when validation doesn't apply to a specific property.
+    /// Try: {"currentPassword":"pass123","newPassword":"different","confirmPassword":"mismatch"}
+    /// </summary>
+    [HttpPost("change-password")]
+    public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        return Ok(new { message = "Password changed successfully" });
+    }
 }

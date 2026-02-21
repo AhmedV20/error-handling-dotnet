@@ -28,15 +28,15 @@ The API will be available at `http://localhost:5000` (or the port shown in outpu
 | Endpoint | Description | Expected Response |
 |----------|-------------|-------------------|
 | `GET /` | Root endpoint | Returns "ErrorLens.ErrorHandling - Minimal API Sample" |
-| `GET /error/generic` | Generic exception | 500 with `code: "GENERIC_EXCEPTION"` |
+| `GET /error/generic` | Generic exception | 500 with `code: "INTERNAL_ERROR"` |
 | `GET /error/invalid-operation` | Invalid operation | 400 with `code: "INVALID_OPERATION"` |
 | `GET /error/argument?name=test` | Valid argument | Returns "Hello, test!" |
 | `GET /error/argument` | Missing argument | 400 with `code: "ARGUMENT_NULL"` |
 | `GET /error/not-found?id=123` | Key not found | 404 with `code: "KEY_NOT_FOUND"` |
 | `GET /error/unauthorized` | Unauthorized access | 401 with `code: "UNAUTHORIZED_ACCESS"` |
-| `GET /error/format` | Format exception | 400 with `code: "FORMAT_EXCEPTION"` |
-| `GET /error/timeout` | Timeout exception | 500 with `code: "TIMEOUT"` |
-| `GET /error/not-implemented` | Not implemented | 500 with `code: "NOT_IMPLEMENTED"` |
+| `GET /error/format` | Format exception | 400 with `code: "FORMAT"` |
+| `GET /error/timeout` | Timeout exception | 408 with `code: "TIMEOUT"` |
+| `GET /error/not-implemented` | Not implemented | 501 with `code: "NOT_IMPLEMENTED"` |
 
 ## Example Requests
 
@@ -49,9 +49,8 @@ curl http://localhost:5000/error/generic
 **Response:**
 ```json
 {
-  "code": "GENERIC_EXCEPTION",
-  "message": "Something went wrong!",
-  "status": 500
+  "code": "INTERNAL_ERROR",
+  "message": "An unexpected error occurred"
 }
 ```
 
@@ -65,8 +64,7 @@ curl http://localhost:5000/error/invalid-operation
 ```json
 {
   "code": "INVALID_OPERATION",
-  "message": "This operation is not allowed",
-  "status": 400
+  "message": "This operation is not allowed"
 }
 ```
 
@@ -80,8 +78,7 @@ curl http://localhost:5000/error/not-found?id=456
 ```json
 {
   "code": "KEY_NOT_FOUND",
-  "message": "Item with ID 456 not found",
-  "status": 404
+  "message": "Item with ID 456 not found"
 }
 ```
 
@@ -101,7 +98,7 @@ Hello, Alice!
 - **Zero-configuration setup**: Only 2 lines of code needed
 - **Automatic error code generation**: Exception types converted to ALL_CAPS codes
 - **Proper HTTP status mapping**: Common exception types map to appropriate status codes
-- **Clean JSON responses**: Structured error format with `code`, `message`, and `status`
+- **Clean JSON responses**: Structured error format with `code` and `message`
 
 ## Code
 

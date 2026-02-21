@@ -61,6 +61,9 @@ public class StringLocalizerErrorMessageLocalizerTests
     [Fact]
     public void LocalizeFieldError_WhenResourceFound_ReturnsLocalizedMessage()
     {
+        // Composite key not found, falls back to error code
+        _stringLocalizer["email.REQUIRED_NOT_NULL"]
+            .Returns(new LocalizedString("email.REQUIRED_NOT_NULL", "email.REQUIRED_NOT_NULL", true));
         _stringLocalizer["REQUIRED_NOT_NULL"]
             .Returns(new LocalizedString("REQUIRED_NOT_NULL", "Pflichtfeld", false));
 
@@ -70,8 +73,22 @@ public class StringLocalizerErrorMessageLocalizerTests
     }
 
     [Fact]
+    public void LocalizeFieldError_WhenFieldSpecificResourceFound_ReturnsFieldSpecificMessage()
+    {
+        // Composite key found — should use field-specific translation
+        _stringLocalizer["email.REQUIRED_NOT_NULL"]
+            .Returns(new LocalizedString("email.REQUIRED_NOT_NULL", "E-Mail ist erforderlich", false));
+
+        var result = _localizer.LocalizeFieldError("REQUIRED_NOT_NULL", "email", "Required field");
+
+        result.Should().Be("E-Mail ist erforderlich");
+    }
+
+    [Fact]
     public void LocalizeFieldError_WhenResourceNotFound_ReturnsDefaultMessage()
     {
+        _stringLocalizer["email.UNKNOWN_FIELD_CODE"]
+            .Returns(new LocalizedString("email.UNKNOWN_FIELD_CODE", "email.UNKNOWN_FIELD_CODE", true));
         _stringLocalizer["UNKNOWN_FIELD_CODE"]
             .Returns(new LocalizedString("UNKNOWN_FIELD_CODE", "UNKNOWN_FIELD_CODE", true));
 
@@ -83,12 +100,16 @@ public class StringLocalizerErrorMessageLocalizerTests
     [Fact]
     public void LocalizeFieldError_UsesErrorCodeAsResourceKey()
     {
+        // Composite key not found, falls back to error code
+        _stringLocalizer["userEmail.INVALID_EMAIL"]
+            .Returns(new LocalizedString("userEmail.INVALID_EMAIL", "userEmail.INVALID_EMAIL", true));
         _stringLocalizer["INVALID_EMAIL"]
             .Returns(new LocalizedString("INVALID_EMAIL", "E-Mail ungültig", false));
 
         _localizer.LocalizeFieldError("INVALID_EMAIL", "userEmail", "Invalid email");
 
-        // Verify it looked up by error code, not by field name
+        // Verify it looked up by composite key first, then error code
+        _ = _stringLocalizer.Received(1)["userEmail.INVALID_EMAIL"];
         _ = _stringLocalizer.Received(1)["INVALID_EMAIL"];
     }
 

@@ -7,6 +7,7 @@ A controller-based API sample demonstrating custom exception handlers and respon
 This sample shows how to extend ErrorLens.ErrorHandling with:
 - Custom exception handlers for domain-specific exceptions
 - Response customizers to add metadata to all error responses
+- Logging filters to suppress noisy logs
 - Controller-based API with Swagger UI
 - Configuration via `appsettings.json`
 
@@ -34,19 +35,17 @@ The API will be available at:
 ```
 FullApiSample/
 ├── Controllers/
-│   └── UsersController.cs          # User management endpoints
+│   └── UsersController.cs           # User management endpoints
 ├── Customizers/
-│   └── TraceIdCustomizer.cs       # Adds traceId, timestamp, instance
+│   └── TraceIdCustomizer.cs         # Adds traceId, timestamp, instance
 ├── Exceptions/
-│   ├── BusinessException.cs       # Base business exception
-│   ├── UserNotFoundException.cs   # User not found (404)
-│   ├── DuplicateEmailException.cs # Email already exists (409)
-│   ├── InsufficientFundsException.cs # Payment failure (400)
-│   └── InvalidOrderStateException.cs # Invalid state transition (422)
+│   └── Exceptions.cs                # All exception classes (4 concrete + 1 abstract base)
+├── Filters/
+│   └── IgnoreNotFoundFilter.cs      # Suppresses logging for 404 responses
 ├── Handlers/
-│   └── BusinessExceptionHandler.cs # Custom handler for business exceptions
-├── appsettings.json                # Configuration
-└── Program.cs                      # Startup configuration
+│   └── BusinessExceptionHandler.cs  # Custom handler for business exceptions
+├── appsettings.json                 # Configuration
+└── Program.cs                       # Startup configuration
 ```
 
 ## Features Demonstrated
@@ -55,7 +54,8 @@ FullApiSample/
 |----------|-------------|
 | **Custom Exception Handler** | `BusinessExceptionHandler` intercepts all business exceptions with Order 50 (higher priority than defaults) |
 | **Response Customizer** | `TraceIdCustomizer` adds `traceId`, `timestamp`, and `instance` to every error response |
-| **Domain Exceptions** | Five custom exception types with specific error codes and HTTP status mappings |
+| **Logging Filter** | `IgnoreNotFoundFilter` suppresses logging for 404 Not Found responses |
+| **Domain Exceptions** | Four custom exception types (plus one abstract base class) with specific error codes and HTTP status mappings |
 | **Validation Errors** | DataAnnotations validation with structured `fieldErrors` |
 | **Swagger Integration** | Full OpenAPI documentation |
 
@@ -68,8 +68,8 @@ FullApiSample/
 | GET | `/api/users` | Get all users | 200 OK |
 | GET | `/api/users/{id}` | Get user by ID | 200 OK / 404 `USER_NOT_FOUND` |
 | POST | `/api/users` | Create new user | 201 Created / 409 `EMAIL_ALREADY_EXISTS` |
-| POST | `/api/users/{id}/transfer` | Transfer funds | 200 OK / 404 `USER_NOT_FOUND` / 400 `INSUFFICIENT_FUNDS` |
-| POST | `/api/users/orders/{orderId}/state` | Update order state | 200 OK / 422 `INVALID_ORDER_STATE` |
+| POST | `/api/users/{id}/transfer` | Transfer funds | 200 OK / 404 `USER_NOT_FOUND` / 422 `INSUFFICIENT_FUNDS` |
+| POST | `/api/users/orders/{orderId}/state` | Update order state | 200 OK / 400 `BUSINESS_RULE_VIOLATION` |
 
 ## Example Requests
 
@@ -120,7 +120,7 @@ curl http://localhost:5000/api/users/user-999
 ```json
 {
   "code": "USER_NOT_FOUND",
-  "message": "User with ID user-999 was not found",
+  "message": "The requested user could not be found in our system",
   "status": 404,
   "traceId": "00-4b75c9e7...",
   "timestamp": "2026-02-12T10:30:45.123Z",
@@ -139,14 +139,14 @@ curl -X POST http://localhost:5000/api/users \
 **Response (400 Bad Request):**
 ```json
 {
-  "code": "VALIDATION_ERROR",
-  "message": "One or more validation errors occurred",
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
   "status": 400,
   "fieldErrors": [
     {
-      "code": "REQUIRED",
+      "code": "EMAIL_IS_REQUIRED",
       "property": "email",
-      "message": "Email is required"
+      "message": "Please provide a valid email address"
     },
     {
       "code": "REQUIRED",
@@ -172,7 +172,7 @@ curl -X POST http://localhost:5000/api/users \
 ```json
 {
   "code": "EMAIL_ALREADY_EXISTS",
-  "message": "An account with email 'john@example.com' already exists",
+  "message": "A user with email 'john@example.com' already exists",
   "status": 409,
   "traceId": "00-4b75c9e7...",
   "timestamp": "2026-02-12T10:30:45.123Z",
@@ -188,12 +188,12 @@ curl -X POST http://localhost:5000/api/users/user-1/transfer \
   -d '{"amount": 500.00}'
 ```
 
-**Response (400 Bad Request):**
+**Response (422 Unprocessable Entity):**
 ```json
 {
   "code": "INSUFFICIENT_FUNDS",
-  "message": "Insufficient funds: requested $500.00, available $100.00",
-  "status": 400,
+  "message": "Insufficient funds: required $500.00, available $100.00",
+  "status": 422,
   "required": 500.00,
   "available": 100.00,
   "traceId": "00-4b75c9e7...",
@@ -257,10 +257,39 @@ The sample uses `appsettings.json` for error handling configuration:
     "HttpStatusInJsonResponse": true,
     "DefaultErrorCodeStrategy": "AllCaps",
     "SearchSuperClassHierarchy": true,
-    "ExceptionLogging": "WithStacktrace"
+    "OverrideModelStateValidation": true,
+    "IncludeRejectedValues": true,
+    "ExceptionLogging": "MessageOnly",
+
+    "HttpStatuses": {
+      "FullApiSample.Exceptions.UserNotFoundException": 404,
+      "FullApiSample.Exceptions.DuplicateEmailException": 409,
+      "FullApiSample.Exceptions.InsufficientFundsException": 422
+    },
+
+    "Codes": {
+      "FullApiSample.Exceptions.UserNotFoundException": "USER_NOT_FOUND",
+      "FullApiSample.Exceptions.DuplicateEmailException": "EMAIL_ALREADY_EXISTS",
+      "email.Required": "EMAIL_IS_REQUIRED",
+      "email.EmailAddress": "EMAIL_FORMAT_INVALID"
+    },
+
+    "Messages": {
+      "FullApiSample.Exceptions.UserNotFoundException": "The requested user could not be found in our system",
+      "email.Required": "Please provide a valid email address"
+    },
+
+    "LogLevels": {
+      "4xx": "Warning",
+      "5xx": "Error",
+      "404": "Debug"
+    },
+    "FullStacktraceHttpStatuses": ["5xx"]
   }
 }
 ```
+
+> **Note:** The `BusinessExceptionHandler` has Order 50 and catches all `BusinessException` subclasses. It overrides any per-exception attributes, returning `400 BUSINESS_RULE_VIOLATION` for all business exceptions. This demonstrates that **handlers take priority over attributes and config mappings**.
 
 ## Learn More
 

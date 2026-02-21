@@ -50,7 +50,8 @@ public class DefaultRateLimitResponseWriter : IRateLimitResponseWriter
         if (lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfterValue))
         {
             retryAfter = retryAfterValue;
-            var retryAfterSeconds = (int)retryAfterValue.TotalSeconds;
+            // Round up to avoid truncating sub-second values to 0 (which means "retry immediately")
+            var retryAfterSeconds = Math.Max(1, (int)Math.Ceiling(retryAfterValue.TotalSeconds));
 
             // Set Retry-After header (always, when metadata is available)
             context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
@@ -58,8 +59,8 @@ public class DefaultRateLimitResponseWriter : IRateLimitResponseWriter
             // Set RateLimit headers
             if (rateLimitOptions.UseModernHeaderFormat)
             {
-                // Combined format (IETF draft): RateLimit: limit=X, remaining=0, reset=Y
-                context.Response.Headers["RateLimit"] = $"limit=0, remaining=0, reset={retryAfterSeconds}";
+                // Combined format (IETF draft): RateLimit: remaining=0, reset=Y
+                context.Response.Headers["RateLimit"] = $"remaining=0, reset={retryAfterSeconds}";
             }
 
             // Include retryAfter in response body if configured

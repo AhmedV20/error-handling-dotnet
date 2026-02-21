@@ -11,11 +11,17 @@ namespace ErrorLens.ErrorHandling.Serialization;
 public class ApiErrorResponseConverter : JsonConverter<ApiErrorResponse>
 {
     private readonly JsonFieldNamesOptions _fieldNames;
+    private readonly HashSet<string> _builtInNames;
 
     public ApiErrorResponseConverter(JsonFieldNamesOptions fieldNames)
     {
         ArgumentNullException.ThrowIfNull(fieldNames);
         _fieldNames = fieldNames;
+        _builtInNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            fieldNames.Code, fieldNames.Message, fieldNames.Status,
+            fieldNames.FieldErrors, fieldNames.GlobalErrors, fieldNames.ParameterErrors
+        };
     }
 
     public override ApiErrorResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -66,15 +72,9 @@ public class ApiErrorResponseConverter : JsonConverter<ApiErrorResponse>
         // Extension data / custom properties (filter keys that collide with built-in fields)
         if (value.Properties is { Count: > 0 })
         {
-            var builtInNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                _fieldNames.Code, _fieldNames.Message, _fieldNames.Status,
-                _fieldNames.FieldErrors, _fieldNames.GlobalErrors, _fieldNames.ParameterErrors
-            };
-
             foreach (var prop in value.Properties)
             {
-                if (!builtInNames.Contains(prop.Key))
+                if (!_builtInNames.Contains(prop.Key))
                 {
                     writer.WritePropertyName(prop.Key);
                     JsonSerializer.Serialize(writer, prop.Value, options);

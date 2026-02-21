@@ -32,7 +32,7 @@ internal class ErrorHandlingOptionsValidator : IValidateOptions<ErrorHandlingOpt
             fieldNames.Property, fieldNames.RejectedValue, fieldNames.Path, fieldNames.Parameter
         };
 
-        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var fieldName in allNames)
         {
             if (fieldName != null && !seen.Add(fieldName))

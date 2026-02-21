@@ -20,6 +20,10 @@ ErrorHandling:
   # Include property path in field errors (default: true)
   AddPathToError: true
 
+  # Include rejected values in validation errors (default: true)
+  # Set to false to prevent sensitive input (e.g., passwords) from being echoed in responses.
+  IncludeRejectedValues: true
+
   # Override [ApiController] automatic model validation (default: false)
   # When true, intercepts model validation and returns ErrorLens structured
   # fieldErrors format instead of ASP.NET Core's default ProblemDetails response.

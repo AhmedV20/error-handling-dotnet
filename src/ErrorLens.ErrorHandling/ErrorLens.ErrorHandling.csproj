@@ -11,11 +11,11 @@
 
     <!-- Package metadata -->
     <PackageId>ErrorLens.ErrorHandling</PackageId>
-    <Version>1.3.0</Version>
+    <Version>1.3.1</Version>
     <Authors>AhmedV20</Authors>
     <Company>ErrorLens</Company>
     <Product>ErrorLens.ErrorHandling</Product>
-    <Description>Automatic, consistent error handling for ASP.NET Core APIs with structured JSON responses, validation error details, custom JSON field names, YAML configuration, RFC 9457 Problem Details support, and extensive configurability.</Description>
+    <Description>Automatic, consistent error handling for ASP.NET Core APIs with structured JSON responses, validation error details, custom JSON field names, YAML configuration, RFC 9457 Problem Details support, OpenTelemetry tracing, error message localization, rate limiting integration, and extensive configurability.</Description>
     <PackageTags>aspnetcore;dotnet;error-handling;exception-handling;exception;api;rest;json;validation;model-validation;field-errors;problem-details;rfc9457;rfc7807;yaml;configuration;middleware;error-response;api-error;structured-errors;error-codes;http-status;webapi;minimal-api;dotnet8;dotnet9;dotnet10</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -23,7 +23,16 @@
     <PackageProjectUrl>https://ahmedv20.github.io/error-handling-dotnet/current/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/AhmedV20/error-handling-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>v1.3.0:
+    <PackageReleaseNotes>v1.3.1:
+- IncludeRejectedValues option to suppress sensitive data in validation errors
+- Pipeline resilience: localization/telemetry errors no longer crash error handling
+- OperationCanceledException propagates naturally instead of returning 500
+- Field-specific localization with composite key support (fieldName.errorCode)
+- ProblemDetails uses configured JsonFieldNames instead of hardcoded values
+- Rate limiting header and retry-after rounding fixes
+- Null guards for model constructors, case-insensitive field name validation
+
+v1.3.0:
 - OpenTelemetry distributed tracing via System.Diagnostics.Activity
 - Localization support with IErrorMessageLocalizer and IStringLocalizer bridge
 - New package: ErrorLens.ErrorHandling.OpenApi (.NET 9+ OpenAPI integration)

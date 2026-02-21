@@ -97,4 +97,20 @@ public class ApiParameterErrorTests
 
         act.Should().Throw<ArgumentNullException>().WithParameterName("parameter");
     }
+
+    [Fact]
+    public void Constructor_WithNullMessage_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiParameterError("REQUIRED", "id", null!);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("message");
+    }
+
+    [Fact]
+    public void Constructor_Full_WithNullMessage_ThrowsArgumentNullException()
+    {
+        var act = () => new ApiParameterError("REQUIRED", "id", null!, "abc");
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("message");
+    }
 }

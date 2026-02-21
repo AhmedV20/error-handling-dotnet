@@ -37,6 +37,12 @@ public class ErrorHandlingExceptionHandler : IExceptionHandler
             return false;
         }
 
+        // Let cancellation exceptions propagate — the client disconnected
+        if (exception is OperationCanceledException && cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+
         var response = _facade.HandleException(exception);
         await _responseWriter.WriteResponseAsync(httpContext, response, cancellationToken);
 

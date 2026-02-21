@@ -197,4 +197,32 @@ public class ModelStateValidationExceptionHandlerTests
 
         response.FieldErrors![0].Path.Should().BeNull();
     }
+
+    [Fact]
+    public void Handle_IncludeRejectedValuesTrue_IncludesRejectedValue()
+    {
+        _options.IncludeRejectedValues = true;
+        var modelState = new ModelStateDictionary();
+        modelState.SetModelValue("Email", "bad-email", "bad-email");
+        modelState.AddModelError("Email", "Invalid email format");
+
+        var exception = new ModelStateValidationException(modelState);
+        var response = _handler.Handle(exception);
+
+        response.FieldErrors![0].RejectedValue.Should().Be("bad-email");
+    }
+
+    [Fact]
+    public void Handle_IncludeRejectedValuesFalse_ExcludesRejectedValue()
+    {
+        _options.IncludeRejectedValues = false;
+        var modelState = new ModelStateDictionary();
+        modelState.SetModelValue("Password", "secret123", "secret123");
+        modelState.AddModelError("Password", "Password too short");
+
+        var exception = new ModelStateValidationException(modelState);
+        var response = _handler.Handle(exception);
+
+        response.FieldErrors![0].RejectedValue.Should().BeNull();
+    }
 }

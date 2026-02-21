@@ -1,6 +1,7 @@
 using System.Net;
 using ErrorLens.ErrorHandling.Configuration;
 using ErrorLens.ErrorHandling.Handlers;
+using ErrorLens.ErrorHandling.Localization;
 using ErrorLens.ErrorHandling.Models;
 using ErrorLens.ErrorHandling.Services;
 using FluentAssertions;
@@ -197,5 +198,30 @@ public class ErrorHandlingFacadeTests
 
         // Both exceptions should be logged
         _logger.ReceivedCalls().Should().HaveCountGreaterOrEqualTo(2);
+    }
+
+    [Fact]
+    public void HandleException_LocalizerThrows_ReturnsSafe500Response()
+    {
+        var brokenLocalizer = Substitute.For<IErrorMessageLocalizer>();
+        brokenLocalizer.Localize(Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(_ => throw new InvalidOperationException("Localizer exploded"));
+
+        var optionsWrapper = Substitute.For<IOptions<ErrorHandlingOptions>>();
+        optionsWrapper.Value.Returns(_options);
+
+        var facade = new ErrorHandlingFacade(
+            Enumerable.Empty<IApiExceptionHandler>(),
+            _fallbackHandler,
+            Enumerable.Empty<IApiErrorResponseCustomizer>(),
+            optionsWrapper,
+            _logger,
+            localizer: brokenLocalizer);
+
+        var response = facade.HandleException(new Exception("original error"));
+
+        response.Code.Should().Be("INTERNAL_SERVER_ERROR");
+        response.Message.Should().Be("An unexpected error occurred");
+        response.HttpStatusCode.Should().Be(HttpStatusCode.InternalServerError);
     }
 }
