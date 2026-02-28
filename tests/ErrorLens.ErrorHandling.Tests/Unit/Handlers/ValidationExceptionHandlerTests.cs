@@ -147,4 +147,53 @@ public class ValidationExceptionHandlerTests
     {
         _handler.Order.Should().Be(100);
     }
+
+    // US3: BuiltInMessages tests
+
+    [Fact]
+    public void Handle_CustomBuiltInMessage_UsedForTopLevelMessage()
+    {
+        _options.BuiltInMessages["VALIDATION_FAILED"] = "Input validation error";
+        var exception = new ValidationException("Original message");
+
+        var response = _handler.Handle(exception);
+
+        response.Code.Should().Be(DefaultErrorCodes.ValidationFailed);
+        response.Message.Should().Be("Input validation error");
+    }
+
+    [Fact]
+    public void Handle_DefaultMessage_WhenKeyNotInBuiltInMessages()
+    {
+        var exception = new ValidationException("Validation failed");
+
+        var response = _handler.Handle(exception);
+
+        response.Message.Should().Be("Validation failed");
+    }
+
+    [Fact]
+    public void Handle_EmptyStringBuiltInMessage_UsesEmptyString()
+    {
+        _options.BuiltInMessages["VALIDATION_FAILED"] = "";
+        var exception = new ValidationException("Validation failed");
+
+        var response = _handler.Handle(exception);
+
+        response.Message.Should().Be("");
+    }
+
+    [Fact]
+    public void Handle_CustomBuiltInMessage_DoesNotAffectFieldErrors()
+    {
+        _options.BuiltInMessages["VALIDATION_FAILED"] = "Custom top-level";
+        var validationResult = new ValidationResult("Email is required", new[] { "Email" });
+        var exception = new ValidationException(validationResult, null, null);
+
+        var response = _handler.Handle(exception);
+
+        response.Message.Should().Be("Custom top-level");
+        response.FieldErrors.Should().HaveCount(1);
+        response.FieldErrors![0].Message.Should().Be("Email is required");
+    }
 }

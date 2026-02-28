@@ -2,7 +2,7 @@
 
 This document provides a comprehensive architectural overview of the **ErrorLens.ErrorHandling** library, a structured error handling framework for ASP.NET Core APIs. It covers the package structure, middleware pipeline, dependency injection graph, handler chain of responsibility, configuration system, and all cross-cutting concerns.
 
-> **Version covered:** 1.3.1
+> **Version covered:** 1.4.0
 > **Target frameworks:** .NET 6.0 through .NET 10.0 (multi-targeting)
 > **Language:** C# 12
 
@@ -31,7 +31,7 @@ This document provides a comprehensive architectural overview of the **ErrorLens
 
 ## 1. Package Structure
 
-The solution ships as **three NuGet packages**, each with a distinct responsibility and target framework range.
+The solution ships as **four NuGet packages**, each with a distinct responsibility and target framework range.
 
 ```mermaid
 graph TD
@@ -39,11 +39,16 @@ graph TD
         CORE["ErrorLens.ErrorHandling<br/><i>net6.0 - net10.0</i>"]
     end
 
+    subgraph Integration Package
+        FV["ErrorLens.ErrorHandling.FluentValidation<br/><i>net6.0 - net10.0</i><br/>FluentValidation >= 11.0.0"]
+    end
+
     subgraph OpenAPI Packages
         OPENAPI["ErrorLens.ErrorHandling.OpenApi<br/><i>net9.0 - net10.0</i><br/>Microsoft.AspNetCore.OpenApi"]
         SWASH["ErrorLens.ErrorHandling.Swashbuckle<br/><i>net6.0 - net8.0</i><br/>Swashbuckle.AspNetCore.SwaggerGen"]
     end
 
+    FV -->|ProjectReference| CORE
     OPENAPI -->|ProjectReference| CORE
     SWASH -->|ProjectReference| CORE
 
@@ -51,6 +56,7 @@ graph TD
     CORE -.->|InternalsVisibleTo| SWASH
 
     style CORE fill:#2563eb,color:#fff,stroke:#1e40af
+    style FV fill:#8b5cf6,color:#fff,stroke:#7c3aed
     style OPENAPI fill:#059669,color:#fff,stroke:#047857
     style SWASH fill:#d97706,color:#fff,stroke:#b45309
 ```
@@ -58,6 +64,7 @@ graph TD
 | Package | Target Frameworks | Purpose |
 |---|---|---|
 | **ErrorLens.ErrorHandling** | net6.0 - net10.0 | Core middleware, handlers, mappers, models, configuration, localization, telemetry, rate limiting, serialization |
+| **ErrorLens.ErrorHandling.FluentValidation** | net6.0 - net10.0 | FluentValidation integration (.NET 6-10); depends on core package and FluentValidation >= 11.0.0 |
 | **ErrorLens.ErrorHandling.OpenApi** | net9.0 - net10.0 | `IOpenApiOperationTransformer` integration for the native .NET 9+ OpenAPI pipeline |
 | **ErrorLens.ErrorHandling.Swashbuckle** | net6.0 - net8.0 | `IOperationFilter` integration for Swashbuckle/Swagger on older frameworks |
 
@@ -235,11 +242,15 @@ graph TD
         UH["AddApiExceptionHandler&lt;T&gt;()"]
         UC["AddErrorResponseCustomizer&lt;T&gt;()"]
         UL["AddErrorHandlingLocalization&lt;T&gt;()"]
+        AEHFV["AddErrorHandlingFluentValidation()"]
     end
 
     UH -->|TryAddEnumerable| H1
     UC -->|TryAddEnumerable| CUS["IApiErrorResponseCustomizer"]
     UL -->|Replace| LOC2["StringLocalizerErrorMessageLocalizer&lt;T&gt;"]
+
+    AEHFV -->|TryAddEnumerable| FVHANDLER["IApiExceptionHandler:<br/>FluentValidationExceptionHandler"]
+    AEHFV -->|Configure| FVOPTS["FluentValidationOptions"]
 
     style RCS fill:#2563eb,color:#fff
     style FAC fill:#7c3aed,color:#fff
@@ -271,6 +282,7 @@ graph LR
         AGG["AggregateExceptionHandler<br/>Order: 50"]
         MSV["ModelStateValidation<br/>ExceptionHandler<br/>Order: 90"]
         VEH["ValidationException<br/>Handler<br/>Order: 100"]
+        FVEH["FluentValidation<br/>ExceptionHandler<br/>Order: 110"]
         JEH["JsonException<br/>Handler<br/>Order: 120"]
         TMH["TypeMismatch<br/>ExceptionHandler<br/>Order: 130"]
         BRH["BadRequest<br/>ExceptionHandler<br/>Order: 150"]
@@ -278,12 +290,14 @@ graph LR
 
     AGG -->|CanHandle=false| MSV
     MSV -->|CanHandle=false| VEH
-    VEH -->|CanHandle=false| JEH
+    VEH -->|CanHandle=false| FVEH
+    FVEH -->|CanHandle=false| JEH
     JEH -->|CanHandle=false| TMH
     TMH -->|CanHandle=false| BRH
     BRH -->|CanHandle=false| FB["DefaultFallbackHandler<br/>(catch-all)"]
 
     style AGG fill:#7c3aed,color:#fff
+    style FVEH fill:#8b5cf6,color:#fff
     style FB fill:#d97706,color:#fff
 ```
 
@@ -292,6 +306,7 @@ graph LR
 | `AggregateExceptionHandler` | 50 | `AggregateException` | Delegates to inner | Re-dispatches |
 | `ModelStateValidationExceptionHandler` | 90 | `ModelStateValidationException` | 400 | `VALIDATION_FAILED` |
 | `ValidationExceptionHandler` | 100 | `ValidationException` | 400 | `VALIDATION_FAILED` |
+| `FluentValidationExceptionHandler` | 110 | `FluentValidation.ValidationException` | 400 | `VALIDATION_FAILED` |
 | `JsonExceptionHandler` | 120 | `JsonException` | 400 | `MESSAGE_NOT_READABLE` |
 | `TypeMismatchExceptionHandler` | 130 | `FormatException`, `InvalidCastException` | 400 | `TYPE_MISMATCH` |
 | `BadRequestExceptionHandler` | 150 | `BadHttpRequestException` | from exception | `BAD_REQUEST` |
@@ -342,13 +357,16 @@ flowchart TD
 `ErrorHandlingOptionsValidator` runs at first `IOptions<ErrorHandlingOptions>` resolution and validates:
 - All `JsonFieldNamesOptions` properties are non-null and non-whitespace.
 - All field name values are unique (no duplicates like `code` and `message` mapped to the same JSON key).
+- `ProblemDetailTypePrefix` is a valid absolute URI or empty string.
+- `RateLimiting.ErrorCode` is not null or empty.
+- `RateLimiting.DefaultMessage` is not null or empty.
 
 ### ErrorHandlingOptions properties
 
 | Property | Type | Default | Description |
 |---|---|---|---|
 | `Enabled` | `bool` | `true` | Enable/disable error handling globally |
-| `DefaultErrorCodeStrategy` | `ErrorCodeStrategy` | `AllCaps` | `AllCaps` or `FullQualifiedName` |
+| `DefaultErrorCodeStrategy` | `ErrorCodeStrategy` | `AllCaps` | `AllCaps`, `FullQualifiedName`, `KebabCase`, `PascalCase`, `DotSeparated` |
 | `HttpStatusInJsonResponse` | `bool` | `false` | Include HTTP status code in JSON body |
 | `SearchSuperClassHierarchy` | `bool` | `false` | Search base classes for config matches |
 | `AddPathToError` | `bool` | `true` | Include property path in field errors |
@@ -357,13 +375,15 @@ flowchart TD
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` | Type URI prefix for Problem Details |
 | `ProblemDetailConvertToKebabCase` | `bool` | `true` | Convert error codes to kebab-case in type URI |
 | `ExceptionLogging` | `ExceptionLogging` | `MessageOnly` | `None`, `MessageOnly`, `WithStacktrace` |
+| `FallbackMessage` | `string` | `"An unexpected error occurred"` | Configurable fallback message for unhandled exceptions |
+| `BuiltInMessages` | `Dictionary<string, string>` | `{}` | Override messages for built-in error codes |
 | `HttpStatuses` | `Dictionary<string, HttpStatusCode>` | `{}` | Exception FQN to HTTP status mappings |
 | `Codes` | `Dictionary<string, string>` | `{}` | Exception FQN or field-specific error code mappings |
 | `Messages` | `Dictionary<string, string>` | `{}` | Exception FQN or field-specific message mappings |
 | `LogLevels` | `Dictionary<string, LogLevel>` | `{}` | HTTP status code/range to log level |
 | `FullStacktraceHttpStatuses` | `HashSet<string>` | `{}` | HTTP statuses that force full stack trace logging |
 | `FullStacktraceClasses` | `HashSet<string>` | `{}` | Exception types that force full stack trace logging |
-| `JsonFieldNames` | `JsonFieldNamesOptions` | *(defaults)* | Custom JSON field names (10 configurable fields) |
+| `JsonFieldNames` | `JsonFieldNamesOptions` | *(defaults)* | Custom JSON field names (11 configurable fields) |
 | `RateLimiting` | `RateLimitingOptions` | *(defaults)* | Rate limiting response options |
 | `OpenApi` | `OpenApiOptions` | `DefaultStatusCodes: {400, 404, 500}` | OpenAPI schema generation options |
 
@@ -688,7 +708,7 @@ All DI registrations use `TryAddSingleton` or `TryAddEnumerable`, meaning:
 `ErrorResponseWriter` creates its `JsonSerializerOptions` (including the custom `ApiErrorResponseConverter`) once at construction. This avoids per-request allocation.
 
 ### 6. Security by Default
-- 5xx errors in `DefaultFallbackHandler` always return `"An unexpected error occurred"` to prevent information disclosure.
+- 5xx errors in `DefaultFallbackHandler` return a configurable `FallbackMessage` (default: `"An unexpected error occurred"`) to prevent information disclosure. The message is customizable via `ErrorHandlingOptions.FallbackMessage` while still defaulting to a safe generic value.
 - `BadRequestExceptionHandler` sanitizes messages containing framework-internal type names (`Microsoft.*`, `System.*`).
 
 ### 7. Static Metadata Cache

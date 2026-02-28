@@ -168,3 +168,124 @@ For method parameter validation errors:
   ]
 }
 ```
+
+## FluentValidation Integration
+
+ErrorLens supports [FluentValidation](https://docs.fluentvalidation.net/) as an alternative validation source alongside DataAnnotations. The companion package automatically catches `FluentValidation.ValidationException` and maps validation failures to the same structured `ApiErrorResponse` format with `fieldErrors`.
+
+### Installation
+
+```bash
+dotnet add package ErrorLens.ErrorHandling.FluentValidation
+```
+
+### Registration
+
+```csharp
+builder.Services.AddErrorHandling();
+builder.Services.AddErrorHandlingFluentValidation();
+```
+
+### Comparison: DataAnnotations vs FluentValidation
+
+Both validation sources produce equivalent structured responses.
+
+**DataAnnotations**
+
+```csharp
+public class CreateUserRequest
+{
+    [Required]
+    public string? Name { get; set; }
+
+    [EmailAddress]
+    public string? Email { get; set; }
+}
+```
+
+**FluentValidation**
+
+```csharp
+public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
+{
+    public CreateUserRequestValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty();
+        RuleFor(x => x.Email).EmailAddress();
+    }
+}
+```
+
+**Both produce the same response structure (HTTP 400)**
+
+```json
+{
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "REQUIRED_NOT_EMPTY",
+      "property": "name",
+      "message": "'Name' must not be empty.",
+      "rejectedValue": null,
+      "path": "name"
+    },
+    {
+      "code": "INVALID_EMAIL",
+      "property": "email",
+      "message": "'Email' is not a valid email address.",
+      "rejectedValue": "not-an-email",
+      "path": "email"
+    }
+  ]
+}
+```
+
+### Error Code Mapping
+
+FluentValidation validators are automatically mapped to ErrorLens error codes:
+
+| FluentValidation Validator | ErrorLens Code |
+|----------------------------|----------------|
+| `NotEmptyValidator` | `REQUIRED_NOT_EMPTY` |
+| `NotNullValidator` | `REQUIRED_NOT_NULL` |
+| `EmailValidator` | `INVALID_EMAIL` |
+| `LengthValidator` | `INVALID_SIZE` |
+| `GreaterThanValidator` | `VALUE_TOO_LOW` |
+| `LessThanValidator` | `VALUE_TOO_HIGH` |
+| `RegularExpressionValidator` | `REGEX_PATTERN_VALIDATION_FAILED` |
+| `InclusiveBetweenValidator` | `VALUE_OUT_OF_RANGE` |
+
+> **Note:** This table shows common mappings. The full list includes 14 built-in validator mappings — see [the AsciiDoc reference](../index.adoc) for the complete table, including `MaximumLengthValidator`, `MinimumLengthValidator`, `CreditCardValidator`, `ExclusiveBetweenValidator`, `LessThanOrEqualValidator`, and `GreaterThanOrEqualValidator`.
+
+Custom codes set via `.WithErrorCode()` are preserved as-is:
+
+```csharp
+RuleFor(x => x.Name).NotEmpty().WithErrorCode("CUSTOM_NAME_REQUIRED");
+```
+
+### Severity Filtering
+
+By default, only `Severity.Error` failures are included in the response. To include `Warning` or `Info` severities:
+
+```csharp
+builder.Services.AddErrorHandlingFluentValidation(options =>
+{
+    options.IncludeSeverities.Add(FluentValidation.Severity.Warning);
+    options.IncludeSeverities.Add(FluentValidation.Severity.Info);
+});
+```
+
+### Nested Properties
+
+Nested property names are camelCased segment-by-segment. For example, `Address.City.ZipCode` becomes `address.city.zipCode` in both the `property` and `path` fields.
+
+### Custom Validation Message
+
+The top-level `"Validation failed"` message can be customized via `BuiltInMessages`:
+
+```yaml
+ErrorHandling:
+  BuiltInMessages:
+    VALIDATION_FAILED: "One or more fields are invalid"
+```

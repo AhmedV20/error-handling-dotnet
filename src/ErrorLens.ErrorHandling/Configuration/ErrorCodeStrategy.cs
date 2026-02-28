@@ -15,5 +15,23 @@ public enum ErrorCodeStrategy
     /// Use full qualified class name.
     /// Example: MyApp.Exceptions.UserNotFoundException
     /// </summary>
-    FullQualifiedName
+    FullQualifiedName,
+
+    /// <summary>
+    /// Convert exception class name to kebab-case format (lowercase, hyphen-separated).
+    /// Example: UserNotFoundException → user-not-found
+    /// </summary>
+    KebabCase,
+
+    /// <summary>
+    /// Strip "Exception" suffix, keep PascalCase words joined.
+    /// Example: UserNotFoundException → UserNotFound
+    /// </summary>
+    PascalCase,
+
+    /// <summary>
+    /// Convert exception class name to dot-separated lowercase format.
+    /// Example: UserNotFoundException → user.not.found
+    /// </summary>
+    DotSeparated
 }

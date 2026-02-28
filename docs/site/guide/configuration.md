@@ -44,7 +44,7 @@ A full YAML template is available at [Configuration Template](/documentation#con
 |--------|------|---------|-------------|
 | `Enabled` | `bool` | `true` | Enable/disable error handling globally |
 | `HttpStatusInJsonResponse` | `bool` | `false` | Include HTTP status code in JSON body |
-| `DefaultErrorCodeStrategy` | `enum` | `AllCaps` | `AllCaps` or `FullQualifiedName` |
+| `DefaultErrorCodeStrategy` | `enum` | `AllCaps` | `AllCaps`, `FullQualifiedName`, `KebabCase`, `PascalCase`, or `DotSeparated` |
 | `SearchSuperClassHierarchy` | `bool` | `false` | Search base classes for config matches |
 | `AddPathToError` | `bool` | `true` | Include property path in field errors |
 | `IncludeRejectedValues` | `bool` | `true` | Include rejected values in validation errors. Set to `false` to prevent sensitive input (e.g., passwords) from being echoed in responses. |
@@ -53,7 +53,9 @@ A full YAML template is available at [Configuration Template](/documentation#con
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` | Type URI prefix for Problem Details |
 | `ProblemDetailConvertToKebabCase` | `bool` | `true` | Convert error codes to kebab-case in type URI |
 | `ExceptionLogging` | `enum` | `MessageOnly` | `None`, `MessageOnly`, `WithStacktrace` |
-| `JsonFieldNames` | `JsonFieldNamesOptions` | (defaults) | Custom JSON property names for error responses |
+| `JsonFieldNames` | `JsonFieldNamesOptions` | (defaults) | Custom JSON property names for error responses (11 configurable fields) |
+| `FallbackMessage` | `string` | `An unexpected error occurred` | Custom message for 5xx error responses |
+| `BuiltInMessages` | `Dictionary<string, string>` | `{}` | Override default messages for built-in handlers |
 
 ## HTTP Status Mappings
 
@@ -114,6 +116,9 @@ Result:
 |----------|---------|
 | `AllCaps` (default) | `USER_NOT_FOUND` |
 | `FullQualifiedName` | `MyApp.Exceptions.UserNotFoundException` |
+| `KebabCase` | `user-not-found` |
+| `PascalCase` | `UserNotFound` |
+| `DotSeparated` | `user.not.found` |
 
 ### Override Error Codes
 
@@ -233,12 +238,19 @@ builder.Services.AddErrorResponseCustomizer<RequestMetadataCustomizer>();
 
 ### 5xx Safe Message Behavior
 
-All 5xx-class errors automatically return a generic safe message:
+All 5xx-class errors automatically return a generic safe message. The default message can be customized via `FallbackMessage`:
+
+```csharp
+builder.Services.AddErrorHandling(options =>
+{
+    options.FallbackMessage = "Something went wrong. Please try again later.";
+});
+```
 
 ```json
 {
   "code": "INTERNAL_ERROR",
-  "message": "An unexpected error occurred"
+  "message": "Something went wrong. Please try again later."
 }
 ```
 
@@ -246,12 +258,35 @@ All 5xx-class errors automatically return a generic safe message:
 4xx errors preserve their original messages since these are typically user-facing and safe to expose.
 :::
 
+### Customizable Built-in Handler Messages
+
+Override the default messages used by built-in exception handlers via `BuiltInMessages`:
+
+```csharp
+builder.Services.AddErrorHandling(options =>
+{
+    options.BuiltInMessages["MESSAGE_NOT_READABLE"] = "The request body could not be parsed.";
+    options.BuiltInMessages["TYPE_MISMATCH"] = "A value has the wrong type.";
+    options.BuiltInMessages["BAD_REQUEST"] = "The request is malformed.";
+    options.BuiltInMessages["VALIDATION_FAILED"] = "Please fix the errors below.";
+});
+```
+
+| Key | Handler | Default Message |
+|-----|---------|-----------------|
+| `MESSAGE_NOT_READABLE` | `JsonExceptionHandler` | `The request body could not be parsed as valid JSON` |
+| `TYPE_MISMATCH` | `TypeMismatchExceptionHandler` | `A type conversion error occurred` |
+| `BAD_REQUEST` | `BadRequestExceptionHandler` | `Bad request` |
+| `VALIDATION_FAILED` | `ValidationExceptionHandler` | *(exception message)* |
+
 ### Startup Validation
 
-`JsonFieldNames` configuration is validated at application startup:
-- Null or empty values are rejected
-- Duplicate field names are detected
-- All properties must be unique
+Configuration is validated at application startup:
+
+- **`JsonFieldNames`** — All 11 properties are validated: null/empty values are rejected and duplicate names are detected
+- **`ProblemDetailTypePrefix`** — Must be a valid absolute URI (e.g., `https://example.com/errors/`) or empty
+- **`RateLimiting.ErrorCode`** — Must not be null or empty
+- **`RateLimiting.DefaultMessage`** — Must not be null or empty
 
 ## Configuration Priority
 

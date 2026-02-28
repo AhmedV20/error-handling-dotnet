@@ -17,7 +17,7 @@ export default withMermaid(defineConfig({
       { text: 'Documentation', link: '/documentation' },
       { text: 'Changelog', link: '/changelog' },
       {
-        text: 'v1.3.1',
+        text: 'v1.4.0',
         items: [
           { text: 'NuGet', link: 'https://www.nuget.org/packages/ErrorLens.ErrorHandling' }
         ]
@@ -68,6 +68,7 @@ export default withMermaid(defineConfig({
             { text: 'Localization', link: '/documentation#localization' },
             { text: 'OpenAPI & Swagger', link: '/documentation#openapi-swagger-integration' },
             { text: 'Rate Limiting', link: '/documentation#rate-limiting' },
+            { text: 'FluentValidation', link: '/documentation#fluentvalidation' },
           ]
         },
         {

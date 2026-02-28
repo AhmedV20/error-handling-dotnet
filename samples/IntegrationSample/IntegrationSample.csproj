@@ -9,9 +9,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ErrorLens.ErrorHandling\ErrorLens.ErrorHandling.csproj" />
     <ProjectReference Include="..\..\src\ErrorLens.ErrorHandling.OpenApi\ErrorLens.ErrorHandling.OpenApi.csproj" />
+    <ProjectReference Include="..\..\src\ErrorLens.ErrorHandling.FluentValidation\ErrorLens.ErrorHandling.FluentValidation.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.0.0" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.9.0" />

@@ -29,6 +29,11 @@ on:
       - '.editorconfig'
       - '.gitignore'
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -60,7 +65,15 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
+        run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --logger trx --results-directory ./test-results
+
+      - name: Test Report
+        uses: dorny/test-reporter@v2
+        if: ${{ !cancelled() }}
+        with:
+          name: '.NET Test Results'
+          path: './test-results/**/*.trx'
+          reporter: 'dotnet-trx'
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -87,6 +100,7 @@ jobs:
           dotnet pack src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj --configuration Release --output ./artifacts
           dotnet pack src/ErrorLens.ErrorHandling.OpenApi/ErrorLens.ErrorHandling.OpenApi.csproj --configuration Release --output ./artifacts
           dotnet pack src/ErrorLens.ErrorHandling.Swashbuckle/ErrorLens.ErrorHandling.Swashbuckle.csproj --configuration Release --output ./artifacts
+          dotnet pack src/ErrorLens.ErrorHandling.FluentValidation/ErrorLens.ErrorHandling.FluentValidation.csproj --configuration Release --output ./artifacts
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

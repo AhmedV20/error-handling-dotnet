@@ -58,4 +58,11 @@ public class JsonFieldNamesOptions
     /// Property name for parameter name in parameter errors. Default: "parameter"
     /// </summary>
     public string Parameter { get; set; } = "parameter";
+
+    // --- Rate limiting fields ---
+
+    /// <summary>
+    /// Property name for retry-after value in rate limit responses. Default: "retryAfter"
+    /// </summary>
+    public string RetryAfter { get; set; } = "retryAfter";
 }

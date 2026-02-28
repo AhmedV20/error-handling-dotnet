@@ -86,17 +86,26 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
+      - name: Extract version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION (from tag: $TAG)"
+
       - name: Pack with release version
         run: |
-          dotnet pack src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj --configuration Release --output ./artifacts /p:Version=${{ github.event.release.tag_name }}
-          dotnet pack src/ErrorLens.ErrorHandling.OpenApi/ErrorLens.ErrorHandling.OpenApi.csproj --configuration Release --output ./artifacts /p:Version=${{ github.event.release.tag_name }}
-          dotnet pack src/ErrorLens.ErrorHandling.Swashbuckle/ErrorLens.ErrorHandling.Swashbuckle.csproj --configuration Release --output ./artifacts /p:Version=${{ github.event.release.tag_name }}
+          dotnet pack src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj --configuration Release --output ./artifacts /p:Version=${{ steps.version.outputs.VERSION }}
+          dotnet pack src/ErrorLens.ErrorHandling.OpenApi/ErrorLens.ErrorHandling.OpenApi.csproj --configuration Release --output ./artifacts /p:Version=${{ steps.version.outputs.VERSION }}
+          dotnet pack src/ErrorLens.ErrorHandling.Swashbuckle/ErrorLens.ErrorHandling.Swashbuckle.csproj --configuration Release --output ./artifacts /p:Version=${{ steps.version.outputs.VERSION }}
+          dotnet pack src/ErrorLens.ErrorHandling.FluentValidation/ErrorLens.ErrorHandling.FluentValidation.csproj --configuration Release --output ./artifacts /p:Version=${{ steps.version.outputs.VERSION }}
 
       - name: Display package info
         run: |
           echo "📦 Package created:"
           ls -la ./artifacts/
-          echo "Version: ${{ github.event.release.tag_name }}"
+          echo "Version: ${{ steps.version.outputs.VERSION }}"
 
       - name: Push to NuGet.org
         run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
@@ -105,7 +114,8 @@ jobs:
         run: |
           echo "## Release Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version:** ${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **ErrorLens.ErrorHandling:** https://www.nuget.org/packages/ErrorLens.ErrorHandling/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **ErrorLens.ErrorHandling.OpenApi:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **ErrorLens.ErrorHandling.Swashbuckle:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle/${{ github.event.release.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ErrorLens.ErrorHandling:** https://www.nuget.org/packages/ErrorLens.ErrorHandling/${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ErrorLens.ErrorHandling.OpenApi:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi/${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ErrorLens.ErrorHandling.Swashbuckle:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle/${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ErrorLens.ErrorHandling.FluentValidation:** https://www.nuget.org/packages/ErrorLens.ErrorHandling.FluentValidation/${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY

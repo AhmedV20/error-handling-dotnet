@@ -2,7 +2,7 @@
 
 This document provides a comprehensive architectural overview of the **ErrorLens.ErrorHandling** library, a structured error handling framework for ASP.NET Core APIs. It covers the package structure, middleware pipeline, dependency injection graph, handler chain of responsibility, configuration system, and all cross-cutting concerns.
 
-> **Version covered:** 1.3.1
+> **Version covered:** 1.4.0
 > **Target frameworks:** .NET 6.0 through .NET 10.0 (multi-targeting)
 > **Language:** C# 12
 

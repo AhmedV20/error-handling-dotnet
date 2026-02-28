@@ -1,4 +1,5 @@
 using ErrorLens.ErrorHandling.Extensions;
+using ErrorLens.ErrorHandling.FluentValidation;
 using ErrorLens.ErrorHandling.Swashbuckle;
 using ShowcaseSample.Customizers;
 using ShowcaseSample.Handlers;
@@ -13,6 +14,9 @@ builder.Services.AddControllers();
 
 // Add error handling (reads from IConfiguration — both JSON and YAML)
 builder.Services.AddErrorHandling(builder.Configuration);
+
+// Add FluentValidation error handling integration
+builder.Services.AddErrorHandlingFluentValidation();
 
 // Register custom infrastructure exception handler
 builder.Services.AddApiExceptionHandler<InfrastructureExceptionHandler>();

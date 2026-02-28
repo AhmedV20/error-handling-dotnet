@@ -9,7 +9,7 @@ Complete reference for ErrorLens.ErrorHandling — structured error responses fo
 dotnet add package ErrorLens.ErrorHandling
 ```
 ```xml [PackageReference]
-<PackageReference Include="ErrorLens.ErrorHandling" Version="1.3.1" />
+<PackageReference Include="ErrorLens.ErrorHandling" Version="1.4.0" />
 ```
 :::
 
@@ -25,6 +25,9 @@ dotnet add package ErrorLens.ErrorHandling.OpenApi
 
 # Swashbuckle/Swagger schema generation (.NET 6-8)
 dotnet add package ErrorLens.ErrorHandling.Swashbuckle
+
+# FluentValidation integration
+dotnet add package ErrorLens.ErrorHandling.FluentValidation
 ```
 
 | Package | Target Frameworks | Version |
@@ -32,6 +35,7 @@ dotnet add package ErrorLens.ErrorHandling.Swashbuckle
 | `ErrorLens.ErrorHandling` | .NET 6, 7, 8, 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling)](https://www.nuget.org/packages/ErrorLens.ErrorHandling) |
 | `ErrorLens.ErrorHandling.OpenApi` | .NET 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.OpenApi)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi) |
 | `ErrorLens.ErrorHandling.Swashbuckle` | .NET 6, 7, 8 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.Swashbuckle)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle) |
+| `ErrorLens.ErrorHandling.FluentValidation` | .NET 6, 7, 8, 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.FluentValidation)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.FluentValidation) |
 
 ## Quick Start
 
@@ -156,11 +160,14 @@ By default, the exception class name is converted to `ALL_CAPS` format:
 | `AllCaps` | `ArgumentNullException` | `ARGUMENT_NULL` |
 | `AllCaps` | `Exception` (base) | `INTERNAL_ERROR` |
 | `FullQualifiedName` | `UserNotFoundException` | `MyApp.Exceptions.UserNotFoundException` |
+| `KebabCase` | `UserNotFoundException` | `user-not-found` |
+| `PascalCase` | `UserNotFoundException` | `UserNotFound` |
+| `DotSeparated` | `UserNotFoundException` | `user.not.found` |
 
 ```csharp
 builder.Services.AddErrorHandling(options =>
 {
-    options.DefaultErrorCodeStrategy = ErrorCodeStrategy.FullQualifiedName;
+    options.DefaultErrorCodeStrategy = ErrorCodeStrategy.KebabCase;
 });
 ```
 
@@ -284,10 +291,12 @@ ErrorHandling:
 |--------|------|---------|-------------|
 | `Enabled` | `bool` | `true` | Enable/disable error handling globally |
 | `HttpStatusInJsonResponse` | `bool` | `false` | Include HTTP status code in JSON body |
-| `DefaultErrorCodeStrategy` | `enum` | `AllCaps` | `AllCaps` or `FullQualifiedName` |
+| `DefaultErrorCodeStrategy` | `enum` | `AllCaps` | `AllCaps`, `FullQualifiedName`, `KebabCase`, `PascalCase`, or `DotSeparated` |
 | `SearchSuperClassHierarchy` | `bool` | `false` | Search base classes for config matches |
 | `AddPathToError` | `bool` | `true` | Include property path in field errors |
 | `IncludeRejectedValues` | `bool` | `true` | Include rejected values in validation errors. Set to `false` to prevent sensitive input (e.g., passwords) from being echoed in responses. |
+| `FallbackMessage` | `string` | `"An unexpected error occurred"` | Custom message for unhandled 5xx errors. 4xx exceptions are unaffected. |
+| `BuiltInMessages` | `Dictionary<string, string>` | `{}` | Override default messages for built-in handlers (`MESSAGE_NOT_READABLE`, `TYPE_MISMATCH`, `BAD_REQUEST`, `VALIDATION_FAILED`) |
 | `OverrideModelStateValidation` | `bool` | `false` | Intercept `[ApiController]` validation |
 | `UseProblemDetailFormat` | `bool` | `false` | Enable RFC 9457 Problem Details format |
 | `ProblemDetailTypePrefix` | `string` | `https://example.com/errors/` | Type URI prefix for Problem Details |
@@ -299,7 +308,7 @@ ErrorHandling:
 | `LogLevels` | `Dictionary<string, LogLevel>` | `{}` | HTTP status code/range → log level (e.g., `"5xx": "Error"`) |
 | `FullStacktraceHttpStatuses` | `HashSet<string>` | `{}` | HTTP statuses that force full stack trace logging |
 | `FullStacktraceClasses` | `HashSet<string>` | `{}` | Exception types that force full stack trace logging |
-| `JsonFieldNames` | `JsonFieldNamesOptions` | *(see [JSON Field Names](#custom-json-field-names))* | Custom JSON field names (10 configurable fields) |
+| `JsonFieldNames` | `JsonFieldNamesOptions` | *(see [JSON Field Names](#custom-json-field-names))* | Custom JSON field names (11 configurable fields) |
 | `RateLimiting` | `RateLimitingOptions` | *(see [Rate Limiting](#rate-limiting))* | Rate limiting response options |
 | `OpenApi` | `OpenApiOptions` | `DefaultStatusCodes: {400, 404, 500}` | OpenAPI/Swagger schema generation options |
 
@@ -411,6 +420,7 @@ builder.Services.AddErrorHandling(options =>
 | `RejectedValue` | `rejectedValue` | Field/parameter errors | Rejected value |
 | `Path` | `path` | Field errors | Property path |
 | `Parameter` | `parameter` | Parameter errors | Parameter name |
+| `RetryAfter` | `retryAfter` | Rate limit responses | Retry-after seconds |
 
 ::: tip
 `Code` and `Message` are shared — they apply to both the top-level response and nested error objects.
@@ -950,9 +960,50 @@ All 5xx-class errors (500-599) automatically return a generic safe message inste
 
 This prevents internal details (database connection strings, file paths, stack traces) from leaking to API consumers. The original exception is still logged with full details on the server side.
 
+The fallback message can be customized:
+
+```csharp
+builder.Services.AddErrorHandling(options =>
+{
+    options.FallbackMessage = "Contact support at help@example.com";
+});
+```
+
+Result:
+
+```json
+{
+  "code": "INTERNAL_SERVER_ERROR",
+  "message": "Contact support at help@example.com"
+}
+```
+
 ::: info
 4xx errors preserve their original messages since these are typically user-facing and safe to expose.
 :::
+
+### Customizable Built-in Handler Messages
+
+Override default messages for built-in exception handlers without writing replacement handler classes:
+
+```csharp
+builder.Services.AddErrorHandling(options =>
+{
+    options.BuiltInMessages["MESSAGE_NOT_READABLE"] = "Invalid JSON payload";
+    options.BuiltInMessages["TYPE_MISMATCH"] = "Invalid data type";
+    options.BuiltInMessages["BAD_REQUEST"] = "Invalid request";
+    options.BuiltInMessages["VALIDATION_FAILED"] = "Please fix the errors below";
+});
+```
+
+Available keys (from `DefaultErrorCodes`):
+
+| Key | Handler | Default Message |
+|-----|---------|-----------------|
+| `MESSAGE_NOT_READABLE` | `JsonExceptionHandler` | `"The request body could not be parsed as valid JSON"` |
+| `TYPE_MISMATCH` | `TypeMismatchExceptionHandler` | `"A type conversion error occurred"` |
+| `BAD_REQUEST` | `BadRequestExceptionHandler` | `"Bad request"` |
+| `VALIDATION_FAILED` | `ValidationExceptionHandler` | `"Validation failed"` |
 
 ### Message Sanitization
 
@@ -965,6 +1016,17 @@ The `JsonFieldNames` configuration is validated at application startup:
 - **Null or empty values** are rejected with clear error messages
 - **Duplicate field names** are detected and reported
 - **All properties must be unique** to prevent JSON serialization conflicts
+
+Additionally, the following settings are validated at startup:
+
+| Setting | Validation Rule |
+|---------|-----------------|
+| `ProblemDetailTypePrefix` | Must be empty or a valid absolute URI |
+| `RateLimiting.ErrorCode` | Must not be null or empty |
+| `RateLimiting.DefaultMessage` | Must not be null or empty |
+| `JsonFieldNames.RetryAfter` | Must not be null or empty; must not duplicate other field names |
+
+Invalid values produce clear error messages at application startup, preventing runtime issues.
 
 ## Logging
 

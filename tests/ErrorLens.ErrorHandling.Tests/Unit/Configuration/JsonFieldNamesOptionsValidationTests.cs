@@ -123,6 +123,56 @@ public class JsonFieldNamesOptionsValidationTests
         act.Should().Throw<OptionsValidationException>();
     }
 
+    // --- US5: RetryAfter validation tests ---
+
+    [Fact]
+    public void Validate_NullRetryAfter_Fails()
+    {
+        var options = new ErrorHandlingOptions();
+        options.JsonFieldNames.RetryAfter = null!;
+
+        var result = ValidateOptions(options);
+
+        result.Failed.Should().BeTrue();
+        result.FailureMessage.Should().Contain("RetryAfter");
+    }
+
+    [Fact]
+    public void Validate_EmptyRetryAfter_Fails()
+    {
+        var options = new ErrorHandlingOptions();
+        options.JsonFieldNames.RetryAfter = "";
+
+        var result = ValidateOptions(options);
+
+        result.Failed.Should().BeTrue();
+        result.FailureMessage.Should().Contain("RetryAfter");
+    }
+
+    [Fact]
+    public void Validate_CustomRetryAfter_Succeeds()
+    {
+        var options = new ErrorHandlingOptions();
+        options.JsonFieldNames.RetryAfter = "retry_after";
+
+        var result = ValidateOptions(options);
+
+        result.Succeeded.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Validate_RetryAfterDuplicatesCode_Fails()
+    {
+        var options = new ErrorHandlingOptions();
+        options.JsonFieldNames.RetryAfter = "code"; // duplicates Code field
+
+        var result = ValidateOptions(options);
+
+        result.Failed.Should().BeTrue();
+        result.FailureMessage.Should().Contain("Duplicate");
+        result.FailureMessage.Should().Contain("code");
+    }
+
     private static ValidateOptionsResult ValidateOptions(ErrorHandlingOptions options)
     {
         // Use reflection to instantiate the internal validator

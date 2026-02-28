@@ -1,9 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Threading.RateLimiting;
+using ErrorLens.ErrorHandling.Configuration;
 using ErrorLens.ErrorHandling.Extensions;
+using ErrorLens.ErrorHandling.FluentValidation;
 using ErrorLens.ErrorHandling.OpenApi;
 using ErrorLens.ErrorHandling.RateLimiting;
+using FluentValidation;
 using IntegrationSample;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
@@ -18,6 +21,12 @@ builder.Services.AddErrorHandling(options =>
     options.OverrideModelStateValidation = true;
     options.IncludeRejectedValues = true;
 
+    // v1.4.0: Use kebab-case error code strategy
+    options.DefaultErrorCodeStrategy = ErrorCodeStrategy.KebabCase;
+
+    // v1.4.0: Custom 5xx fallback message
+    options.FallbackMessage = "An internal error occurred. Please try again or contact support.";
+
     // Configure rate limiting responses
     options.RateLimiting = new()
     {
@@ -27,6 +36,9 @@ builder.Services.AddErrorHandling(options =>
         UseModernHeaderFormat = true  // Use IETF draft RateLimit-* headers
     };
 });
+
+// --- FluentValidation Integration (v1.4.0) ---
+builder.Services.AddErrorHandlingFluentValidation();
 
 // --- Localization ---
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
@@ -134,11 +146,24 @@ app.MapPost("/validate", (ContactRequest request) =>
     Results.Ok(new { message = "Contact created", name = request.Name }))
 .WithTags("Validation");
 
+// FluentValidation endpoint — demonstrates FluentValidation integration (v1.4.0)
+// POST with invalid data to see fieldErrors with automatic error code mapping
+app.MapPost("/validate-fluent", (OrderRequest request) =>
+{
+    var validator = new OrderRequestValidator();
+    var result = validator.Validate(request);
+    if (!result.IsValid)
+        throw new FluentValidation.ValidationException(result.Errors);
+
+    return Results.Ok(new { message = "Order placed", product = request.ProductName });
+})
+.WithTags("Validation");
+
 // Health check — lists all features demonstrated by this sample
 app.MapGet("/", () => Results.Ok(new
 {
     service = "IntegrationSample",
-    version = "1.3.1",
+    version = "1.4.0",
     features = new[]
     {
         "OpenTelemetry Tracing",
@@ -146,7 +171,10 @@ app.MapGet("/", () => Results.Ok(new
         "Rate Limiting",
         "AggregateException Handling",
         "Error Message Localization",
-        "Validation (OverrideModelStateValidation)"
+        "Validation (OverrideModelStateValidation)",
+        "FluentValidation Integration",
+        "KebabCase Error Code Strategy",
+        "Custom FallbackMessage"
     }
 }))
 .WithTags("Info");
@@ -169,4 +197,34 @@ public class ContactRequest
 
     [Range(1, 5, ErrorMessage = "Priority must be between 1 and 5")]
     public int Priority { get; set; }
+}
+
+/// <summary>
+/// Request model for the /validate-fluent endpoint.
+/// Validated via FluentValidation instead of DataAnnotations.
+/// </summary>
+public class OrderRequest
+{
+    public string? ProductName { get; set; }
+    public decimal Price { get; set; }
+    public int Quantity { get; set; }
+    public string? Email { get; set; }
+}
+
+/// <summary>
+/// FluentValidation validator for OrderRequest.
+/// Error codes are automatically mapped to ErrorLens DefaultErrorCodes.
+/// With KebabCase strategy, exception-based codes use kebab format.
+/// </summary>
+public class OrderRequestValidator : AbstractValidator<OrderRequest>
+{
+    public OrderRequestValidator()
+    {
+        RuleFor(x => x.ProductName).NotEmpty();        // → REQUIRED_NOT_EMPTY
+        RuleFor(x => x.Price).GreaterThan(0);          // → INVALID_MIN
+        RuleFor(x => x.Quantity).InclusiveBetween(1, 100); // → VALUE_OUT_OF_RANGE
+        RuleFor(x => x.Email)
+            .EmailAddress()                             // → INVALID_EMAIL
+            .When(x => !string.IsNullOrEmpty(x.Email));
+    }
 }

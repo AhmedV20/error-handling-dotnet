@@ -2,6 +2,7 @@ using System.Net;
 using ErrorLens.ErrorHandling.Configuration;
 using ErrorLens.ErrorHandling.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 
 namespace ErrorLens.ErrorHandling.Handlers;
 
@@ -10,6 +11,13 @@ namespace ErrorLens.ErrorHandling.Handlers;
 /// </summary>
 public class BadRequestExceptionHandler : AbstractApiExceptionHandler
 {
+    private readonly ErrorHandlingOptions _options;
+
+    public BadRequestExceptionHandler(IOptions<ErrorHandlingOptions> options)
+    {
+        _options = options.Value;
+    }
+
     /// <inheritdoc />
     public override int Order => 150;
 
@@ -36,7 +44,7 @@ public class BadRequestExceptionHandler : AbstractApiExceptionHandler
         return response;
     }
 
-    private static string SanitizeMessage(string message)
+    private string SanitizeMessage(string message)
     {
         // Allowlist approach: only pass through known-safe, user-facing messages.
         // Everything else is replaced with a generic message to prevent
@@ -50,6 +58,8 @@ public class BadRequestExceptionHandler : AbstractApiExceptionHandler
             return message;
         }
 
-        return "Bad request";
+        return _options.BuiltInMessages.TryGetValue(DefaultErrorCodes.BadRequest, out var custom)
+            ? custom
+            : "Bad request";
     }
 }

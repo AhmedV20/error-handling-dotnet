@@ -13,7 +13,7 @@ ErrorLens
 :source-highlighter: highlight.js
 :icons: font
 
-This documentation is for version 1.3.1.
+This documentation is for version 1.4.0.
 
 == Goal
 
@@ -57,7 +57,7 @@ dotnet add package ErrorLens.ErrorHandling
 [source,xml,indent=0,role="secondary"]
 .PackageReference
 ----
-<PackageReference Include="ErrorLens.ErrorHandling" Version="1.3.1" />
+<PackageReference Include="ErrorLens.ErrorHandling" Version="1.4.0" />
 ----
 
 NOTE: This library is intended to be used with an https://learn.microsoft.com/en-us/aspnet/core[ASP.NET Core] project.
@@ -75,6 +75,12 @@ dotnet add package ErrorLens.ErrorHandling.OpenApi
 .Swashbuckle/Swagger schema generation (.NET 6-8)
 ----
 dotnet add package ErrorLens.ErrorHandling.Swashbuckle
+----
+
+[source,bash,indent=0]
+.FluentValidation integration (.NET 6-10)
+----
+dotnet add package ErrorLens.ErrorHandling.FluentValidation
 ----
 
 === Usage
@@ -276,6 +282,115 @@ NOTE: This response requires `OverrideModelStateValidation: true`. Without it, A
 
 NOTE: If there are validation errors at the class level, they will be added in the response as `globalErrors`.
 
+==== FluentValidation exception handling
+
+The `ErrorLens.ErrorHandling.FluentValidation` satellite package adds automatic handling of `FluentValidation.ValidationException`.
+
+[source,bash,indent=0]
+----
+dotnet add package ErrorLens.ErrorHandling.FluentValidation
+----
+
+Register it alongside the core library:
+
+[source,csharp]
+----
+builder.Services.AddErrorHandling();
+builder.Services.AddErrorHandlingFluentValidation();
+----
+
+When a `FluentValidation.ValidationException` is thrown, the library produces a structured response identical in shape to DataAnnotations validation errors.
+By default, only `Error` severity failures are included.
+To include other severities:
+
+[source,csharp]
+----
+builder.Services.AddErrorHandlingFluentValidation(options =>
+{
+    options.IncludeSeverities.Add(FluentValidation.Severity.Warning);
+});
+----
+
+===== Built-in error code mappings
+
+The handler maps 14 built-in FluentValidation validators to `DefaultErrorCodes` constants:
+
+[cols="2,2"]
+|===
+|FluentValidation Validator |Mapped Error Code
+
+|`NotNullValidator`
+|`REQUIRED_NOT_NULL`
+
+|`NotEmptyValidator`
+|`REQUIRED_NOT_EMPTY`
+
+|`EmailValidator`
+|`INVALID_EMAIL`
+
+|`LengthValidator`
+|`INVALID_SIZE`
+
+|`MinimumLengthValidator`
+|`INVALID_SIZE`
+
+|`MaximumLengthValidator`
+|`INVALID_SIZE`
+
+|`LessThanValidator`
+|`INVALID_MAX`
+
+|`LessThanOrEqualValidator`
+|`INVALID_MAX`
+
+|`GreaterThanValidator`
+|`INVALID_MIN`
+
+|`GreaterThanOrEqualValidator`
+|`INVALID_MIN`
+
+|`RegularExpressionValidator`
+|`INVALID_PATTERN`
+
+|`CreditCardValidator`
+|`INVALID_CREDIT_CARD`
+
+|`InclusiveBetweenValidator`
+|`VALUE_OUT_OF_RANGE`
+
+|`ExclusiveBetweenValidator`
+|`VALUE_OUT_OF_RANGE`
+|===
+
+Custom error codes set via `.WithErrorCode("CUSTOM_CODE")` are preserved as-is.
+Nested property names (e.g., `Address.ZipCode`) are converted with segment-by-segment camelCase (e.g., `address.zipCode`).
+
+===== Response example
+
+[source,json]
+----
+{
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "REQUIRED_NOT_EMPTY",
+      "property": "email",
+      "message": "'Email' must not be empty.",
+      "rejectedValue": "",
+      "path": "email"
+    },
+    {
+      "code": "VALUE_TOO_LOW",
+      "property": "age",
+      "message": "'Age' must be greater than '0'.",
+      "rejectedValue": -5,
+      "path": "age"
+    }
+  ]
+}
+----
+
 ==== Setup with configuration binding
 
 You can bind error handling options from `appsettings.json` or any other configuration source:
@@ -399,6 +514,28 @@ If you like to use the full qualified name style for the codes, then specify thi
   }
 }
 ----
+
+The available strategies are:
+
+[cols="2,2"]
+|===
+|Strategy |Example (`UserNotFoundException`)
+
+|`AllCaps` (default)
+|`USER_NOT_FOUND`
+
+|`FullQualifiedName`
+|`MyApp.Exceptions.UserNotFoundException`
+
+|`KebabCase`
+|`user-not-found`
+
+|`PascalCase`
+|`UserNotFound`
+
+|`DotSeparated`
+|`user.not.found`
+|===
 
 For a class called `UserNotFoundException`, the default style (`AllCaps`) will result in the following JSON:
 
@@ -697,6 +834,23 @@ Breakdown:
 * The `parameterErrors` array contains all the parameter-level validation problems.
 * The `globalErrors` array contains the class-level validation problems.
 
+==== Customizing built-in handler messages
+
+The default messages returned by built-in handlers can be overridden using the `BuiltInMessages` dictionary, without writing replacement handler classes:
+
+[source,csharp]
+----
+builder.Services.AddErrorHandling(options =>
+{
+    options.BuiltInMessages["MESSAGE_NOT_READABLE"] = "Invalid JSON payload";
+    options.BuiltInMessages["TYPE_MISMATCH"] = "Invalid data type";
+    options.BuiltInMessages["BAD_REQUEST"] = "Invalid request";
+    options.BuiltInMessages["VALIDATION_FAILED"] = "Please fix the errors below";
+});
+----
+
+The available keys correspond to `DefaultErrorCodes` constants used by the built-in handlers.
+
 ==== Unreadable HTTP message
 
 If a controller receives a message it cannot read (e.g., invalid JSON), a `BadHttpRequestException` is thrown.
@@ -918,7 +1072,8 @@ If the `code`, `message`, `fieldErrors`, `globalErrors`, `parameterErrors`, and 
       "Property": "field",
       "RejectedValue": "value",
       "Path": "jsonPath",
-      "Parameter": "paramName"
+      "Parameter": "paramName",
+      "RetryAfter": "retry_after"
     }
   }
 }
@@ -940,6 +1095,7 @@ ErrorHandling:
     RejectedValue: value
     Path: jsonPath
     Parameter: paramName
+    RetryAfter: retry_after
 ----
 
 With these settings, a response will look similar to this:
@@ -1012,6 +1168,10 @@ All configurable field names:
 |`Parameter`
 |`parameter`
 |Parameter error objects
+
+|`RetryAfter`
+|`retryAfter`
+|Rate limit response body
 |===
 
 === Security
@@ -1032,6 +1192,16 @@ All 5xx-class errors (500-599) automatically return a generic safe message inste
 
 This prevents internal details (database connection strings, file paths, stack traces) from leaking to API consumers. The original exception is still logged with full details on the server side.
 
+The fallback message is configurable via the `FallbackMessage` property:
+
+[source,csharp]
+----
+builder.Services.AddErrorHandling(options =>
+{
+    options.FallbackMessage = "Contact support at help@example.com";
+});
+----
+
 NOTE: 4xx errors (400-499) preserve their original messages since these are typically user-facing and safe to expose.
 
 ==== Message sanitization
@@ -1050,11 +1220,12 @@ This prevents internal framework implementation details from being exposed.
 
 ==== Startup validation
 
-The `JsonFieldNames` configuration is validated at application startup:
+Several configuration properties are validated at application startup:
 
-* **Null or empty values** are rejected with clear error messages
-* **Duplicate field names** are detected and reported
-* **All properties must be unique** to prevent JSON serialization conflicts
+* **JsonFieldNames**: Null or empty values are rejected; duplicate field names are detected and reported
+* **ProblemDetailTypePrefix**: Must be a valid absolute URI or empty
+* **RateLimiting.ErrorCode**: Must not be null or empty
+* **RateLimiting.DefaultMessage**: Must not be null or empty
 
 This fails-fast behavior prevents misconfiguration from causing runtime errors.
 
@@ -1529,6 +1700,13 @@ ErrorHandling:
 
 The response includes a `Retry-After` HTTP header with the retry delay in seconds.
 
+The `retryAfter` field name in the response body can be customized via `JsonFieldNames`:
+
+[source,csharp]
+----
+options.JsonFieldNames.RetryAfter = "retry_after";
+----
+
 == Custom exception handler
 
 If the <<Configuration,extensive customization options>> are not enough, you can write your own `IApiExceptionHandler` implementation.
@@ -1670,7 +1848,7 @@ The `DefaultFallbackHandler` always runs last as the catch-all.
 |`true`
 
 |DefaultErrorCodeStrategy
-|Determines how an Exception is converted into a `code`. One of: `AllCaps`, `FullQualifiedName`.
+|Determines how an Exception is converted into a `code`. One of: `AllCaps`, `FullQualifiedName`, `KebabCase`, `PascalCase`, `DotSeparated`.
 |`AllCaps`
 
 |HttpStatusInJsonResponse

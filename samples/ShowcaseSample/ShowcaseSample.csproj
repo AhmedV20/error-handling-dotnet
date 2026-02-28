@@ -9,6 +9,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ErrorLens.ErrorHandling\ErrorLens.ErrorHandling.csproj" />
     <ProjectReference Include="..\..\src\ErrorLens.ErrorHandling.Swashbuckle\ErrorLens.ErrorHandling.Swashbuckle.csproj" />
+    <ProjectReference Include="..\..\src\ErrorLens.ErrorHandling.FluentValidation\ErrorLens.ErrorHandling.FluentValidation.csproj" />
+    <PackageReference Include="FluentValidation" Version="11.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0"/>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.0.0"/>
   </ItemGroup>

@@ -42,7 +42,7 @@ public class DefaultFallbackHandler : IFallbackApiExceptionHandler
         // For 5xx errors, use safe generic message to prevent information disclosure
         if ((int)status >= 500)
         {
-            message = "An unexpected error occurred";
+            message = _options.FallbackMessage;
         }
 
         var response = new ApiErrorResponse(status, code, message);

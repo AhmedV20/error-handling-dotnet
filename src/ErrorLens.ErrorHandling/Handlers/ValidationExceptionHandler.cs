@@ -42,10 +42,14 @@ public class ValidationExceptionHandler : AbstractApiExceptionHandler
         if (exception is not ValidationException validationException)
             throw new InvalidOperationException($"Cannot handle exception of type {exception.GetType()}. Call CanHandle first.");
 
+        var topLevelMessage = _options.BuiltInMessages.TryGetValue(DefaultErrorCodes.ValidationFailed, out var custom)
+            ? custom
+            : validationException.Message;
+
         var response = new ApiErrorResponse(
             HttpStatusCode.BadRequest,
             DefaultErrorCodes.ValidationFailed,
-            validationException.Message);
+            topLevelMessage);
 
         // Extract field errors from ValidationResult
         if (validationException.ValidationResult != null)
@@ -62,11 +66,13 @@ public class ValidationExceptionHandler : AbstractApiExceptionHandler
                     var code = _errorCodeMapper.GetErrorCode(fieldKey, defaultCode);
                     var message = _errorMessageMapper.GetErrorMessage(fieldKey, defaultCode, result.ErrorMessage ?? "Validation failed");
 
+                    var rejectedValue = _options.IncludeRejectedValues ? validationException.Value : null;
+
                     var fieldError = new ApiFieldError(
                         code,
                         StringUtils.ToCamelCase(memberName),
                         message,
-                        validationException.Value,
+                        rejectedValue,
                         _options.AddPathToError ? StringUtils.ToCamelCase(memberName) : null);
 
                     response.AddFieldError(fieldError);

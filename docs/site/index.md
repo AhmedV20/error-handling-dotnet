@@ -22,7 +22,7 @@ features:
     details: Add two lines of code and every unhandled exception returns a structured JSON response — no configuration required.
   - icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
     title: Smart Error Codes
-    details: Automatic ALL_CAPS code generation from exception class names with full customization support.
+    details: 5 error code strategies — AllCaps, FullQualifiedName, KebabCase, PascalCase, DotSeparated — with full customization support.
   - icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
     title: Highly Configurable
     details: JSON or YAML configuration for HTTP statuses, error codes, messages, and custom JSON field names.
@@ -53,6 +53,9 @@ features:
   - icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
     title: Rate Limiting
     details: Structured 429 responses with Retry-After headers via IRateLimitResponseWriter (.NET 7+).
+  - icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    title: FluentValidation Support
+    details: First-party integration for FluentValidation with automatic error code mapping, severity filtering, and structured field errors.
 ---
 
 <div class="banner-section">
@@ -92,3 +95,4 @@ Any unhandled exception automatically becomes a structured JSON response:
 | `ErrorLens.ErrorHandling` | .NET 6 - 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling)](https://www.nuget.org/packages/ErrorLens.ErrorHandling) |
 | `ErrorLens.ErrorHandling.OpenApi` | .NET 9+ | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.OpenApi)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi) |
 | `ErrorLens.ErrorHandling.Swashbuckle` | .NET 6 - 8 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.Swashbuckle)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle) |
+| `ErrorLens.ErrorHandling.FluentValidation` | .NET 6 - 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.FluentValidation)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.FluentValidation) |

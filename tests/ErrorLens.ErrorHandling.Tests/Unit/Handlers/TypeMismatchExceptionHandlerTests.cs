@@ -1,13 +1,25 @@
 using System.Net;
+using ErrorLens.ErrorHandling.Configuration;
 using ErrorLens.ErrorHandling.Handlers;
 using FluentAssertions;
+using Microsoft.Extensions.Options;
+using NSubstitute;
 using Xunit;
 
 namespace ErrorLens.ErrorHandling.Tests.Unit.Handlers;
 
 public class TypeMismatchExceptionHandlerTests
 {
-    private readonly TypeMismatchExceptionHandler _handler = new();
+    private readonly ErrorHandlingOptions _options;
+    private readonly TypeMismatchExceptionHandler _handler;
+
+    public TypeMismatchExceptionHandlerTests()
+    {
+        _options = new ErrorHandlingOptions();
+        var optionsWrapper = Substitute.For<IOptions<ErrorHandlingOptions>>();
+        optionsWrapper.Value.Returns(_options);
+        _handler = new TypeMismatchExceptionHandler(optionsWrapper);
+    }
 
     [Fact]
     public void Order_Is130()
@@ -57,5 +69,36 @@ public class TypeMismatchExceptionHandlerTests
         var act = () => _handler.Handle(new InvalidOperationException());
 
         act.Should().Throw<InvalidOperationException>();
+    }
+
+    // US3: BuiltInMessages tests
+
+    [Fact]
+    public void Handle_CustomBuiltInMessage_UsesCustomMessage()
+    {
+        _options.BuiltInMessages["TYPE_MISMATCH"] = "Value type does not match expected type";
+
+        var response = _handler.Handle(new FormatException("bad format"));
+
+        response.Code.Should().Be("TYPE_MISMATCH");
+        response.Message.Should().Be("Value type does not match expected type");
+    }
+
+    [Fact]
+    public void Handle_DefaultMessage_WhenKeyNotInBuiltInMessages()
+    {
+        var response = _handler.Handle(new FormatException("bad format"));
+
+        response.Message.Should().Be("A type conversion error occurred");
+    }
+
+    [Fact]
+    public void Handle_EmptyStringBuiltInMessage_UsesEmptyString()
+    {
+        _options.BuiltInMessages["TYPE_MISMATCH"] = "";
+
+        var response = _handler.Handle(new FormatException("bad format"));
+
+        response.Message.Should().Be("");
     }
 }

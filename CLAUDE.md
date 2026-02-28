@@ -23,6 +23,7 @@ C# 12 / .NET 6.0 through .NET 10.0 (multi-targeting): Follow standard convention
 
 ## Recent Changes
 
+- 004-customization-features: FluentValidation integration, configurable messages, error code strategies, enhanced validation
 - 003-integration-features: Added C# 12 / .NET 6.0 through .NET 10.0 (multi-targeting)
 
 <!-- MANUAL ADDITIONS START -->

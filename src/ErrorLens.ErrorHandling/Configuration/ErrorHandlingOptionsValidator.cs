@@ -23,13 +23,15 @@ internal class ErrorHandlingOptionsValidator : IValidateOptions<ErrorHandlingOpt
         ValidateProperty(failures, fieldNames.RejectedValue, nameof(fieldNames.RejectedValue));
         ValidateProperty(failures, fieldNames.Path, nameof(fieldNames.Path));
         ValidateProperty(failures, fieldNames.Parameter, nameof(fieldNames.Parameter));
+        ValidateProperty(failures, fieldNames.RetryAfter, nameof(fieldNames.RetryAfter));
 
         // Check for duplicate field names
         var allNames = new[]
         {
             fieldNames.Code, fieldNames.Message, fieldNames.Status,
             fieldNames.FieldErrors, fieldNames.GlobalErrors, fieldNames.ParameterErrors,
-            fieldNames.Property, fieldNames.RejectedValue, fieldNames.Path, fieldNames.Parameter
+            fieldNames.Property, fieldNames.RejectedValue, fieldNames.Path, fieldNames.Parameter,
+            fieldNames.RetryAfter
         };
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -39,6 +41,28 @@ internal class ErrorHandlingOptionsValidator : IValidateOptions<ErrorHandlingOpt
             {
                 failures.Add($"Duplicate JSON field name '{fieldName}' in JsonFieldNames configuration.");
             }
+        }
+
+        // Validate ProblemDetailTypePrefix (must be valid absolute HTTP/HTTPS URI or empty)
+        if (!string.IsNullOrEmpty(options.ProblemDetailTypePrefix))
+        {
+            if (!Uri.TryCreate(options.ProblemDetailTypePrefix, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                failures.Add($"ProblemDetailTypePrefix '{options.ProblemDetailTypePrefix}' is not a valid URI. Must be a valid absolute HTTP or HTTPS URI or empty string.");
+            }
+        }
+
+        // Validate RateLimiting.ErrorCode (must not be null or empty)
+        if (string.IsNullOrWhiteSpace(options.RateLimiting.ErrorCode))
+        {
+            failures.Add("RateLimiting.ErrorCode must not be null or empty.");
+        }
+
+        // Validate RateLimiting.DefaultMessage (must not be null or empty)
+        if (string.IsNullOrWhiteSpace(options.RateLimiting.DefaultMessage))
+        {
+            failures.Add("RateLimiting.DefaultMessage must not be null or empty.");
         }
 
         return failures.Count > 0

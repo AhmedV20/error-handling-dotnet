@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-02-27
+
+### Added
+
+- **New Package: ErrorLens.ErrorHandling.FluentValidation** (.NET 6-10)
+  - `FluentValidationExceptionHandler` (Order 110) catches `FluentValidation.ValidationException`
+  - Automatic mapping of FluentValidation failures to structured `fieldErrors` / `globalErrors`
+  - `FluentValidationErrorCodeMapping` maps 14 built-in validators to `DefaultErrorCodes` constants
+  - Severity filtering via `FluentValidationOptions.IncludeSeverities` (default: Error only)
+  - Nested property name support with segment-by-segment camelCase conversion
+  - Custom error codes from `.WithErrorCode()` preserved exactly
+  - Setup: `services.AddErrorHandlingFluentValidation()`
+  - Dependency: FluentValidation >= 11.0.0
+
+- **Configurable 5xx Fallback Message**
+  - `ErrorHandlingOptions.FallbackMessage` property (default: `"An unexpected error occurred"`)
+  - Customize the generic safe message for unhandled server errors
+  - 4xx exceptions are unaffected (preserve original messages)
+  - Configurable via code, `appsettings.json`, or YAML
+
+- **Customizable Built-in Handler Messages**
+  - `ErrorHandlingOptions.BuiltInMessages` dictionary keyed by error code
+  - Override default messages for `MESSAGE_NOT_READABLE`, `TYPE_MISMATCH`, `BAD_REQUEST`, `VALIDATION_FAILED`
+  - Partial configuration supported — unset keys use existing defaults
+  - Applied to `JsonExceptionHandler`, `TypeMismatchExceptionHandler`, `BadRequestExceptionHandler`, `ValidationExceptionHandler`
+
+- **Additional Error Code Strategies**
+  - `ErrorCodeStrategy.KebabCase`: `UserNotFoundException` → `user-not-found`
+  - `ErrorCodeStrategy.PascalCase`: `UserNotFoundException` → `UserNotFound`
+  - `ErrorCodeStrategy.DotSeparated`: `UserNotFoundException` → `user.not.found`
+  - Correct acronym handling: `HTTPException` → `http-exception` / `HTTP` / `http.exception`
+
+- **RetryAfter Field Name Customization**
+  - `JsonFieldNamesOptions.RetryAfter` property (default: `"retryAfter"`)
+  - Customize the retry-after field name in rate limit JSON responses
+  - Included in startup duplicate field name validation
+
+- **Enhanced Configuration Validation**
+  - `ProblemDetailTypePrefix` validated as valid absolute URI (or empty string) at startup
+  - `RateLimiting.ErrorCode` validated as non-null/non-empty at startup
+  - `RateLimiting.DefaultMessage` validated as non-null/non-empty at startup
+  - Clear error messages for invalid configuration
+
+### Changed
+
+- `JsonExceptionHandler`, `TypeMismatchExceptionHandler`, `BadRequestExceptionHandler` now accept `IOptions<ErrorHandlingOptions>` for custom message support
+- `ErrorHandlingOptionsValidator` extended with 3 new validation rules
+- `ErrorCodeMapper` extended with 3 new conversion methods
+- `DefaultRateLimitResponseWriter` uses configurable `RetryAfter` field name
+- `ErrorHandlingFacade` catch-block uses configurable `FallbackMessage`
+
 ## [1.3.1] - 2026-02-21
 
 ### Added
@@ -199,8 +250,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### CI/CD
 
-- CI and Release workflows updated to pack and publish all 3 NuGet packages
-- Release summary includes links for all 3 packages
+- CI and Release workflows updated to pack and publish all 4 NuGet packages
+- Release summary includes links for all 4 packages
 
 ## [1.1.1] - 2026-02-12
 

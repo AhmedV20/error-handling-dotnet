@@ -11,7 +11,7 @@
 
     <!-- Package metadata -->
     <PackageId>ErrorLens.ErrorHandling</PackageId>
-    <Version>1.3.1</Version>
+    <Version>1.4.0</Version>
     <Authors>AhmedV20</Authors>
     <Company>ErrorLens</Company>
     <Product>ErrorLens.ErrorHandling</Product>
@@ -23,7 +23,15 @@
     <PackageProjectUrl>https://ahmedv20.github.io/error-handling-dotnet/current/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/AhmedV20/error-handling-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>v1.3.1:
+    <PackageReleaseNotes>v1.4.0:
+- New package: ErrorLens.ErrorHandling.FluentValidation (catches FluentValidation.ValidationException)
+- Configurable FallbackMessage for 5xx error responses
+- BuiltInMessages dictionary to override built-in handler messages
+- Three new ErrorCodeStrategy options: KebabCase, PascalCase, DotSeparated
+- RetryAfter field name customization in JsonFieldNames
+- Enhanced configuration validation (ProblemDetailTypePrefix URI, RateLimiting fields)
+
+v1.3.1:
 - IncludeRejectedValues option to suppress sensitive data in validation errors
 - Pipeline resilience: localization/telemetry errors no longer crash error handling
 - OperationCanceledException propagates naturally instead of returning 500
@@ -67,6 +75,7 @@ Full changelog: https://github.com/AhmedV20/error-handling-dotnet/blob/main/CHAN
     <InternalsVisibleTo Include="ErrorLens.ErrorHandling.Tests" />
     <InternalsVisibleTo Include="ErrorLens.ErrorHandling.Swashbuckle" />
     <InternalsVisibleTo Include="ErrorLens.ErrorHandling.OpenApi" />
+    <InternalsVisibleTo Include="ErrorLens.ErrorHandling.FluentValidation" />
   </ItemGroup>
 
   <ItemGroup>

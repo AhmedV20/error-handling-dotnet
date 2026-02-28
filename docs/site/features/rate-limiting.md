@@ -180,6 +180,25 @@ ErrorHandling:
 | `IncludeRetryAfterInBody` | `true` | Include `retryAfter` property in JSON body |
 | `UseModernHeaderFormat` | `false` | Use IETF draft `RateLimit` header format |
 
+### Custom RetryAfter Field Name
+
+The `retryAfter` JSON field name is customizable via `JsonFieldNames.RetryAfter`:
+
+```csharp
+builder.Services.AddErrorHandling(options =>
+{
+    options.JsonFieldNames.RetryAfter = "retry_after";
+});
+```
+
+```yaml
+ErrorHandling:
+  JsonFieldNames:
+    RetryAfter: retry_after
+```
+
+This changes the rate limit response body field from `"retryAfter"` to `"retry_after"`.
+
 ## Localization
 
 Rate limit messages are localized through the same `IErrorMessageLocalizer` pipeline. See [Localization](/features/localization) for setup details.

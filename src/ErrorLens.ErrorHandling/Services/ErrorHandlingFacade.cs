@@ -142,7 +142,7 @@ public class ErrorHandlingFacade
             response = new ApiErrorResponse(
                 System.Net.HttpStatusCode.InternalServerError,
                 "INTERNAL_SERVER_ERROR",
-                "An unexpected error occurred");
+                _options.FallbackMessage);
         }
 
         return response;
