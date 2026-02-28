@@ -9,9 +9,12 @@ ErrorHandling:
   # Include HTTP status code in JSON response body (default: false)
   HttpStatusInJsonResponse: false
 
-  # Error code generation strategy: AllCaps | FullQualifiedName (default: AllCaps)
+  # Error code generation strategy: AllCaps | FullQualifiedName | KebabCase | PascalCase | DotSeparated (default: AllCaps)
   # AllCaps: UserNotFoundException → USER_NOT_FOUND
   # FullQualifiedName: MyApp.Exceptions.UserNotFoundException
+  # KebabCase: UserNotFoundException → user-not-found
+  # PascalCase: UserNotFoundException → UserNotFound
+  # DotSeparated: UserNotFoundException → user.not.found
   DefaultErrorCodeStrategy: AllCaps
 
   # Search exception base class hierarchy for config matches (default: false)
@@ -23,6 +26,19 @@ ErrorHandling:
   # Include rejected values in validation errors (default: true)
   # Set to false to prevent sensitive input (e.g., passwords) from being echoed in responses.
   IncludeRejectedValues: true
+
+  # Custom message for unhandled 5xx errors (default: "An unexpected error occurred")
+  # Set to customize the generic safe message shown for server errors.
+  # 4xx exceptions are unaffected and preserve their original messages.
+  FallbackMessage: "An unexpected error occurred"
+
+  # Override default messages for built-in exception handlers.
+  # Keys are DefaultErrorCodes constants. Only set the ones you want to override.
+  # BuiltInMessages:
+  #   MESSAGE_NOT_READABLE: "The request body could not be parsed as valid JSON"
+  #   TYPE_MISMATCH: "A type conversion error occurred"
+  #   BAD_REQUEST: "Bad request"
+  #   VALIDATION_FAILED: "Validation failed"
 
   # Override [ApiController] automatic model validation (default: false)
   # When true, intercepts model validation and returns ErrorLens structured
@@ -59,6 +75,7 @@ ErrorHandling:
     RejectedValue: rejectedValue  # Rejected value field (default: "rejectedValue")
     Path: path                    # Property path field (default: "path")
     Parameter: parameter          # Parameter name field (default: "parameter")
+    RetryAfter: retryAfter        # Retry-after field in rate limit responses (default: "retryAfter")
 
   # --- Exception → HTTP Status Mappings ---
   # Key: Fully qualified exception type name

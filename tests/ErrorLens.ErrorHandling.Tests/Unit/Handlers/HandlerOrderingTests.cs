@@ -45,7 +45,9 @@ public class HandlerOrderingTests
     [Fact]
     public void BadRequestExceptionHandler_HasOrder150()
     {
-        var handler = new BadRequestExceptionHandler();
+        var optionsWrapper = Substitute.For<IOptions<ErrorHandlingOptions>>();
+        optionsWrapper.Value.Returns(new ErrorHandlingOptions());
+        var handler = new BadRequestExceptionHandler(optionsWrapper);
 
         handler.Order.Should().Be(150);
     }

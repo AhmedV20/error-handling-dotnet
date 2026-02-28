@@ -117,6 +117,7 @@ src/
 
   ErrorLens.ErrorHandling.OpenApi/   # OpenAPI transformer (.NET 9+)
   ErrorLens.ErrorHandling.Swashbuckle/ # Swashbuckle filter (.NET 6-8)
+  ErrorLens.ErrorHandling.FluentValidation/ # FluentValidation integration (.NET 6-10)
 
 tests/
   ErrorLens.ErrorHandling.Tests/     # Core library tests
@@ -125,6 +126,7 @@ tests/
     Unit/                            # Unit tests
   ErrorLens.ErrorHandling.OpenApi.Tests/      # OpenAPI tests
   ErrorLens.ErrorHandling.Swashbuckle.Tests/  # Swashbuckle tests
+  ErrorLens.ErrorHandling.FluentValidation.Tests/  # FluentValidation tests
 
 samples/
   MinimalApiSample/                  # Zero-config Minimal API example

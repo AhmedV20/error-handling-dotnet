@@ -5,6 +5,7 @@
 [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.svg)](https://www.nuget.org/packages/ErrorLens.ErrorHandling)
 [![NuGet OpenApi](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.OpenApi.svg?label=OpenApi)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi)
 [![NuGet Swashbuckle](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.Swashbuckle.svg?label=Swashbuckle)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle)
+[![NuGet FluentValidation](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.FluentValidation.svg?label=FluentValidation)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.FluentValidation)
 [![Build](https://github.com/AhmedV20/error-handling-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/AhmedV20/error-handling-dotnet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![.NET 6.0+](https://img.shields.io/badge/.NET-10.0%20|%209.0%20|%208.0%20|%207.0%20|%206.0-512BD4)
@@ -39,6 +40,9 @@ ErrorLens provides a production-ready error handling pipeline for ASP.NET Core A
 - **OpenAPI / Swagger Integration** — Auto-add error response schemas to API docs
 - **Rate Limiting** — Structured 429 responses with `Retry-After` headers via `IRateLimitResponseWriter` (.NET 7+)
 - **Built-in Error Code Constants** — `DefaultErrorCodes` class with 23 predefined codes for consistent frontend matching
+- **FluentValidation Integration** — First-party support for FluentValidation with automatic error code mapping and severity filtering
+- **Configurable Error Messages** — Customize 5xx fallback message and override built-in handler messages via `FallbackMessage` and `BuiltInMessages`
+- **5 Error Code Strategies** — `AllCaps`, `FullQualifiedName`, `KebabCase`, `PascalCase`, `DotSeparated`
 
 ## Quick Start
 
@@ -130,11 +134,13 @@ For a detailed architecture overview with Mermaid diagrams, see [docs/ARCHITECTU
 | **[ErrorLens.ErrorHandling](https://www.nuget.org/packages/ErrorLens.ErrorHandling)** | Core middleware for structured error responses | .NET 6, 7, 8, 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling) |
 | **[ErrorLens.ErrorHandling.OpenApi](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi)** | OpenAPI schema generation (.NET 9+) | .NET 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.OpenApi?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.OpenApi) |
 | **[ErrorLens.ErrorHandling.Swashbuckle](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle)** | Swashbuckle integration (.NET 6-8) | .NET 6, 7, 8 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.Swashbuckle?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.Swashbuckle) |
+| **[ErrorLens.ErrorHandling.FluentValidation](https://www.nuget.org/packages/ErrorLens.ErrorHandling.FluentValidation)** | FluentValidation integration | .NET 6, 7, 8, 9, 10 | [![NuGet](https://img.shields.io/nuget/v/ErrorLens.ErrorHandling.FluentValidation?style=flat-square&color=5b6ee1&label=)](https://www.nuget.org/packages/ErrorLens.ErrorHandling.FluentValidation) |
 
 ```bash
 # Optional integration packages
 dotnet add package ErrorLens.ErrorHandling.OpenApi        # .NET 9+
 dotnet add package ErrorLens.ErrorHandling.Swashbuckle    # .NET 6-8
+dotnet add package ErrorLens.ErrorHandling.FluentValidation  # .NET 6-10
 ```
 
 ## Default HTTP Status Mappings
@@ -156,7 +162,7 @@ ErrorLens maps common .NET exception types to appropriate HTTP status codes out 
 
 > **Note:** `TaskCanceledException` inherits from `OperationCanceledException`, so it also maps to 499 automatically.
 
-Override any mapping via [configuration](docs/site/guide/configuration.md) or [`[ResponseStatus]`](docs/site/features/attributes.md) attributes.
+Override any mapping via [configuration](docs/guides/configuration.md) or [`[ResponseStatus]`](docs/features/attributes.md) attributes.
 
 ## Configuration
 
@@ -206,7 +212,7 @@ Settings are resolved in this order (highest priority first):
 4. **Exception attributes** — `[ResponseErrorCode]`, `[ResponseStatus]`
 5. **Default conventions** — class name to `ALL_CAPS`, built-in HTTP status mappings
 
-For the full configuration reference (all options, JSON field names, rate limiting, OpenAPI), see the [Configuration Guide](docs/site/guide/configuration.md).
+For the full configuration reference (all options, JSON field names, rate limiting, OpenAPI), see the [Configuration Guide](docs/guides/configuration.md).
 
 ## Exception Attributes
 
@@ -242,7 +248,7 @@ Response:
 | `[ResponseStatus(404)]` | Class | Sets the HTTP status code (accepts `int`, must be 100-599) |
 | `[ResponseErrorProperty("name")]` | Property | Includes the property in the JSON response |
 
-For more details, see [Exception Attributes](docs/site/features/attributes.md).
+For more details, see [Exception Attributes](docs/features/attributes.md).
 
 ## Validation Errors
 
@@ -273,11 +279,11 @@ Response:
 }
 ```
 
-Validation error codes and messages can be customized via configuration. See the [Configuration Guide](docs/site/guide/configuration.md) for details.
+Validation error codes and messages can be customized via configuration. See the [Configuration Guide](docs/guides/configuration.md) for details.
 
 ## Security
 
-All 5xx-class errors (500-599) automatically return a generic safe message instead of the raw exception message:
+All 5xx-class errors (500-599) automatically return a generic safe message instead of the raw exception message. The default message can be customized via `ErrorHandlingOptions.FallbackMessage`:
 
 ```json
 {
@@ -302,28 +308,29 @@ This prevents internal details (database connection strings, file paths, stack t
 > **Documentation site:** [https://ahmedv20.github.io/error-handling-dotnet/current/](https://ahmedv20.github.io/error-handling-dotnet/current/)
 
 **Guides**
-- [Getting Started](docs/site/guide/getting-started.md) — Installation, setup, first error response
-- [Configuration](docs/site/guide/configuration.md) — JSON/YAML config, all options, priority order
-- [Logging](docs/site/guide/logging.md) — Log levels, stack traces, logging filters
+- [Getting Started](docs/guides/getting-started.md) — Installation, setup, first error response
+- [Configuration](docs/guides/configuration.md) — JSON/YAML config, all options, priority order
+- [Logging](docs/guides/logging.md) — Log levels, stack traces, logging filters
 - [Troubleshooting](docs/site/guide/troubleshooting.md) — Common issues and solutions
 
 **Core Features**
-- [Exception Attributes](docs/site/features/attributes.md) — `[ResponseErrorCode]`, `[ResponseStatus]`, `[ResponseErrorProperty]`
-- [Custom Handlers](docs/site/features/custom-handlers.md) — `IApiExceptionHandler`, `IFallbackApiExceptionHandler`
-- [Response Customization](docs/site/features/response-customization.md) — `IApiErrorResponseCustomizer`
-- [JSON Field Names](docs/site/features/json-field-names.md) — Rename any response field
-- [Problem Details (RFC 9457)](docs/site/features/problem-details.md) — `application/problem+json` format
+- [Exception Attributes](docs/features/attributes.md) — `[ResponseErrorCode]`, `[ResponseStatus]`, `[ResponseErrorProperty]`
+- [Custom Handlers](docs/features/custom-handlers.md) — `IApiExceptionHandler`, `IFallbackApiExceptionHandler`
+- [Response Customization](docs/features/response-customization.md) — `IApiErrorResponseCustomizer`
+- [JSON Field Names](docs/features/json-field-names.md) — Rename any response field
+- [Problem Details (RFC 9457)](docs/features/problem-details.md) — `application/problem+json` format
 
 **Integration Features**
-- [OpenTelemetry Tracing](docs/site/features/telemetry.md) — Automatic `Activity` spans
-- [Localization](docs/site/features/localization.md) — Multi-language error messages
-- [OpenAPI (.NET 9+)](docs/site/features/openapi.md) — Auto-generated error schemas
-- [Swashbuckle (.NET 6-8)](docs/site/features/swashbuckle.md) — Swagger error schemas
-- [Rate Limiting (.NET 7+)](docs/site/features/rate-limiting.md) — Structured 429 responses
+- [OpenTelemetry Tracing](docs/features/telemetry.md) — Automatic `Activity` spans
+- [Localization](docs/features/localization.md) — Multi-language error messages
+- [OpenAPI (.NET 9+)](docs/features/openapi.md) — Auto-generated error schemas
+- [Swashbuckle (.NET 6-8)](docs/features/swashbuckle.md) — Swagger error schemas
+- [Rate Limiting (.NET 7+)](docs/features/rate-limiting.md) — Structured 429 responses
+- [FluentValidation](docs/site/documentation.md#fluentvalidation-integration) — FluentValidation integration with automatic error mapping
 
 **Reference**
 - [Architecture](docs/ARCHITECTURE.md) — Full architecture guide with Mermaid diagrams
-- [API Reference](docs/site/reference/api.md) — All public types, interfaces, and extension methods
+- [API Reference](docs/reference/api-reference.md) — All public types, interfaces, and extension methods
 - [Changelog](CHANGELOG.md) — Version history
 
 ## Prerequisites

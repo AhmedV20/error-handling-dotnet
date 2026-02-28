@@ -1,14 +1,26 @@
 using System.Net;
+using ErrorLens.ErrorHandling.Configuration;
 using ErrorLens.ErrorHandling.Handlers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using NSubstitute;
 using Xunit;
 
 namespace ErrorLens.ErrorHandling.Tests.Unit.Handlers;
 
 public class BadRequestExceptionHandlerTests
 {
-    private readonly BadRequestExceptionHandler _handler = new();
+    private readonly ErrorHandlingOptions _options;
+    private readonly BadRequestExceptionHandler _handler;
+
+    public BadRequestExceptionHandlerTests()
+    {
+        _options = new ErrorHandlingOptions();
+        var optionsWrapper = Substitute.For<IOptions<ErrorHandlingOptions>>();
+        optionsWrapper.Value.Returns(_options);
+        _handler = new BadRequestExceptionHandler(optionsWrapper);
+    }
 
     [Fact]
     public void Order_Is150()
@@ -95,5 +107,52 @@ public class BadRequestExceptionHandlerTests
         var response = _handler.Handle(exception);
 
         response.HttpStatusCode.Should().Be((HttpStatusCode)413);
+    }
+
+    // US3: BuiltInMessages tests
+
+    [Fact]
+    public void Handle_CustomBuiltInMessage_UsedForSanitizedFallback()
+    {
+        _options.BuiltInMessages["BAD_REQUEST"] = "The request is invalid";
+        var exception = new BadHttpRequestException("System.Text.Json deserialization failed");
+
+        var response = _handler.Handle(exception);
+
+        response.Code.Should().Be("BAD_REQUEST");
+        response.Message.Should().Be("The request is invalid");
+    }
+
+    [Fact]
+    public void Handle_DefaultMessage_WhenKeyNotInBuiltInMessages()
+    {
+        var exception = new BadHttpRequestException("System.Text.Json deserialization failed");
+
+        var response = _handler.Handle(exception);
+
+        response.Message.Should().Be("Bad request");
+    }
+
+    [Fact]
+    public void Handle_EmptyStringBuiltInMessage_UsesEmptyString()
+    {
+        _options.BuiltInMessages["BAD_REQUEST"] = "";
+        var exception = new BadHttpRequestException("System.Text.Json deserialization failed");
+
+        var response = _handler.Handle(exception);
+
+        response.Message.Should().Be("");
+    }
+
+    [Fact]
+    public void Handle_CustomBuiltInMessage_DoesNotAffectSafeMessages()
+    {
+        _options.BuiltInMessages["BAD_REQUEST"] = "Custom bad request";
+        var exception = new BadHttpRequestException("Missing content type");
+
+        var response = _handler.Handle(exception);
+
+        // Safe messages pass through the allowlist, not affected by BuiltInMessages
+        response.Message.Should().Be("Missing content type");
     }
 }

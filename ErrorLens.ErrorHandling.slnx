@@ -9,10 +9,12 @@
     <Project Path="src/ErrorLens.ErrorHandling/ErrorLens.ErrorHandling.csproj" />
     <Project Path="src/ErrorLens.ErrorHandling.Swashbuckle/ErrorLens.ErrorHandling.Swashbuckle.csproj" />
     <Project Path="src/ErrorLens.ErrorHandling.OpenApi/ErrorLens.ErrorHandling.OpenApi.csproj" />
+    <Project Path="src/ErrorLens.ErrorHandling.FluentValidation/ErrorLens.ErrorHandling.FluentValidation.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ErrorLens.ErrorHandling.Tests/ErrorLens.ErrorHandling.Tests.csproj" />
     <Project Path="tests/ErrorLens.ErrorHandling.Swashbuckle.Tests/ErrorLens.ErrorHandling.Swashbuckle.Tests.csproj" />
     <Project Path="tests/ErrorLens.ErrorHandling.OpenApi.Tests/ErrorLens.ErrorHandling.OpenApi.Tests.csproj" />
+    <Project Path="tests/ErrorLens.ErrorHandling.FluentValidation.Tests/ErrorLens.ErrorHandling.FluentValidation.Tests.csproj" />
   </Folder>
 </Solution>

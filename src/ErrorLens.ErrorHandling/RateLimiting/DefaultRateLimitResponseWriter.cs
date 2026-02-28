@@ -66,7 +66,7 @@ public class DefaultRateLimitResponseWriter : IRateLimitResponseWriter
             // Include retryAfter in response body if configured
             if (rateLimitOptions.IncludeRetryAfterInBody)
             {
-                response.AddProperty("retryAfter", retryAfterSeconds);
+                response.AddProperty(_options.JsonFieldNames.RetryAfter, retryAfterSeconds);
             }
         }
 

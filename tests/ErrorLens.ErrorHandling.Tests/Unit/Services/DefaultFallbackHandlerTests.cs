@@ -123,6 +123,56 @@ public class DefaultFallbackHandlerTests
         }
     }
 
+    // US2: FallbackMessage tests
+
+    [Fact]
+    public void Handle_CustomFallbackMessage_UsedFor5xxResponses()
+    {
+        _options.FallbackMessage = "Contact support at help@example.com";
+        var exception = new Exception("Internal details: connection string=...");
+
+        var response = _handler.Handle(exception);
+
+        response.HttpStatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.Message.Should().Be("Contact support at help@example.com");
+    }
+
+    [Fact]
+    public void Handle_DefaultFallbackMessage_UsedWhenNotConfigured()
+    {
+        // FallbackMessage defaults to "An unexpected error occurred"
+        var exception = new Exception("Server crash details");
+
+        var response = _handler.Handle(exception);
+
+        response.HttpStatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.Message.Should().Be("An unexpected error occurred");
+    }
+
+    [Fact]
+    public void Handle_4xxException_NotAffectedByFallbackMessage()
+    {
+        _options.FallbackMessage = "Custom server error message";
+        var exception = new ArgumentException("Invalid argument provided");
+
+        var response = _handler.Handle(exception);
+
+        response.HttpStatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Message.Should().Be("Invalid argument provided");
+    }
+
+    [Fact]
+    public void Handle_5xxWithCustomFallbackMessage_OverridesDefault()
+    {
+        _options.FallbackMessage = "Something went wrong. Please try again later.";
+        var exception = new Test5xxException("Sensitive server details");
+
+        var response = _handler.Handle(exception);
+
+        response.HttpStatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        response.Message.Should().Be("Something went wrong. Please try again later.");
+    }
+
     [ResponseStatus(HttpStatusCode.ServiceUnavailable)]
     private class Test5xxException : Exception
     {

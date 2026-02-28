@@ -122,4 +122,182 @@ public class ErrorCodeMapperTests
     private class HttpConnectionException : Exception { }
     private class IOErrorException : Exception { }
     private class Error404Exception : Exception { }
+
+    // --- US4: KebabCase strategy tests ---
+
+    [Fact]
+    public void GetErrorCode_KebabCase_UserNotFoundException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.KebabCase;
+
+        var code = _mapper.GetErrorCode(new UserNotFoundException());
+
+        code.Should().Be("user-not-found");
+    }
+
+    [Fact]
+    public void GetErrorCode_KebabCase_HTTPException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.KebabCase;
+
+        var code = _mapper.GetErrorCode(new HttpConnectionException());
+
+        code.Should().Be("http-connection");
+    }
+
+    [Fact]
+    public void GetErrorCode_KebabCase_IOException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.KebabCase;
+
+        var code = _mapper.GetErrorCode(new IOErrorException());
+
+        code.Should().Be("io-error");
+    }
+
+    [Fact]
+    public void GetErrorCode_KebabCase_BaseException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.KebabCase;
+
+        var code = _mapper.GetErrorCode(new Exception("test"));
+
+        code.Should().Be("internal-error");
+    }
+
+    [Fact]
+    public void GetErrorCode_KebabCase_SingleWordException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.KebabCase;
+
+        var code = _mapper.GetErrorCode(new ArgumentException("test"));
+
+        code.Should().Be("argument");
+    }
+
+    [Fact]
+    public void GetErrorCode_KebabCase_WithNumbers()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.KebabCase;
+
+        var code = _mapper.GetErrorCode(new Error404Exception());
+
+        code.Should().Be("error404");
+    }
+
+    // --- US4: PascalCase strategy tests ---
+
+    [Fact]
+    public void GetErrorCode_PascalCase_UserNotFoundException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.PascalCase;
+
+        var code = _mapper.GetErrorCode(new UserNotFoundException());
+
+        code.Should().Be("UserNotFound");
+    }
+
+    [Fact]
+    public void GetErrorCode_PascalCase_HTTPException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.PascalCase;
+
+        var code = _mapper.GetErrorCode(new HttpConnectionException());
+
+        code.Should().Be("HttpConnection");
+    }
+
+    [Fact]
+    public void GetErrorCode_PascalCase_IOException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.PascalCase;
+
+        var code = _mapper.GetErrorCode(new IOErrorException());
+
+        code.Should().Be("IOError");
+    }
+
+    [Fact]
+    public void GetErrorCode_PascalCase_BaseException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.PascalCase;
+
+        var code = _mapper.GetErrorCode(new Exception("test"));
+
+        code.Should().Be("InternalError");
+    }
+
+    [Fact]
+    public void GetErrorCode_PascalCase_SingleWordException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.PascalCase;
+
+        var code = _mapper.GetErrorCode(new ArgumentException("test"));
+
+        code.Should().Be("Argument");
+    }
+
+    // --- US4: DotSeparated strategy tests ---
+
+    [Fact]
+    public void GetErrorCode_DotSeparated_UserNotFoundException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.DotSeparated;
+
+        var code = _mapper.GetErrorCode(new UserNotFoundException());
+
+        code.Should().Be("user.not.found");
+    }
+
+    [Fact]
+    public void GetErrorCode_DotSeparated_HTTPException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.DotSeparated;
+
+        var code = _mapper.GetErrorCode(new HttpConnectionException());
+
+        code.Should().Be("http.connection");
+    }
+
+    [Fact]
+    public void GetErrorCode_DotSeparated_IOException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.DotSeparated;
+
+        var code = _mapper.GetErrorCode(new IOErrorException());
+
+        code.Should().Be("io.error");
+    }
+
+    [Fact]
+    public void GetErrorCode_DotSeparated_BaseException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.DotSeparated;
+
+        var code = _mapper.GetErrorCode(new Exception("test"));
+
+        code.Should().Be("internal.error");
+    }
+
+    [Fact]
+    public void GetErrorCode_DotSeparated_SingleWordException()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.DotSeparated;
+
+        var code = _mapper.GetErrorCode(new ArgumentException("test"));
+
+        code.Should().Be("argument");
+    }
+
+    [Fact]
+    public void GetErrorCode_DotSeparated_WithNumbers()
+    {
+        _options.DefaultErrorCodeStrategy = ErrorCodeStrategy.DotSeparated;
+
+        var code = _mapper.GetErrorCode(new Error404Exception());
+
+        code.Should().Be("error404");
+    }
+
+    private class UserNotFoundException : Exception { }
 }

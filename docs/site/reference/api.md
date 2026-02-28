@@ -60,6 +60,8 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `LogLevels` | `Dictionary<string, LogLevel>` | `{}` |
 | `FullStacktraceHttpStatuses` | `HashSet<string>` | `{}` |
 | `FullStacktraceClasses` | `HashSet<string>` | `{}` |
+| `FallbackMessage` | `string` | `An unexpected error occurred` |
+| `BuiltInMessages` | `Dictionary<string, string>` | `{}` |
 | `JsonFieldNames` | `JsonFieldNamesOptions` | (defaults) |
 | `RateLimiting` | `RateLimitingOptions` | (defaults) |
 | `OpenApi` | `OpenApiOptions` | (defaults) |
@@ -78,9 +80,10 @@ builder.Configuration.AddYamlErrorHandling("custom-path.yml", optional: true, re
 | `RejectedValue` | `string` | `rejectedValue` |
 | `Path` | `string` | `path` |
 | `Parameter` | `string` | `parameter` |
+| `RetryAfter` | `string` | `retryAfter` |
 
 ::: info Startup Validation
-All `JsonFieldNames` properties are validated at startup. Null/empty values and duplicate names are rejected with clear error messages.
+All `JsonFieldNames` properties (including `RetryAfter`) are validated at startup. Null/empty values and duplicate names are rejected with clear error messages. Additionally, `ProblemDetailTypePrefix` is validated as a valid absolute URI (or empty), and `RateLimiting.ErrorCode` / `RateLimiting.DefaultMessage` must be non-empty.
 :::
 
 ### OpenApiOptions
@@ -106,6 +109,9 @@ All `JsonFieldNames` properties are validated at startup. Null/empty values and 
 |-------|-------------|
 | `AllCaps` | `UserNotFoundException` → `USER_NOT_FOUND` |
 | `FullQualifiedName` | `MyApp.UserNotFoundException` |
+| `KebabCase` | `UserNotFoundException` → `user-not-found` |
+| `PascalCase` | `UserNotFoundException` → `UserNotFound` |
+| `DotSeparated` | `UserNotFoundException` → `user.not.found` |
 
 #### ExceptionLogging
 
@@ -345,6 +351,19 @@ services.AddErrorHandlingOpenApi(options => { ... });
 ```csharp
 services.AddErrorHandlingSwashbuckle();
 services.AddErrorHandlingSwashbuckle(options => { ... });
+```
+
+### FluentValidationServiceCollectionExtensions
+
+```csharp
+// Zero-config setup
+services.AddErrorHandlingFluentValidation();
+
+// With severity filtering options
+services.AddErrorHandlingFluentValidation(options =>
+{
+    options.IncludeSeverities.Add(FluentValidation.Severity.Warning);
+});
 ```
 
 ## Telemetry

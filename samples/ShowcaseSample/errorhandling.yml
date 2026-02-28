@@ -4,16 +4,27 @@
 ErrorHandling:
   Enabled: true
   HttpStatusInJsonResponse: true
-  DefaultErrorCodeStrategy: AllCaps
+  DefaultErrorCodeStrategy: DotSeparated  # Options: AllCaps, FullQualifiedName, KebabCase, PascalCase, DotSeparated
   SearchSuperClassHierarchy: true
   ExceptionLogging: WithStacktrace
   OverrideModelStateValidation: true
   IncludeRejectedValues: true
 
+  # Custom 5xx fallback message (shown instead of raw exception details)
+  FallbackMessage: "Something went wrong. Please contact support."
+
+  # Override default messages for built-in handlers
+  BuiltInMessages:
+    MESSAGE_NOT_READABLE: "The request body could not be parsed as valid JSON."
+    VALIDATION_FAILED: "Please fix the validation errors and try again."
+    # TYPE_MISMATCH: "A value has the wrong type."
+    # BAD_REQUEST: "The request is malformed."
+
   # Customize JSON field names (rename "code" → "type", "message" → "detail")
   JsonFieldNames:
     Code: type
     Message: detail
+    RetryAfter: retry_after
 
   # Force full stacktrace logging for server errors
   FullStacktraceHttpStatuses:

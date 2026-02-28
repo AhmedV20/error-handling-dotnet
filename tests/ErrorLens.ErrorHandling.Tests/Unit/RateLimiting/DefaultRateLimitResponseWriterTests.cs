@@ -316,6 +316,63 @@ public class DefaultRateLimitResponseWriterTests
         body.Should().NotContain("\"retryAfter\"");
     }
 
+    // --- (9) US5: Custom RetryAfter field name ---
+
+    [Fact]
+    public async Task WriteRateLimitResponseAsync_CustomRetryAfterFieldName_UsesCustomName()
+    {
+        var options = new ErrorHandlingOptions
+        {
+            RateLimiting = new RateLimitingOptions { IncludeRetryAfterInBody = true }
+        };
+        options.JsonFieldNames.RetryAfter = "retry_after";
+        var writer = CreateWriter(options);
+        var context = CreateHttpContext();
+        var lease = new TestRateLimitLease(TimeSpan.FromSeconds(60));
+
+        await writer.WriteRateLimitResponseAsync(context, lease);
+
+        var body = await ReadResponseBody(context);
+        body.Should().Contain("\"retry_after\"");
+        body.Should().NotContain("\"retryAfter\"");
+    }
+
+    [Fact]
+    public async Task WriteRateLimitResponseAsync_DefaultRetryAfterFieldName_UsesRetryAfter()
+    {
+        var options = new ErrorHandlingOptions
+        {
+            RateLimiting = new RateLimitingOptions { IncludeRetryAfterInBody = true }
+        };
+        var writer = CreateWriter(options);
+        var context = CreateHttpContext();
+        var lease = new TestRateLimitLease(TimeSpan.FromSeconds(30));
+
+        await writer.WriteRateLimitResponseAsync(context, lease);
+
+        var body = await ReadResponseBody(context);
+        body.Should().Contain("\"retryAfter\"");
+    }
+
+    [Fact]
+    public async Task WriteRateLimitResponseAsync_CustomRetryAfterFieldName_NoMetadata_OmitsField()
+    {
+        var options = new ErrorHandlingOptions
+        {
+            RateLimiting = new RateLimitingOptions { IncludeRetryAfterInBody = true }
+        };
+        options.JsonFieldNames.RetryAfter = "retry_after";
+        var writer = CreateWriter(options);
+        var context = CreateHttpContext();
+        var lease = new TestRateLimitLease(retryAfter: null);
+
+        await writer.WriteRateLimitResponseAsync(context, lease);
+
+        var body = await ReadResponseBody(context);
+        body.Should().NotContain("\"retry_after\"");
+        body.Should().NotContain("\"retryAfter\"");
+    }
+
     /// <summary>
     /// Concrete test double for <see cref="RateLimitLease"/> since its generic
     /// TryGetMetadata delegates to the non-generic abstract method, which NSubstitute

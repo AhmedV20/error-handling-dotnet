@@ -120,6 +120,21 @@ public class ErrorHandlingOptions
     public RateLimitingOptions RateLimiting { get; set; } = new();
 
     /// <summary>
+    /// Custom message for unhandled 5xx server errors. Only applied to 5xx responses;
+    /// 4xx exceptions continue to use their actual exception message.
+    /// Default: "An unexpected error occurred"
+    /// </summary>
+    public string FallbackMessage { get; set; } = "An unexpected error occurred";
+
+    /// <summary>
+    /// Override messages for built-in error handlers by error code.
+    /// Keys are <see cref="DefaultErrorCodes"/> constant values (e.g., "MESSAGE_NOT_READABLE", "TYPE_MISMATCH", "BAD_REQUEST", "VALIDATION_FAILED").
+    /// When a key is present, the corresponding handler uses the custom message instead of its hardcoded default.
+    /// Default: empty dictionary (all handlers use their hardcoded defaults).
+    /// </summary>
+    public Dictionary<string, string> BuiltInMessages { get; set; } = new();
+
+    /// <summary>
     /// Configuration options for OpenAPI/Swagger error response schema generation.
     /// </summary>
     public OpenApiOptions OpenApi { get; set; } = new();

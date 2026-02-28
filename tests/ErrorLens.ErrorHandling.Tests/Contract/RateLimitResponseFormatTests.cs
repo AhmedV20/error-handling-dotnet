@@ -205,6 +205,43 @@ public class RateLimitResponseFormatTests
         await act.Should().NotThrowAsync();
     }
 
+    // --- US5: Custom RetryAfter field name contract ---
+
+    [Fact]
+    public async Task StandardFormat_CustomRetryAfterFieldName_UsesCustomName()
+    {
+        var options = new ErrorHandlingOptions
+        {
+            RateLimiting = new RateLimitingOptions { IncludeRetryAfterInBody = true }
+        };
+        options.JsonFieldNames.RetryAfter = "retry_after";
+        var writer = CreateWriter(options);
+        var context = CreateHttpContext();
+        var lease = new TestRateLimitLease(TimeSpan.FromSeconds(60));
+
+        await writer.WriteRateLimitResponseAsync(context, lease);
+
+        var json = await GetResponseJson(context);
+        json.RootElement.GetProperty("retry_after").GetInt32().Should().Be(60);
+    }
+
+    [Fact]
+    public async Task StandardFormat_DefaultRetryAfterFieldName_UsesRetryAfter()
+    {
+        var options = new ErrorHandlingOptions
+        {
+            RateLimiting = new RateLimitingOptions { IncludeRetryAfterInBody = true }
+        };
+        var writer = CreateWriter(options);
+        var context = CreateHttpContext();
+        var lease = new TestRateLimitLease(TimeSpan.FromSeconds(45));
+
+        await writer.WriteRateLimitResponseAsync(context, lease);
+
+        var json = await GetResponseJson(context);
+        json.RootElement.GetProperty("retryAfter").GetInt32().Should().Be(45);
+    }
+
     private sealed class TestRateLimitLease : RateLimitLease
     {
         private readonly TimeSpan? _retryAfter;

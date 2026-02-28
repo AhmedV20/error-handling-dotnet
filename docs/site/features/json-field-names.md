@@ -18,6 +18,7 @@ ErrorHandling:
     RejectedValue: value
     Path: jsonPath
     Parameter: param
+    RetryAfter: retry_after
 ```
 ```json [JSON]
 {
@@ -61,6 +62,7 @@ builder.Services.AddErrorHandling(options =>
 | `RejectedValue` | `rejectedValue` | Field/parameter errors | Rejected value |
 | `Path` | `path` | Field errors | Property path |
 | `Parameter` | `parameter` | Parameter errors | Parameter name |
+| `RetryAfter` | `retryAfter` | Rate limit responses | Retry-after seconds |
 
 ::: tip
 `Code` and `Message` are shared — they apply to both the top-level response and nested error objects.

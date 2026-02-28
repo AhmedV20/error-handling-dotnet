@@ -90,6 +90,7 @@ Handlers execute in order of their `Order` property (lowest first). The first ha
 | 50 | `AggregateExceptionHandler` | `AggregateException` unwrapping | Yes |
 | 90 | `ModelStateValidationExceptionHandler` | `[ApiController]` model validation | Yes (with config) |
 | 100 | `ValidationExceptionHandler` | DataAnnotations validation | Yes |
+| 110 | `FluentValidationExceptionHandler` | FluentValidation errors | Yes (with package) |
 | 120 | `JsonExceptionHandler` | JSON parsing errors | Yes |
 | 130 | `TypeMismatchExceptionHandler` | Type conversion errors | Yes |
 | 150 | `BadRequestExceptionHandler` | Bad HTTP requests | Yes |
