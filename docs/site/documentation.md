@@ -1413,6 +1413,160 @@ app.MapControllers();          // 4. Endpoints
 
 Rate limit messages are localized through the same `IErrorMessageLocalizer` pipeline. See [Localization](#localization) for setup details.
 
+## FluentValidation
+
+ErrorLens provides first-party integration for [FluentValidation](https://docs.fluentvalidation.net/) via a separate package. It automatically catches `FluentValidation.ValidationException` and maps failures to structured error responses with field errors, error codes, and rejected values.
+
+### Installation
+
+```bash
+dotnet add package ErrorLens.ErrorHandling.FluentValidation
+```
+
+### Registration
+
+```csharp
+builder.Services.AddErrorHandling();
+builder.Services.AddErrorHandlingFluentValidation();
+```
+
+The handler is registered at **Order 110** (after the built-in DataAnnotations `ValidationExceptionHandler` at 100, before `JsonExceptionHandler` at 120).
+
+### Severity Filtering
+
+By default, only `Severity.Error` failures are included in the response. You can include warnings and info-level failures:
+
+```csharp
+builder.Services.AddErrorHandlingFluentValidation(options =>
+{
+    options.IncludeSeverities.Add(FluentValidation.Severity.Warning);
+    options.IncludeSeverities.Add(FluentValidation.Severity.Info);
+});
+```
+
+### Error Code Mapping
+
+FluentValidation validator names are automatically mapped to ErrorLens `DefaultErrorCodes` constants:
+
+| FluentValidation Validator | ErrorLens Error Code |
+|---|---|
+| `NotNullValidator` | `REQUIRED_NOT_NULL` |
+| `NotEmptyValidator` | `REQUIRED_NOT_EMPTY` |
+| `EmailValidator` | `INVALID_EMAIL` |
+| `LengthValidator` | `INVALID_SIZE` |
+| `MinimumLengthValidator` | `INVALID_SIZE` |
+| `MaximumLengthValidator` | `INVALID_SIZE` |
+| `LessThanValidator` | `VALUE_TOO_HIGH` |
+| `LessThanOrEqualValidator` | `VALUE_TOO_HIGH` |
+| `GreaterThanValidator` | `VALUE_TOO_LOW` |
+| `GreaterThanOrEqualValidator` | `VALUE_TOO_LOW` |
+| `RegularExpressionValidator` | `REGEX_PATTERN_VALIDATION_FAILED` |
+| `CreditCardValidator` | `INVALID_CREDIT_CARD` |
+| `InclusiveBetweenValidator` | `VALUE_OUT_OF_RANGE` |
+| `ExclusiveBetweenValidator` | `VALUE_OUT_OF_RANGE` |
+
+Unknown validators and user-defined custom error codes (via `.WithErrorCode()`) are preserved as-is.
+
+### Custom Error Codes
+
+Use `.WithErrorCode()` on your FluentValidation rules to set a custom error code that overrides the default mapping:
+
+```csharp
+public class CreateUserValidator : AbstractValidator<CreateUserRequest>
+{
+    public CreateUserValidator()
+    {
+        RuleFor(x => x.Email)
+            .NotEmpty()
+            .EmailAddress();
+
+        RuleFor(x => x.Age)
+            .GreaterThanOrEqualTo(18)
+            .WithErrorCode("MUST_BE_ADULT");  // Custom code, used as-is
+
+        RuleFor(x => x.Username)
+            .Matches(@"^[a-zA-Z0-9_]+$");
+    }
+}
+```
+
+### Nested Properties
+
+FluentValidation nested property names are automatically converted to camelCase:
+
+```csharp
+RuleFor(x => x.Address.City.ZipCode).NotEmpty();
+// Produces: field = "address.city.zipCode", path = "address.city.zipCode"
+```
+
+### Response Format
+
+**Field-level errors:**
+
+```json
+{
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "fieldErrors": [
+    {
+      "code": "REQUIRED_NOT_EMPTY",
+      "field": "email",
+      "message": "'Email' must not be empty.",
+      "rejectedValue": "",
+      "path": "email"
+    },
+    {
+      "code": "MUST_BE_ADULT",
+      "field": "age",
+      "message": "'Age' must be greater than or equal to '18'.",
+      "rejectedValue": 15,
+      "path": "age"
+    }
+  ]
+}
+```
+
+**Object-level / global errors** (rules with empty `PropertyName`) appear in `globalErrors`:
+
+```json
+{
+  "code": "VALIDATION_FAILED",
+  "message": "Validation failed",
+  "globalErrors": [
+    {
+      "code": "DATE_RANGE_INVALID",
+      "message": "End date must be after start date."
+    }
+  ]
+}
+```
+
+### Integration with Core Features
+
+The FluentValidation handler integrates with all core ErrorLens features:
+
+- **`IncludeRejectedValues`** — Controls whether `rejectedValue` is included in field errors (default: `true`)
+- **`AddPathToError`** — Controls whether `path` is included in field errors (default: `true`)
+- **`HttpStatusInJsonResponse`** — Includes `"status": 400` in the response body when enabled
+- **`BuiltInMessages`** — Override the top-level message via `BuiltInMessages["VALIDATION_FAILED"]`
+- **`IErrorCodeMapper` / `IErrorMessageMapper`** — Custom mappers are applied to FluentValidation errors
+- **`IErrorMessageLocalizer`** — Localization is applied to all field and global error messages
+- **`JsonFieldNames`** — Custom JSON field names apply to FluentValidation responses
+- **`UseProblemDetailFormat`** — FluentValidation errors are included in Problem Details responses
+
+### DataAnnotations vs FluentValidation
+
+Both validation handlers produce the same structured `fieldErrors` / `globalErrors` format. The key differences:
+
+| Feature | DataAnnotations (built-in) | FluentValidation (package) |
+|---|---|---|
+| Handler Order | 100 | 110 |
+| Exception Type | `System.ComponentModel.DataAnnotations.ValidationException` | `FluentValidation.ValidationException` |
+| Error Code Source | Attribute type name mapping | Validator class name mapping (14 built-in) |
+| Custom Codes | Via `IErrorCodeMapper` configuration | Via `.WithErrorCode()` or `IErrorCodeMapper` |
+| Severity Filtering | N/A | Configurable via `IncludeSeverities` |
+| Multiple Field Errors | One per exception | Multiple per exception |
+
 ## Built-in Error Code Constants
 
 The `DefaultErrorCodes` static class provides all built-in error code strings for consistent matching in frontend applications.
